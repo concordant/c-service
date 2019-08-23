@@ -1,10 +1,3 @@
-export enum Protocol {
-    WEBSOCKET = "ws",
-    SECURE_WEBSOCKET = "wss",
-    HTTP = "http",
-    HTTPS = "https",
-}
-
 export interface IEndpointInfo {
     readonly port: number;
     readonly address?: string;
@@ -18,7 +11,15 @@ export interface IMessage {
 
 export interface IRemoteEndpointStub {
     connection: any;
+
     send(msg: IMessage): void;
+}
+
+export enum Protocol {
+    WEBSOCKET = "ws",
+    SECURE_WEBSOCKET = "wss",
+    HTTP = "http",
+    HTTPS = "https",
 }
 
 export type RemoteEndpoint = IRemoteEndpointStub;

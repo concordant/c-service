@@ -1,4 +1,4 @@
-import {IEndpointInfo} from "../utils/NetworkCommon";
+import {IEndpointInfo} from "../Utils/NetworkCommon";
 
 type IServiceInfo = IEndpointInfo;
 

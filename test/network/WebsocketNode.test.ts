@@ -1,6 +1,6 @@
-import {WebSocketServerEndpoint} from "../../src/Network/EndpointImpl/WebSocketServerEndpoint";
+import WebSocketServerEndpoint from "../../src/Network/EndpointImpl/WebSocketServerEndpoint";
 import {Handler, IAsyncDuplexEndpoint, IHandlerResp} from "../../src/Network/Interfaces/IAsyncDuplexEndpoint";
-import {RemoteEndpoint, Protocol} from "../../src/Network/utils/NetworkCommon";
+import {Protocol, RemoteEndpoint} from "../../src/Network/Utils/NetworkCommon";
 
 describe("Client/Server connection", () => {
 

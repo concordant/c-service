@@ -1,6 +1,6 @@
 import WebSocket from "ws";
 import {EndpointEvent, Handler, IAsyncDuplexEndpoint} from "../Interfaces/IAsyncDuplexEndpoint";
-import {IEndpointInfo, IMessage, RemoteEndpoint} from "../utils/NetworkCommon";
+import {IEndpointInfo, IMessage, RemoteEndpoint} from "../Utils/NetworkCommon";
 import RemoteWebSocketEndpointStub from "./RemoteWebSocketEndpointStub";
 
 export default class WebSocketEndpoint implements IAsyncDuplexEndpoint {

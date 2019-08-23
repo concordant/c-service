@@ -1,5 +1,5 @@
 import WebSocket from "ws";
-import {IMessage, IRemoteEndpointStub} from "../../Network/utils/NetworkCommon";
+import {IMessage, IRemoteEndpointStub} from "../Utils/NetworkCommon";
 
 export default class RemoteWebSocketEndpointStub implements IRemoteEndpointStub {
 

@@ -1,4 +1,4 @@
-import { IEndpointInfo, IMessage, RemoteEndpoint} from "../utils/NetworkCommon";
+import { IEndpointInfo, IMessage, RemoteEndpoint} from "../Utils/NetworkCommon";
 
 export type EndpointEvent = "open" | "message" | "connected" | "close" | "error";
 export type Handler = (endpoint: RemoteEndpoint, ...params: any) => IHandlerResp;

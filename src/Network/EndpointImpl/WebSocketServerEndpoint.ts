@@ -1,12 +1,12 @@
 import express from "express";
 import * as http from "http";
 import WebSocket, {Server} from "ws";
-import {Handler, IHandlerResp} from "../Interfaces/IAsyncDuplexEndpoint";
-import {IEndpointInfo, Protocol, RemoteEndpoint} from "../utils/NetworkCommon";
+import {Handler} from "../Interfaces/IAsyncDuplexEndpoint";
+import {IEndpointInfo, Protocol} from "../Utils/NetworkCommon";
 import WebSocketEndpoint from "./WebSocketEndpoint";
 
-type ServerEndpointEvent = "connection" | "message" | "connected" | "close" | "error";
-export class WebSocketServerEndpoint extends WebSocketEndpoint {
+type ServerEndpointEvent = "connection" | "message" | "close" | "error";
+export default class WebSocketServerEndpoint extends WebSocketEndpoint {
 
     public readonly info: IEndpointInfo;
     public readonly serverEndpoint: Server;
@@ -26,7 +26,7 @@ export class WebSocketServerEndpoint extends WebSocketEndpoint {
             return {state: "listening"};
         };
 
-        const connectionEvent: ServerEndpointEvent = "connection";
+        const connectionEvent = "connection";
         this.serverEndpoint.on(connectionEvent, connectionHandler);
         if (this.serverHandlers[connectionEvent] !== undefined) {
             this.serverHandlers[connectionEvent]!.forEach((handler: Handler) =>

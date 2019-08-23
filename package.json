@@ -2,9 +2,11 @@
   "name": "collab2",
   "version": "1.0.0",
   "description": "A p2p collaborative spreadsheet",
-  "main": "app.js",
+  "main": "./dist/src/app.js",
+  "types": "./dist/src/app.d.ts",
   "scripts": {
-    "start": "tsc && node dist/app.js",
+    "start": "tsc && node dist/src/app.js",
+    "server": "tsc && node dist/src/server.js",
     "test": "jest"
   },
   "repository": {
