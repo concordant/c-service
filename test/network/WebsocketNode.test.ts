@@ -1,48 +1,56 @@
-import {State, WebSocketNode} from "../../src/Network/EndpointImpl/WebsocketNode";
-import {INode, INodeResponse} from "../../src/Network/Interfaces/INode";
-import {Endpoint, IMessage, INodeInfo} from "../../src/Network/utils/NetworkCommon";
+import {WebSocketServerEndpoint} from "../../src/Network/EndpointImpl/WebSocketServerEndpoint";
+import {Handler, IAsyncDuplexEndpoint, IHandlerResp} from "../../src/Network/Interfaces/IAsyncDuplexEndpoint";
+import {RemoteEndpoint, Protocol} from "../../src/Network/utils/NetworkCommon";
 
 describe("Client/Server connection", () => {
 
     const NODE_1_PORT = 44900;
     const NODE_2_PORT = 45900;
-    let server1: INode;
-    let server2: INode;
+    let server1: IAsyncDuplexEndpoint;
+    let server2: IAsyncDuplexEndpoint;
 
     it("Create Server", () => {
-        server1 = new WebSocketNode(NODE_1_PORT, {});
+        server1 = new WebSocketServerEndpoint(NODE_1_PORT, {});
     });
 
-    it("Create Server with handle connection", (done) => {
-        const onConnection = (...args: any) => {
+    it("Create Server and check connection and open events", (done) => {
+
+        let counter = 0;
+
+        const onConnection = (): IHandlerResp => {
             console.log("Called onServerConnection");
-            done();
-            return {state: "listening", response: undefined};
+            counter++;
+            return {state: "listening"};
         };
-        server1 = new WebSocketNode(NODE_1_PORT, {connection: [onConnection]});
-        server2 = new WebSocketNode(NODE_2_PORT, {
-            open: [
-                (): any => {
-                    console.log("open");
-                    return {state: "listening"};
-                }],
-        });
-        server2.connect("localhost", NODE_1_PORT).then(() => {
-            return;
-        });
+
+        const onOpen = (): IHandlerResp => {
+            console.log("open");
+            if (counter === 1) {
+                done();
+            }
+            return {state: "listening"};
+        };
+
+        server1 = new WebSocketServerEndpoint(NODE_1_PORT, {connection: [onConnection]});
+        server2 = new WebSocketServerEndpoint(NODE_2_PORT);
+        server2.connect({
+            address: "localhost",
+            port: NODE_1_PORT,
+            protocol: Protocol.WEBSOCKET,
+        }, {open: [onOpen]}).then();
     });
 
     it("Exchange Messages Between two servers", (done) => {
 
         let foobar = "";
-        const onServerMessage = (endpoint: Endpoint, messageJSON: any, ...args: any) => {
+        const onServerMessage: Handler = (endpoint: RemoteEndpoint, messageJSON: any, ...args: any) => {
             const message = JSON.parse(messageJSON);
             foobar += message.content;
-            endpoint.send(JSON.stringify({content: "bar"}));
+            endpoint.send({content: "bar"});
             return {state: "listening", response: undefined};
         };
 
-        const onClientMessage = (endpoint: Endpoint, messageJSON: any, ...args: any) => {
+        const onClientMessage: Handler = (endpoint: RemoteEndpoint, messageJSON: any, ...args: any) => {
             const message = JSON.parse(messageJSON);
             foobar += message.content;
             expect(foobar).toEqual("foobar");
@@ -50,34 +58,36 @@ describe("Client/Server connection", () => {
             return {state: "listening", response: undefined};
         };
 
-        const onServerConnection = (...args: any): INodeResponse => {
-            return {state: "listening", response: undefined};
+        const onServerConnection: Handler = (): IHandlerResp => {
+            return {state: "listening"};
         };
 
-        const onClientConnectionOpen = (endpoint: Endpoint, ...args: any) => {
-            server2.sendAsync({content: "foo"}, endpoint);
-            return {state: "listening", response: undefined};
+        const onClientConnectionOpen: Handler = (endpoint: RemoteEndpoint, ...args: any) => {
+            server2.send({content: "foo"}, endpoint).then();
+            return {state: "listening"};
         };
 
-        server1 = new WebSocketNode(NODE_1_PORT, {message: [onServerMessage], connection: [onServerConnection]});
-        server2 = new WebSocketNode(NODE_2_PORT, {});
+        const server1Handlers = {message: [onServerMessage], connection: [onServerConnection]};
 
-        server2.connect("localhost", NODE_1_PORT, {
-            message: [onClientMessage],
-            open: [onClientConnectionOpen],
-        }).then((endpoint) => {
-            return;
-        });
+        server1 = new WebSocketServerEndpoint(NODE_1_PORT, server1Handlers);
+        server2 = new WebSocketServerEndpoint(NODE_2_PORT, {});
+
+        server2.connect({address: "localhost", port: NODE_1_PORT, protocol: Protocol.WEBSOCKET},
+            {
+                message: [onClientMessage],
+                open: [onClientConnectionOpen],
+            })
+            .then();
     });
 
-    //TODO close socket after state "stop" ensure socket is closed in both sides
+    // TODO: close socket after state "stop" ensure socket is closed in both sides
 
     afterEach(() => {
         if (server1 !== undefined) {
-            server1.stop().then(() => "ok");
+            server1.close().then(() => "ok");
         }
         if (server2 !== undefined) {
-            server2.stop().then(() => "ok");
+            server2.close().then(() => "ok");
         }
     });
 

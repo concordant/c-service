@@ -5,16 +5,20 @@ export enum Protocol {
     HTTPS = "https",
 }
 
-export interface INodeInfo {
+export interface IEndpointInfo {
     readonly port: number;
     readonly address?: string;
     readonly protocol: Protocol;
-
 }
 
 export interface IMessage {
     headers?: Map<string, string>;
-    content: string;
+    content: any;
 }
 
-export type Endpoint = any; // TODO: specify type
+export interface IRemoteEndpointStub {
+    connection: any;
+    send(msg: IMessage): void;
+}
+
+export type RemoteEndpoint = IRemoteEndpointStub;
