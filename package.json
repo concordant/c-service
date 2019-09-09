@@ -1,35 +1,55 @@
 {
-  "name": "collab2",
+  "name": "collab2-server",
   "version": "1.0.0",
   "description": "A p2p collaborative spreadsheet",
-  "main": "./dist/src/app.js",
-  "types": "./dist/src/app.d.ts",
+  "main": "./dist/main.js",
+  "types": "./dist/main.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
   "scripts": {
-    "start": "tsc && node dist/src/app.js",
-    "server": "tsc && node dist/src/server.js",
-    "test": "jest"
+    "start": "tsc && node dist/app.js",
+    "server": "tsc && node dist/server.js",
+    "test": "jest",
+    "coverage": "jest --coverage",
+    "build": "tsc",
+    "prepare": "npm run build",
+    "prepack": "npm run build"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/balegas/collab2.git"
+    "url": "git+https://github.com/balegas/collab2-server.git"
   },
   "author": "Valter Balegas",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/balegas/collab2/issues"
+    "url": "https://github.com/balegas/collab2-server/issues"
   },
-  "homepage": "https://github.com/balegas/collab2#readme",
+  "homepage": "https://github.com/balegas/collab2-server#readme",
   "devDependencies": {
+    "@microsoft/tsdoc": "^0.12.14",
     "@types/express": "^4.17.1",
     "@types/jest": "^24.0.18",
+    "@types/pouchdb": "^6.4.0",
     "@types/ws": "^6.0.2",
     "jest": "^24.9.0",
-    "ts-jest": "^24.0.2",
+    "ts-jest": "^24.1.0",
     "tslint": "^5.18.0",
-    "typescript": "^3.5.3"
+    "typescript": "^3.6.3"
   },
   "dependencies": {
+    "@types/lodash": "^4.14.138",
     "express": "^4.17.1",
+    "lodash": "^4.17.15",
+    "pouchdb": "^7.1.1",
+    "pouchdb-adapter-memory": "^7.1.1",
     "ws": "^7.1.2"
+  },
+  "jest": {
+    "collectCoverage": true,
+    "coverageReporters": [
+      "json",
+      "html"
+    ]
   }
 }
