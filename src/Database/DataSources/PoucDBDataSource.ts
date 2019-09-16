@@ -39,7 +39,7 @@ export default class PouchDBDataSource implements IDataSource {
     }
 
     public connection(autoSave: boolean): Promise<PouchDBAdapter> {
-        if (!autoSave) {
+        if (autoSave) {
             return Promise.reject("Not Implemented");
         }
 

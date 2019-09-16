@@ -1,7 +1,9 @@
-import {IBasicConnection, IDBHandlers, IDBObject, IFilter, Key} from "../../Interfaces/Types";
+import _ from "lodash";
+import {Register} from "../../DataTypes/Interfaces/Types";
+import {PouchDBObject} from "../../DataTypes/PouchDB/PouchDBObject";
+import {IBasicConnection, IDBHandlers, IDBObject, IDBSaveHandlers, IFilter, Key} from "../../Interfaces/Types";
 import Database = PouchDB.Database;
 import PouchError = PouchDB.Core.Error;
-import {PouchDBObject} from "./PouchDBObject";
 import Document = PouchDB.Core.Document;
 import ExistingDocument = PouchDB.Core.ExistingDocument;
 import Response = PouchDB.Core.Response;
@@ -17,7 +19,7 @@ export class PouchDBAdapter implements IBasicConnection {
         return `${key.bucket}_${key.key}`;
     }
 
-    constructor(private connection: Database, private autoSave: boolean) {
+    constructor(private connection: Database, public autoSave: boolean) {
 
     }
 
@@ -27,12 +29,12 @@ export class PouchDBAdapter implements IBasicConnection {
             .catch(() => Promise.reject(new Error("Couldn't Connect to server")));
     }
 
-    public get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<PouchDBObject<T>> {
+    public get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<Register<T>> {
         if (passThrough) {
             return Promise.reject("Not Implemented");
         }
         return this.connection.get(PouchDBAdapter.convertKeyToId(key))
-            .then((obj: any) => new PouchDBObject<T>(obj))
+            .then((obj: any) => new PouchDBObject<T>(obj, this))
             .catch((error: Error) => {
                 const pouchError = error as PouchError;
                 if (pouchError.reason === "missing" && (defaultObj !== undefined && defaultObj !== null)) {
@@ -41,6 +43,12 @@ export class PouchDBAdapter implements IBasicConnection {
                 return Promise.reject(error);
             });
 
+    }
+
+    public save<T>(obj: PouchDBObject<T>): Promise<PouchDBObject<T>> {
+        return this.connection.put(obj.currentValue())
+            .then((resp: Response) =>
+                new PouchDBObject<T>({_id: resp.id, _rev: resp.rev, ...obj.currentValue()}, this));
     }
 
     public delete(key: Key): Promise<void> {
@@ -86,7 +94,7 @@ export class PouchDBAdapter implements IBasicConnection {
         return this.connection.put(obj)
             .then((resp: Response) => {
                 doc._rev = resp.rev;
-                return new PouchDBObject(doc);
+                return new PouchDBObject(doc, this);
             });
     }
 }

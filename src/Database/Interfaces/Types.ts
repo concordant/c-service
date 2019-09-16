@@ -6,6 +6,8 @@
  * We also must consider GraphQL interface, that is what FaunaDB is doing.
  * I've walked a few steps on that direction myself. I think its doable... but something for after the MVP
  */
+import {Register} from "../DataTypes/Interfaces/Types";
+
 export type Key = string | { key: string, bucket: string };
 
 /**
@@ -32,19 +34,18 @@ export enum CONTEXT_COMPARE {
  *  A representation of a database object that the user can interact with
  */
 export interface IDBObject<T> extends IContext {
-    key: Key;
 
     /**
      * Commit the current modifications on the object
      */
-    save(): Promise<void>;
+    save(): Promise<IDBObject<T>>;
 
     /**
      * Checks if the object has local uncommitted changes
      */
     isDirty(): boolean;
 
-    value(): T;
+    currentValue(): T;
 }
 
 /**
@@ -105,7 +106,7 @@ interface IDB {
     // get<T extends IDBObject>(key: Key, strict?: boolean, passThrough?: boolean): Promise<T>;
 
     // get<T, Y extends IDBObject<T>>(key: Key, strict?: boolean, passThrough?: boolean): Promise<Y>;
-    get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<IDBObject<T>>;
+    get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<Register<T>>;
 
     // query TODO: Need to think more about this before making decisions. Dont forget GraphQL!
 

@@ -1,8 +1,8 @@
 import {IDBObject} from "../../Interfaces/Types";
 
-export default interface IRegister<T> extends IDBObject {
-    get(): T;
+export default interface IRegister<T> extends IDBObject<T> {
+    currentValue(): T;
 
-    set(value: T): void;
+    updateValue(value: T): void;
 
 }
