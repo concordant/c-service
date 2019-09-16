@@ -1,10 +1,14 @@
 import {IBasicConnection, IDBHandlers, IDBObject, IFilter, Key} from "../../Interfaces/Types";
 import Database = PouchDB.Database;
+import PouchError = PouchDB.Core.Error;
 import {PouchDBObject} from "./PouchDBObject";
+import Document = PouchDB.Core.Document;
+import ExistingDocument = PouchDB.Core.ExistingDocument;
+import Response = PouchDB.Core.Response;
 
 export class PouchDBAdapter implements IBasicConnection {
 
-    protected static getKey(key: Key): string {
+    protected static convertKeyToId(key: Key): string {
         if (typeof key === "string") {
             return key;
         } else if (!key.key) {
@@ -23,9 +27,20 @@ export class PouchDBAdapter implements IBasicConnection {
             .catch(() => Promise.reject(new Error("Couldn't Connect to server")));
     }
 
-    public get<Y>(key: Key): Promise<PouchDBObject<Y>> {
-        return this.connection.get(PouchDBAdapter.getKey(key))
-            .then((obj: any) => new PouchDBObject<Y>(obj));
+    public get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<PouchDBObject<T>> {
+        if (passThrough) {
+            return Promise.reject("Not Implemented");
+        }
+        return this.connection.get(PouchDBAdapter.convertKeyToId(key))
+            .then((obj: any) => new PouchDBObject<T>(obj))
+            .catch((error: Error) => {
+                const pouchError = error as PouchError;
+                if (pouchError.reason === "missing" && (defaultObj !== undefined && defaultObj !== null)) {
+                    return this.create<T>(key, defaultObj);
+                }
+                return Promise.reject(error);
+            });
+
     }
 
     public delete(key: Key): Promise<void> {
@@ -63,5 +78,15 @@ export class PouchDBAdapter implements IBasicConnection {
 
     public setAutoSave() {
         throw Error("Not Implemented");
+    }
+
+    private create<T>(key: Key, obj: T): Promise<PouchDBObject<T>> {
+        const doc = obj as Document<T> & ExistingDocument<T>;
+        doc._id = PouchDBAdapter.convertKeyToId(key);
+        return this.connection.put(obj)
+            .then((resp: Response) => {
+                doc._rev = resp.rev;
+                return new PouchDBObject(doc);
+            });
     }
 }

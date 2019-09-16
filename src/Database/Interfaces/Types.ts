@@ -64,13 +64,13 @@ export interface IDataSource {
      *  Starts a new non-transactional session with the database
      *  Get operations retrieve the most recent version of the object
      */
-    connection(autoSave: boolean): Promise<Connection | Error>;
+    connection(autoSave: boolean): Promise<Connection>;
 
     /**
      * Starts a new transactional session with the database
      * @return a ITxConnection
      */
-    txConnection(): Promise<ITxConnection | Error>; // €
+    txConnection(): Promise<ITxConnection>; // €
 
     /**
      * Disconnects from the remote database
@@ -96,7 +96,7 @@ interface IDB {
      * Object is cached in the local store until release is called
      *
      * @param key - identifier of the object
-     * @param strict - Reject promise if object doesn't exist yet on the store
+     * @param defaultObj - Reject promise if default object is not provided and object does not exist
      * @param  passThrough - ignore the cached value and fetch a fresh version
      * @return current object associated with the key, empty object if it doesn't exist yet.
      * Reject promise if impossible to get object or object is not of the given type.
@@ -104,7 +104,8 @@ interface IDB {
     // TODO: Need Runtime infomration about the type. Needs to be done as in the next method
     // get<T extends IDBObject>(key: Key, strict?: boolean, passThrough?: boolean): Promise<T>;
 
-    get<T>(key: Key, strict?: boolean, passThrough?: boolean): Promise<IDBObject<T>>;
+    // get<T, Y extends IDBObject<T>>(key: Key, strict?: boolean, passThrough?: boolean): Promise<Y>;
+    get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<IDBObject<T>>;
 
     // query TODO: Need to think more about this before making decisions. Dont forget GraphQL!
 

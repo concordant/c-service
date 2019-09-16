@@ -1,7 +1,7 @@
 import PouchDB from "pouchdb";
 import InMemoryAdapter from "pouchdb-adapter-memory";
 import {PouchDBAdapter} from "../Adapters/PouchDB/PouchDBAdapter";
-import {Connection, IDataSource} from "../Interfaces/Types";
+import {Connection, IBasicConnection, IDataSource} from "../Interfaces/Types";
 import Database = PouchDB.Database;
 
 PouchDB.plugin(InMemoryAdapter);
@@ -38,7 +38,7 @@ export default class PouchDBDataSource implements IDataSource {
         }
     }
 
-    public connection(autoSave: boolean): Promise<Connection | Error> {
+    public connection(autoSave: boolean): Promise<PouchDBAdapter> {
         if (!autoSave) {
             return Promise.reject("Not Implemented");
         }
