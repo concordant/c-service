@@ -6,7 +6,7 @@
  * We also must consider GraphQL interface, that is what FaunaDB is doing.
  * I've walked a few steps on that direction myself. I think its doable... but something for after the MVP
  */
-type Key = string;
+export type Key = string | { key: string, bucket: string };
 
 /**
  * Places a transaction or an object version in position of the database timeline
@@ -14,13 +14,13 @@ type Key = string;
  * If underlying store does not allow the comparison of object version, the result of compareTo
  * is NON_COMPARABLE
  */
-interface IContext {
+export interface IContext {
     /** Compares two contexts */
     compareVersion(other: IContext): CONTEXT_COMPARE;
 }
 
 /** The comparison result of two contexts */
-enum CONTEXT_COMPARE {
+export enum CONTEXT_COMPARE {
     EQUAL = "EQUAL",
     LESS_THAN = "LESS_THAN",
     GREATER_THAN = "GREATER_THAN",
@@ -31,7 +31,7 @@ enum CONTEXT_COMPARE {
 /**
  *  A representation of a database object that the user can interact with
  */
-interface IDBObject extends IContext {
+export interface IDBObject<T> extends IContext {
     key: Key;
 
     /**
@@ -43,24 +43,28 @@ interface IDBObject extends IContext {
      * Checks if the object has local uncommitted changes
      */
     isDirty(): boolean;
+
+    value(): T;
 }
 
 /**
  * Database connection factory
  */
-interface IDataSource {
-    /**
-     * Sets the database connections parameters
-     *
-     * @param params - database-specific configuration
-     */
-    init(params: any): void;
+export interface IDataSource {
+
+    // /**
+    //  * Sets the database connections parameters
+    //  *
+    //  * @param params - database-specific configuration
+    //  * @comment: (Valter) removed this method and pass params in constructor
+    //  */
+    // init(params: any): void;
 
     /**
      *  Starts a new non-transactional session with the database
      *  Get operations retrieve the most recent version of the object
      */
-    connection(autoSave: boolean): Promise<IConnection | Error>;
+    connection(autoSave: boolean): Promise<Connection | Error>;
 
     /**
      * Starts a new transactional session with the database
@@ -97,7 +101,10 @@ interface IDB {
      * @return current object associated with the key, empty object if it doesn't exist yet.
      * Reject promise if impossible to get object or object is not of the given type.
      */
-    get<T extends IDBObject>(key: Key, strict?: boolean, passThrough?: boolean): Promise<T>;
+    // TODO: Need Runtime infomration about the type. Needs to be done as in the next method
+    // get<T extends IDBObject>(key: Key, strict?: boolean, passThrough?: boolean): Promise<T>;
+
+    get<T>(key: Key, strict?: boolean, passThrough?: boolean): Promise<IDBObject<T>>;
 
     // query TODO: Need to think more about this before making decisions. Dont forget GraphQL!
 
@@ -118,7 +125,7 @@ interface IDB {
      * @param handlers - handlers for each event type
      * @returns Listener that receives database events and calls handlers locally
      */
-    subscribe(key: Key, filter?: IFilter, handlers?: IDBHandlers): IDatabaseListener;
+    subscribe<T>(key: Key, filter?: IFilter, handlers?: IDBHandlers<IDBObject<T>>): IDatabaseListener;
 
     /**
      * Release object from local store
@@ -128,17 +135,17 @@ interface IDB {
      */
     release(key: Key): void | Error;
 
-    releaseAll(): boolean;
+    releaseAll(): void | Error;
 }
 
-type Connection = IBasicConnection | ITxConnection;
+export type Connection = IBasicConnection | ITxConnection;
 
 /**
  * A Connection establishes a channel to query the database
  * Different types of connections can have different types of guarantees
  * @comment Channels might be a more appropriate name
  */
-interface IBasicConnection extends IDB {
+export interface IBasicConnection extends IDB {
 
     /**
      * Calls save for every object in cache that has outstanding operations
@@ -185,16 +192,16 @@ interface IDatabaseListener {
     cancel(): void | Error;
 }
 
-interface IDBHandlers {
-    put?: PutHandler;
+export interface IDBHandlers<T> {
+    put?: PutHandler<T>;
 }
 
-interface IDBSaveHandlers {
-    saved?: SavedHandler;
-    saved_value?: SavedHandler;
+export interface IDBSaveHandlers {
+    saved?: SavedHandler<any>;
+    saved_value?: SavedHandler<any>;
 }
 
-interface IDBTxHandlers {
+export interface IDBTxHandlers {
     tx_remote_commit?: RemoteCommitHandler;
     tx_remote_accepted?: RemoteCommitHandler;
     /**
@@ -207,7 +214,7 @@ interface IDBTxHandlers {
 /** An event subscription filter. Can be used to receive
  * events only for certain predicate updates
  */
-interface IFilter {
+export interface IFilter {
     attributes: any;
     // TODO: This is a placeholder definition. Needs to be designed with query model in mind
 }
@@ -218,9 +225,9 @@ interface IFilter {
  * @param value: the value of the modified object
  */
 
-type PutHandler = (key: string, value: IDBObject) => void;
+type PutHandler<T> = (key: string, value: IDBObject<T>) => void;
 
-type SavedHandler = (key: string, value?: IDBObject) => void;
+type SavedHandler<T> = (key: string, value?: IDBObject<T>) => void;
 
 /** Handles remote commit event on a subscribed transaction
  *
