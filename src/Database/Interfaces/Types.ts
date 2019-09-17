@@ -6,7 +6,7 @@
  * We also must consider GraphQL interface, that is what FaunaDB is doing.
  * I've walked a few steps on that direction myself. I think its doable... but something for after the MVP
  */
-import {Register} from "../DataTypes/Interfaces/Types";
+import {Document} from "../DataTypes/Interfaces/Types";
 
 export type Key = string | { key: string, bucket: string };
 
@@ -95,7 +95,7 @@ interface IDB {
      * Reject promise if impossible to get object or object is not of the given type.
      */
 
-    get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<Register<T>>;
+    get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<Document<T>>;
 
     // query TODO: Need to think more about this before making decisions. Dont forget GraphQL!
 
@@ -116,7 +116,7 @@ interface IDB {
      * @param handlers - handlers for each event type
      * @returns EventEmitter for this subscription
      */
-    subscribe<T>(keyOrKeys: Key | Key[], handlers: IDBHandlers<Register<T>>, filter?: IFilter): DatabaseEventEmitter;
+    subscribe<T>(keyOrKeys: Key | Key[], handlers: IDBHandlers<Document<T>>, filter?: IFilter): DatabaseEventEmitter;
 
     /**
      * Stop listening to events of provided EventEmitter
@@ -199,15 +199,10 @@ export interface IDBSaveAllHandlers {
 export interface IDBTxHandlers {
     commit?: RemoteCommitHandler;
     accepted?: RemoteCommitHandler;
-    /**
-     * TODO: @remark do we want to distinguish between committed and accepted?
-     * A transaction might not commit if not accepted, but eventually
-     * committed if accepted
-     */
 }
 
-/** An event subscription filter. Can be used to receive
- * events only for certain predicate updates
+/**
+ * An event subscription filter. Can be used to receive events only for certain predicate updates
  */
 export interface IFilter {
     attributes: any;

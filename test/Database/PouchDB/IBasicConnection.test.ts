@@ -3,13 +3,15 @@ import PouchDBDataSource, {
     IConnectionParams,
     IConnectionProtocol,
 } from "../../../src/Database/DataSources/PoucDBDataSource";
-import {Register} from "../../../src/Database/DataTypes/Interfaces/Types";
+import {Document} from "../../../src/Database/DataTypes/Interfaces/Types";
 import {DatabaseEventEmitter, IBasicConnection, IDBObject} from "../../../src/Database/Interfaces/Types";
 
 class TestObject {
     constructor(public foo: string = "foo") {
     }
 }
+
+const WAIT_FOR_TEST = process.env.WAIT_FOR_TEST && parseInt(process.env.WAIT_FOR_TEST, 10) || 300;
 
 describe("Establish Connection tests", () => {
     it("Init local in-memory database", (done) => {
@@ -98,7 +100,7 @@ describe("Modify object tests", () => {
 
     it("get object and update local", (done) => {
         connection.get<TestObject>(TEST_KEY, new TestObject())
-            .then((obj: Register<TestObject>) => {
+            .then((obj: Document<TestObject>) => {
                 obj.updateValue(new TestObject("bar"));
                 expect(obj.currentValue().foo).toEqual("bar");
                 done();
@@ -107,12 +109,12 @@ describe("Modify object tests", () => {
 
     it("get object and save update", (done) => {
         connection.get<TestObject>(TEST_KEY, new TestObject())
-            .then((obj: Register<TestObject>) => {
+            .then((obj: Document<TestObject>) => {
                 obj.updateValue(new TestObject("bar"));
                 return obj.save();
             })
             .then(() => connection.get<TestObject>(TEST_KEY, new TestObject()))
-            .then((obj: Register<TestObject>) => expect(obj.currentValue().foo).toEqual("bar"))
+            .then((obj: Document<TestObject>) => expect(obj.currentValue().foo).toEqual("bar"))
             .then((() => done()));
 
     });
@@ -156,7 +158,7 @@ describe("Database events test", () => {
 
     it("subscribe to changes --- update", (done) => {
         connection.get<TestObject>(TEST_KEY, new TestObject())
-            .then((obj: Register<TestObject>) => {
+            .then((obj: Document<TestObject>) => {
                 connection.subscribe<TestObject>(TEST_KEY, {
                     change: (key, newObj) => {
                         expect(key).toEqual(TEST_KEY);
@@ -191,7 +193,7 @@ describe("Database events test", () => {
         setTimeout(() => {
             expect(counter).toEqual(2);
             done();
-        }, 1000);
+        }, WAIT_FOR_TEST);
     });
 
     it("cancel subscription", (done) => {
@@ -206,7 +208,7 @@ describe("Database events test", () => {
         });
 
         connection.get<TestObject>(TEST_KEY, new TestObject())
-            .then((obj: Register<TestObject>) => {
+            .then((obj: Document<TestObject>) => {
                 obj.updateValue(new TestObject("bar"));
                 return obj.save();
             })
@@ -218,6 +220,6 @@ describe("Database events test", () => {
         setTimeout(() => {
             expect(counter).toEqual(2);
             done();
-        }, 1000);
+        }, WAIT_FOR_TEST);
     });
 });

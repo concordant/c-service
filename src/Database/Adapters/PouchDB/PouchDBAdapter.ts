@@ -1,18 +1,16 @@
-import _ from "lodash";
-import IRegister from "../../DataTypes/Interfaces/IRegister";
-import {Register} from "../../DataTypes/Interfaces/Types";
+import {Document} from "../../DataTypes/Interfaces/Types";
 import {PouchDBObject} from "../../DataTypes/PouchDB/PouchDBObject";
 import {
     DatabaseEventEmitter,
     IBasicConnection,
-    IDBHandlers, IDBObject,
+    IDBHandlers,
     IDBSaveAllHandlers,
     IFilter,
     Key,
 } from "../../Interfaces/Types";
 import Database = PouchDB.Database;
 import PouchError = PouchDB.Core.Error;
-import Document = PouchDB.Core.Document;
+import PouchDocument = PouchDB.Core.Document;
 import ExistingDocument = PouchDB.Core.ExistingDocument;
 import Response = PouchDB.Core.Response;
 import Changes = PouchDB.Core.Changes;
@@ -43,7 +41,7 @@ export class PouchDBAdapter implements IBasicConnection {
             .catch(() => Promise.reject(new Error("Couldn't Connect to server")));
     }
 
-    public get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<Register<T>> {
+    public get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<Document<T>> {
         if (passThrough) {
             return Promise.reject("Not Implemented");
         }
@@ -71,7 +69,7 @@ export class PouchDBAdapter implements IBasicConnection {
 
     public subscribe<T>(
         keyOrKeys: Key | Key[],
-        handlers: IDBHandlers<Register<T>>,
+        handlers: IDBHandlers<Document<T>>,
         filter?: IFilter): DatabaseEventEmitter {
         let docIds: string[];
         if (keyOrKeys instanceof Array) {
@@ -92,7 +90,7 @@ export class PouchDBAdapter implements IBasicConnection {
         if (handlers.change) {
             changes.on(CHANGE_EVENT, (change) => {
                 if (handlers.change && change.doc) {
-                    const obj: IRegister<T> = new PouchDBObject(change.doc, this);
+                    const obj: Document<T> = new PouchDBObject(change.doc, this);
                     handlers.change(change.id, obj);
                 }
             });
@@ -134,7 +132,7 @@ export class PouchDBAdapter implements IBasicConnection {
     }
 
     private create<T>(key: Key, obj: T): Promise<PouchDBObject<T>> {
-        const doc = obj as Document<T> & ExistingDocument<T>;
+        const doc = obj as PouchDocument<T> & ExistingDocument<T>;
         doc._id = PouchDBAdapter.convertKeyToId(key);
         return this.connection.put(obj)
             .then((resp: Response) => {

@@ -1,15 +1,15 @@
 import PouchDB from "pouchdb";
 import {PouchDBAdapter} from "../../Adapters/PouchDB/PouchDBAdapter";
 import {CONTEXT_COMPARE, IContext} from "../../Interfaces/Types";
-import Document = PouchDB.Core.Document;
+import PouchDocument = PouchDB.Core.Document;
 import ExistingDocument = PouchDB.Core.ExistingDocument;
-import {Register} from "../Interfaces/Types";
+import {Document} from "../Interfaces/Types";
 
-export class PouchDBObject<T> implements Register<T> {
-    private newDocument?: Document<T> & ExistingDocument<T>;
+export class PouchDBObject<T> implements Document<T> {
+    private newDocument?: PouchDocument<T> & ExistingDocument<T>;
 
     constructor(
-        private document: Document<T> & ExistingDocument<T>,
+        private document: PouchDocument<T> & ExistingDocument<T>,
         private connection: PouchDBAdapter) {
     }
 
