@@ -1,6 +1,6 @@
 import _ from "lodash";
-import PouchDBDataSource, {IConnectionParams,} from "../../../src/Database/DataSources/PoucDBDataSource";
 import {Document} from "../../../src/Database/DataTypes/Interfaces/Types";
+import PouchDBDataSource, {IConnectionParams} from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
 import {CONTEXT_COMPARE, IBasicConnection} from "../../../src/Database/Interfaces/Types";
 
 class TestObject {

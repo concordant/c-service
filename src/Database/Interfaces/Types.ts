@@ -8,6 +8,13 @@
  */
 import {Document} from "../DataTypes/Interfaces/Types";
 
+export type DataSource = IDataSource;
+export type Connection = IBasicConnection | ITxConnection;
+export type Database = IDB;
+export type DBTxHandler = IDBTxHandlers;
+export type DBSaveAllHandler = IDBSaveAllHandlers;
+export type DatabaseEventEmitter = IDatabaseEventEmitter;
+
 export type Key = string | { key: string, bucket: string };
 
 /**
@@ -142,8 +149,6 @@ interface IDB {
     close(): Promise<void>;
 }
 
-export type Connection = IBasicConnection | ITxConnection;
-
 /**
  * A Connection establishes a channel to query the database
  * Different types of connections can have different types of guarantees
@@ -218,8 +223,6 @@ type SavedHandler<T> = (key: string, value?: T) => void;
 type RemoteCommitHandler = () => void;
 
 export type EventType = "UPDATE";
-
-export type DatabaseEventEmitter = IDatabaseEventEmitter;
 
 interface IDatabaseEventEmitter extends EventEmitter {
     cancel(): void;

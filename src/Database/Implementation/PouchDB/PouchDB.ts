@@ -1,5 +1,4 @@
 import {Document} from "../../DataTypes/Interfaces/Types";
-import {PouchDBObject} from "../../DataTypes/PouchDB/PouchDBObject";
 import {
     DatabaseEventEmitter,
     IBasicConnection,
@@ -8,6 +7,7 @@ import {
     IFilter,
     Key,
 } from "../../Interfaces/Types";
+import PouchDBObject from "./DataTypes/PouchDBObject";
 import Database = PouchDB.Database;
 import PouchError = PouchDB.Core.Error;
 import PouchDocument = PouchDB.Core.Document;
@@ -17,7 +17,7 @@ import Changes = PouchDB.Core.Changes;
 
 const CHANGE_EVENT = "change";
 
-export class PouchDBAdapter implements IBasicConnection {
+export default class PouchDB implements IBasicConnection {
     protected static convertKeyToId(key: Key): string {
         if (typeof key === "string") {
             return key;
@@ -45,7 +45,7 @@ export class PouchDBAdapter implements IBasicConnection {
         if (passThrough) {
             return Promise.reject("Not Implemented");
         }
-        return this.connection.get<T>(PouchDBAdapter.convertKeyToId(key))
+        return this.connection.get<T>(PouchDB.convertKeyToId(key))
             .then((obj: ExistingDocument<T>) => new PouchDBObject<T>(obj, this))
             .catch((error: Error) => {
                 const pouchError = error as PouchError;
@@ -73,9 +73,9 @@ export class PouchDBAdapter implements IBasicConnection {
         filter?: IFilter): DatabaseEventEmitter {
         let docIds: string[];
         if (keyOrKeys instanceof Array) {
-            docIds = keyOrKeys.map((k) => PouchDBAdapter.convertKeyToId(k));
+            docIds = keyOrKeys.map((k) => PouchDB.convertKeyToId(k));
         } else if (typeof keyOrKeys === "string") {
-            const keyString = PouchDBAdapter.convertKeyToId(keyOrKeys);
+            const keyString = PouchDB.convertKeyToId(keyOrKeys);
             docIds = [keyString];
         } else {
             throw Error("Keys bad format");
@@ -133,7 +133,7 @@ export class PouchDBAdapter implements IBasicConnection {
 
     private create<T>(key: Key, obj: T): Promise<PouchDBObject<T>> {
         const doc = obj as PouchDocument<T> & ExistingDocument<T>;
-        doc._id = PouchDBAdapter.convertKeyToId(key);
+        doc._id = PouchDB.convertKeyToId(key);
         return this.connection.put(obj)
             .then((resp: Response) => {
                 doc._rev = resp.rev;

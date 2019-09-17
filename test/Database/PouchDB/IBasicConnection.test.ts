@@ -1,9 +1,9 @@
+import {Document} from "../../../src/Database/DataTypes/Interfaces/Types";
 import PouchDBDataSource, {
     DEFAULT_PORT,
     IConnectionParams,
     IConnectionProtocol,
-} from "../../../src/Database/DataSources/PoucDBDataSource";
-import {Document} from "../../../src/Database/DataTypes/Interfaces/Types";
+} from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
 import {DatabaseEventEmitter, IBasicConnection, IDBObject} from "../../../src/Database/Interfaces/Types";
 
 class TestObject {

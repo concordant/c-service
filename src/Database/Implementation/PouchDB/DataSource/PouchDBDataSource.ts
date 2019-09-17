@@ -1,10 +1,12 @@
 import PouchDB from "pouchdb";
 import InMemoryAdapter from "pouchdb-adapter-memory";
-import {PouchDBAdapter} from "../Adapters/PouchDB/PouchDBAdapter";
-import {Connection, IBasicConnection, IDataSource} from "../Interfaces/Types";
+import {IDataSource} from "../../../Interfaces/Types";
+import PouchDBImpl from "../PouchDB";
 import Database = PouchDB.Database;
 
 PouchDB.plugin(InMemoryAdapter);
+
+export type ConnectionParams = IConnectionParams;
 
 export enum IConnectionProtocol {
     WEBSOCKET = "ws",
@@ -27,7 +29,7 @@ export default class PouchDBDataSource implements IDataSource {
 
     private db: Database;
 
-    constructor(params: IConnectionParams) {
+    constructor(params: ConnectionParams) {
         const {protocol, host, port, dbName, connectionParams} = params;
 
         if (!(host || port || protocol)) {
@@ -38,14 +40,14 @@ export default class PouchDBDataSource implements IDataSource {
         }
     }
 
-    public connection(autoSave: boolean): Promise<PouchDBAdapter> {
+    public connection(autoSave: boolean): Promise<PouchDBImpl> {
         if (autoSave) {
             return Promise.reject("Not Implemented");
         }
 
-        const connection = new PouchDBAdapter(this.db, autoSave);
+        const connection = new PouchDBImpl(this.db, autoSave);
         return Promise.resolve(connection)
-            .then((adapter: PouchDBAdapter) => adapter.isConnected())
+            .then((adapter: PouchDBImpl) => adapter.isConnected())
             .then((result) => result ? connection : Promise.reject(Error(`Error: ${result}`)));
     }
 
