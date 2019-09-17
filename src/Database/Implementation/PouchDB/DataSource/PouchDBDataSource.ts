@@ -1,10 +1,6 @@
-import PouchDB from "pouchdb";
-import InMemoryAdapter from "pouchdb-adapter-memory";
 import {IDataSource} from "../../../Interfaces/Types";
 import PouchDBImpl from "../PouchDB";
 import Database = PouchDB.Database;
-
-PouchDB.plugin(InMemoryAdapter);
 
 export type ConnectionParams = IConnectionParams;
 
@@ -29,14 +25,14 @@ export default class PouchDBDataSource implements IDataSource {
 
     private db: Database;
 
-    constructor(params: ConnectionParams) {
+    constructor(levelUPAdapter: any, params: ConnectionParams) {
         const {protocol, host, port, dbName, connectionParams} = params;
 
         if (!(host || port || protocol)) {
-            this.db = new PouchDB(dbName, connectionParams);
+            this.db = new levelUPAdapter(dbName, connectionParams);
         } else {
             const url = `${protocol}://${host}:${port}/${dbName}`;
-            this.db = new PouchDB(url, connectionParams);
+            this.db = new levelUPAdapter(url, connectionParams);
         }
     }
 

@@ -16,6 +16,7 @@ import Response = PouchDB.Core.Response;
 import Changes = PouchDB.Core.Changes;
 
 const CHANGE_EVENT = "change";
+const NOT_FOUND_ERROR_CODE = 404;
 
 export default class PouchDB implements IBasicConnection {
     protected static convertKeyToId(key: Key): string {
@@ -49,7 +50,7 @@ export default class PouchDB implements IBasicConnection {
             .then((obj: ExistingDocument<T>) => new PouchDBObject<T>(obj, this))
             .catch((error: Error) => {
                 const pouchError = error as PouchError;
-                if (pouchError.reason === "missing" && (defaultObj !== undefined && defaultObj !== null)) {
+                if (pouchError.status === NOT_FOUND_ERROR_CODE && (defaultObj !== undefined && defaultObj !== null)) {
                     return this.create<T>(key, defaultObj);
                 }
                 return Promise.reject(error);

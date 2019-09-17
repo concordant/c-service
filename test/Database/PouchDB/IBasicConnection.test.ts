@@ -1,4 +1,5 @@
 import {Document} from "../../../src/Database/DataTypes/Interfaces/Types";
+import {PouchDB} from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
 import PouchDBDataSource, {
     DEFAULT_PORT,
     IConnectionParams,
@@ -19,7 +20,7 @@ describe("Establish Connection tests", () => {
             connectionParams: {adapter: "memory"},
             dbName: "testDB",
         };
-        const dataSource = new PouchDBDataSource(params);
+        const dataSource = new PouchDBDataSource(PouchDB, params);
         dataSource.connection(false)
             .then((result) => result ? done() : fail());
     });
@@ -31,7 +32,7 @@ describe("Establish Connection tests", () => {
             port: DEFAULT_PORT,
             protocol: IConnectionProtocol.HTTPS,
         };
-        const dataSource = new PouchDBDataSource(params);
+        const dataSource = new PouchDBDataSource(PouchDB, params);
         dataSource.connection(false)
             .then(() => fail())
             .catch(() => done());
@@ -48,7 +49,7 @@ describe("Get tests", () => {
             connectionParams: {adapter: "memory"},
             dbName: "testDB",
         };
-        const dataSource = new PouchDBDataSource(params);
+        const dataSource = new PouchDBDataSource(PouchDB, params);
         return dataSource.connection(false)
             .then((pouchConnection) => {
                 connection = pouchConnection;
@@ -89,7 +90,7 @@ describe("Modify object tests", () => {
             connectionParams: {adapter: "memory"},
             dbName: "testDB",
         };
-        const dataSource = new PouchDBDataSource(params);
+        const dataSource = new PouchDBDataSource(PouchDB, params);
         return dataSource.connection(false)
             .then((pouchConnection) => {
                 connection = pouchConnection;
@@ -134,7 +135,7 @@ describe("Database events test", () => {
             connectionParams: {adapter: "memory"},
             dbName: "testDB" + dbCounter++,
         };
-        const dataSource = new PouchDBDataSource(params);
+        const dataSource = new PouchDBDataSource(PouchDB, params);
         return dataSource.connection(false)
             .then((pouchConnection) => {
                 connection = pouchConnection;
