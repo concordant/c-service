@@ -1,6 +1,6 @@
 import PouchDB from "pouchdb";
 import {PouchDBAdapter} from "../../Adapters/PouchDB/PouchDBAdapter";
-import {CONTEXT_COMPARE, IContext, IDBObject, IDBSaveHandlers, Key} from "../../Interfaces/Types";
+import {CONTEXT_COMPARE, IContext} from "../../Interfaces/Types";
 import Document = PouchDB.Core.Document;
 import ExistingDocument = PouchDB.Core.ExistingDocument;
 import {Register} from "../Interfaces/Types";

@@ -1,15 +1,25 @@
 import _ from "lodash";
+import IRegister from "../../DataTypes/Interfaces/IRegister";
 import {Register} from "../../DataTypes/Interfaces/Types";
 import {PouchDBObject} from "../../DataTypes/PouchDB/PouchDBObject";
-import {IBasicConnection, IDBHandlers, IDBObject, IDBSaveHandlers, IFilter, Key} from "../../Interfaces/Types";
+import {
+    DatabaseEventEmitter,
+    IBasicConnection,
+    IDBHandlers, IDBObject,
+    IDBSaveAllHandlers,
+    IFilter,
+    Key,
+} from "../../Interfaces/Types";
 import Database = PouchDB.Database;
 import PouchError = PouchDB.Core.Error;
 import Document = PouchDB.Core.Document;
 import ExistingDocument = PouchDB.Core.ExistingDocument;
 import Response = PouchDB.Core.Response;
+import Changes = PouchDB.Core.Changes;
+
+const CHANGE_EVENT = "change";
 
 export class PouchDBAdapter implements IBasicConnection {
-
     protected static convertKeyToId(key: Key): string {
         if (typeof key === "string") {
             return key;
@@ -19,8 +29,12 @@ export class PouchDBAdapter implements IBasicConnection {
         return `${key.bucket}_${key.key}`;
     }
 
-    constructor(private connection: Database, public autoSave: boolean) {
+    // private eventEmitter: EventEmitter;
+    private subscriptions: { [subscriptionId in string]: Changes<any> };
 
+    constructor(private connection: Database, public autoSave: boolean) {
+        // this.eventEmitter = new EventEmitter();
+        this.subscriptions = {};
     }
 
     public isConnected(): Promise<boolean> {
@@ -33,8 +47,8 @@ export class PouchDBAdapter implements IBasicConnection {
         if (passThrough) {
             return Promise.reject("Not Implemented");
         }
-        return this.connection.get(PouchDBAdapter.convertKeyToId(key))
-            .then((obj: any) => new PouchDBObject<T>(obj, this))
+        return this.connection.get<T>(PouchDBAdapter.convertKeyToId(key))
+            .then((obj: ExistingDocument<T>) => new PouchDBObject<T>(obj, this))
             .catch((error: Error) => {
                 const pouchError = error as PouchError;
                 if (pouchError.reason === "missing" && (defaultObj !== undefined && defaultObj !== null)) {
@@ -55,15 +69,42 @@ export class PouchDBAdapter implements IBasicConnection {
         return Promise.reject("Not Implemented");
     }
 
-    public subscribe<T>(key: Key, filter?: IFilter, handlers?: IDBHandlers<IDBObject<T>>) {
-        return {
-            cancel: () => {
-                throw Error("Not Implemented");
-            },
-        };
+    public subscribe<T>(
+        keyOrKeys: Key | Key[],
+        handlers: IDBHandlers<Register<T>>,
+        filter?: IFilter): DatabaseEventEmitter {
+        let docIds: string[];
+        if (keyOrKeys instanceof Array) {
+            docIds = keyOrKeys.map((k) => PouchDBAdapter.convertKeyToId(k));
+        } else if (typeof keyOrKeys === "string") {
+            const keyString = PouchDBAdapter.convertKeyToId(keyOrKeys);
+            docIds = [keyString];
+        } else {
+            throw Error("Keys bad format");
+        }
+
+        const changes = this.connection.changes<T>({
+            doc_ids: docIds,
+            include_docs: true,
+            live: true,
+            since: "now",
+        });
+        if (handlers.change) {
+            changes.on(CHANGE_EVENT, (change) => {
+                if (handlers.change && change.doc) {
+                    const obj: IRegister<T> = new PouchDBObject(change.doc, this);
+                    handlers.change(change.id, obj);
+                }
+            });
+        }
+        return changes;
     }
 
-    public saveAll() {
+    public cancelSubscription(eventEmitter: DatabaseEventEmitter) {
+        eventEmitter.cancel();
+    }
+
+    public saveAll(): IDBSaveAllHandlers {
         throw Error("Not Implemented");
         return {};
     }
@@ -86,6 +127,10 @@ export class PouchDBAdapter implements IBasicConnection {
 
     public setAutoSave() {
         throw Error("Not Implemented");
+    }
+
+    public close(): Promise<void> {
+        return this.connection.close();
     }
 
     private create<T>(key: Key, obj: T): Promise<PouchDBObject<T>> {

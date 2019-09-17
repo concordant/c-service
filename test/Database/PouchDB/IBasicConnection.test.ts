@@ -4,14 +4,14 @@ import PouchDBDataSource, {
     IConnectionProtocol,
 } from "../../../src/Database/DataSources/PoucDBDataSource";
 import {Register} from "../../../src/Database/DataTypes/Interfaces/Types";
-import {IBasicConnection, IDBObject, Key} from "../../../src/Database/Interfaces/Types";
+import {DatabaseEventEmitter, IBasicConnection, IDBObject} from "../../../src/Database/Interfaces/Types";
 
 class TestObject {
     constructor(public foo: string = "foo") {
     }
 }
 
-describe("Establish Connection", () => {
+describe("Establish Connection tests", () => {
     it("Init local in-memory database", (done) => {
         const params: IConnectionParams = {
             connectionParams: {adapter: "memory"},
@@ -32,12 +32,12 @@ describe("Establish Connection", () => {
         const dataSource = new PouchDBDataSource(params);
         dataSource.connection(false)
             .then(() => fail())
-            .catch((e) => done());
+            .catch(() => done());
     });
 
 });
 
-describe("get tests", () => {
+describe("Get tests", () => {
     const TEST_KEY = "test_key";
     let connection: IBasicConnection;
 
@@ -75,13 +75,9 @@ describe("get tests", () => {
             });
     });
 
-    afterEach(() => {
-
-    });
-
 });
 
-describe("modify object test", () => {
+describe("Modify object tests", () => {
     const TEST_KEY = "test_key";
 
     let connection: IBasicConnection;
@@ -103,7 +99,6 @@ describe("modify object test", () => {
     it("get object and update local", (done) => {
         connection.get<TestObject>(TEST_KEY, new TestObject())
             .then((obj: Register<TestObject>) => {
-                const value = obj.currentValue();
                 obj.updateValue(new TestObject("bar"));
                 expect(obj.currentValue().foo).toEqual("bar");
                 done();
@@ -111,10 +106,8 @@ describe("modify object test", () => {
     });
 
     it("get object and save update", (done) => {
-        console.log("create test");
         connection.get<TestObject>(TEST_KEY, new TestObject())
             .then((obj: Register<TestObject>) => {
-                const value = obj.currentValue();
                 obj.updateValue(new TestObject("bar"));
                 return obj.save();
             })
@@ -124,8 +117,107 @@ describe("modify object test", () => {
 
     });
 
-    afterEach(() => {
+});
+
+describe("Database events test", () => {
+
+    const TEST_KEY = "test_key0";
+    const TEST_KEY1 = "test_key1";
+
+    let connection: IBasicConnection;
+    let dbCounter = 0;
+
+    beforeEach(() => {
+        const params: IConnectionParams = {
+            connectionParams: {adapter: "memory"},
+            dbName: "testDB" + dbCounter++,
+        };
+        const dataSource = new PouchDBDataSource(params);
+        return dataSource.connection(false)
+            .then((pouchConnection) => {
+                connection = pouchConnection;
+            })
+            .then(() => expect(connection).toBeDefined());
 
     });
 
+    it("subscribe to changes --- create", (done) => {
+        connection.subscribe<TestObject>(TEST_KEY, {
+            change: (key, obj) => {
+                expect(key).toEqual(TEST_KEY);
+                expect(obj.currentValue().foo).toEqual("foo");
+                done();
+            },
+        });
+
+        connection.get<TestObject>(TEST_KEY, new TestObject())
+            .catch((error) => fail(error));
+    });
+
+    it("subscribe to changes --- update", (done) => {
+        connection.get<TestObject>(TEST_KEY, new TestObject())
+            .then((obj: Register<TestObject>) => {
+                connection.subscribe<TestObject>(TEST_KEY, {
+                    change: (key, newObj) => {
+                        expect(key).toEqual(TEST_KEY);
+                        expect(newObj.currentValue().foo).toEqual("bar");
+                        done();
+                    },
+                });
+
+                obj.updateValue(new TestObject("bar"));
+                return obj.save();
+            })
+            .catch((error) => fail(error));
+    });
+
+    afterEach(() => {
+        return connection.close();
+    });
+
+    it("subscribe array of keys", (done) => {
+        let counter = 0;
+        connection.subscribe<TestObject>([TEST_KEY, TEST_KEY1], {
+            change: () => {
+                counter = counter + 1;
+            },
+        });
+
+        connection.get<TestObject>(TEST_KEY, new TestObject())
+            .catch((error) => fail(error));
+
+        connection.get<TestObject>(TEST_KEY1, new TestObject())
+            .catch((error) => fail(error));
+        setTimeout(() => {
+            expect(counter).toEqual(2);
+            done();
+        }, 1000);
+    });
+
+    it("cancel subscription", (done) => {
+        let counter = 0;
+        const eventEmitter: DatabaseEventEmitter = connection.subscribe<TestObject>([TEST_KEY, TEST_KEY1], {
+            change: () => {
+                counter = counter + 1;
+                if (counter === 2) {
+                    connection.cancelSubscription(eventEmitter);
+                }
+            },
+        });
+
+        connection.get<TestObject>(TEST_KEY, new TestObject())
+            .then((obj: Register<TestObject>) => {
+                obj.updateValue(new TestObject("bar"));
+                return obj.save();
+            })
+            .catch((error) => fail(error));
+
+        connection.get<TestObject>(TEST_KEY1, new TestObject())
+            .catch((error) => fail(error));
+
+        setTimeout(() => {
+            expect(counter).toEqual(2);
+            done();
+        }, 1000);
+    });
 });

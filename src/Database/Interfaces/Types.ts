@@ -53,14 +53,6 @@ export interface IDBObject<T> extends IContext {
  */
 export interface IDataSource {
 
-    // /**
-    //  * Sets the database connections parameters
-    //  *
-    //  * @param params - database-specific configuration
-    //  * @comment: (Valter) removed this method and pass params in constructor
-    //  */
-    // init(params: any): void;
-
     /**
      *  Starts a new non-transactional session with the database
      *  Get operations retrieve the most recent version of the object
@@ -102,10 +94,7 @@ interface IDB {
      * @return current object associated with the key, empty object if it doesn't exist yet.
      * Reject promise if impossible to get object or object is not of the given type.
      */
-    // TODO: Need Runtime infomration about the type. Needs to be done as in the next method
-    // get<T extends IDBObject>(key: Key, strict?: boolean, passThrough?: boolean): Promise<T>;
 
-    // get<T, Y extends IDBObject<T>>(key: Key, strict?: boolean, passThrough?: boolean): Promise<Y>;
     get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<Register<T>>;
 
     // query TODO: Need to think more about this before making decisions. Dont forget GraphQL!
@@ -122,12 +111,18 @@ interface IDB {
     /**
      * Subscribes events for a given key with a given filter
      *
-     * @param key - identifier of the object
+     * @param keyOrKeys - identifier of a single object, or an array of identifiers
      * @param filter - predicate to decide if the event should be triggered
      * @param handlers - handlers for each event type
-     * @returns Listener that receives database events and calls handlers locally
+     * @returns EventEmitter for this subscription
      */
-    subscribe<T>(key: Key, filter?: IFilter, handlers?: IDBHandlers<IDBObject<T>>): IDatabaseListener;
+    subscribe<T>(keyOrKeys: Key | Key[], handlers: IDBHandlers<Register<T>>, filter?: IFilter): DatabaseEventEmitter;
+
+    /**
+     * Stop listening to events of provided EventEmitter
+     * @param eventEmitter the event emitter to to be stopped
+     */
+    cancelSubscription(eventEmitter: DatabaseEventEmitter): void;
 
     /**
      * Release object from local store
@@ -138,6 +133,11 @@ interface IDB {
     release(key: Key): void | Error;
 
     releaseAll(): void | Error;
+
+    /**
+     * Close database
+     */
+    close(): Promise<void>;
 }
 
 export type Connection = IBasicConnection | ITxConnection;
@@ -152,7 +152,7 @@ export interface IBasicConnection extends IDB {
     /**
      * Calls save for every object in cache that has outstanding operations
      */
-    saveAll(): IDBSaveHandlers;
+    saveAll(): IDBSaveAllHandlers;
 
     /**
      * Discard local updates for object with given key
@@ -187,25 +187,18 @@ interface ITxConnection extends IDB {
     commit(): IDBTxHandlers;
 }
 
-interface IDatabaseListener {
-    /**
-     * Stop listener
-     */
-    cancel(): void | Error;
-}
-
+// TODO: NEED TO DEFINE EVENTS MORE CAREFULLY.
 export interface IDBHandlers<T> {
-    put?: PutHandler<T>;
+    change?: ChangeHandler<T>;
 }
 
-export interface IDBSaveHandlers {
-    saved?: SavedHandler<any>;
-    saved_value?: SavedHandler<any>;
+export interface IDBSaveAllHandlers {
+    complete?: SavedHandler<any>;
 }
 
 export interface IDBTxHandlers {
-    tx_remote_commit?: RemoteCommitHandler;
-    tx_remote_accepted?: RemoteCommitHandler;
+    commit?: RemoteCommitHandler;
+    accepted?: RemoteCommitHandler;
     /**
      * TODO: @remark do we want to distinguish between committed and accepted?
      * A transaction might not commit if not accepted, but eventually
@@ -221,23 +214,16 @@ export interface IFilter {
     // TODO: This is a placeholder definition. Needs to be designed with query model in mind
 }
 
-/** Handles a put event on a subscribed key.
- *
- * @param key: the key of the modified object
- * @param value: the value of the modified object
- */
+type ChangeHandler<T> = (key: string, value: T) => void;
 
-type PutHandler<T> = (key: string, value: IDBObject<T>) => void;
-
-type SavedHandler<T> = (key: string, value?: IDBObject<T>) => void;
-
-/** Handles remote commit event on a subscribed transaction
- *
- * @param key: the key of the modified object
- * @param value: the value of the modified object
- */
+type SavedHandler<T> = (key: string, value?: T) => void;
 
 type RemoteCommitHandler = () => void;
 
-// TODO: Add other events. Offline operation can be refined to offline put, etc.
-// type DBEvent = "offline_operation" | "put" | "delete" | "subscription" | "tx_remote_commit";
+export type EventType = "UPDATE";
+
+export type DatabaseEventEmitter = IDatabaseEventEmitter;
+
+interface IDatabaseEventEmitter extends EventEmitter {
+    cancel(): void;
+}
