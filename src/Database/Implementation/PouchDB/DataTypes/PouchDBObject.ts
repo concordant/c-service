@@ -3,13 +3,18 @@ import {Document} from "../../../DataTypes/Interfaces/Types";
 import {CONTEXT_COMPARE, IContext} from "../../../Interfaces/Types";
 import PouchDBImpl from "../PouchDB";
 import ExistingDocument = PouchDB.Core.ExistingDocument;
+import AllDocsMeta = PouchDB.Core.AllDocsMeta;
 
 export default class PouchDBObject<T> implements Document<T> {
+    public id: string;
     private newDocument?: ExistingDocument<T>;
 
     constructor(
-        private document: ExistingDocument<T>,
-        private connection: PouchDBImpl) {
+        private document: ExistingDocument<T> & AllDocsMeta,
+        private connection: PouchDBImpl,
+        public conflicts: string[] = []) {
+        this.id = document._id;
+        this.conflicts = document._conflicts || this.conflicts;
     }
 
     /**
@@ -30,15 +35,24 @@ export default class PouchDBObject<T> implements Document<T> {
     //     return this.document;
     // }
 
-    public currentValue(): T {
+    public current(): T {
         return this.newDocument ? this.newDocument : this.document;
     }
 
-    public updateValue(value: T): void {
-        this.newDocument = {_id: this.document._id, _rev: this.document._rev, ...value};
-        if (this.connection.autoSave) {
-            this.save().catch((error) => Promise.reject(error));
+    public update(value: T): PouchDBObject<T> {
+        this.updateNoSideEffects(value);
+        if (this.connection.isAutoSave()) {
+            this.save()
+                .then(() => this)
+                .catch((error) => Promise.reject(error));
         }
+        return this;
+    }
+
+    public updateNoSideEffects(value: T): PouchDBObject<T> {
+        //  Caution: need to keep revision from fetched object
+        this.newDocument = {...value, _id: this.document._id, _rev: this.document._rev};
+        return this;
     }
 
     public compareVersion(other: IContext) {

@@ -1,6 +1,7 @@
 import _ from "lodash";
 import {Document} from "../../../src/Database/DataTypes/Interfaces/Types";
-import PouchDBDataSource, {IConnectionParams} from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
+import {PouchDB} from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
+import PouchDBDataSource, {IAdapterParams} from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
 import {CONTEXT_COMPARE, IBasicConnection} from "../../../src/Database/Interfaces/Types";
 
 class TestObject {
@@ -8,17 +9,18 @@ class TestObject {
     }
 }
 
-describe("Establish Connection tests", () => {
-    const TEST_KEY = "test_key";
+describe("PouchDB Object tests", () => {
+    // Need to clear database between tests
+    const TEST_KEY = "test_key_cmp";
     let connection: IBasicConnection;
 
     beforeAll(() => {
-        const params: IConnectionParams = {
+        const params: IAdapterParams = {
             connectionParams: {adapter: "memory"},
             dbName: "testDB",
         };
-        const dataSource = new PouchDBDataSource(params);
-        return dataSource.connection(false)
+        const dataSource = new PouchDBDataSource(PouchDB, params);
+        return dataSource.connection({autoSave: false})
             .then((pouchConnection) => {
                 connection = pouchConnection;
             })
@@ -37,7 +39,7 @@ describe("Establish Connection tests", () => {
         return connection.get<TestObject>(TEST_KEY, new TestObject())
             .then((obj: Document<TestObject>) => {
                 const obj1 = _.clone(obj);
-                obj1.updateValue(obj1.currentValue());
+                obj1.update(obj1.current());
                 expect(obj1.compareVersion(obj)).toEqual(CONTEXT_COMPARE.CONCURRENT);
             });
     });
@@ -47,7 +49,7 @@ describe("Establish Connection tests", () => {
 
         connection.get<TestObject>(TEST_KEY, new TestObject())
             .then((obj: Document<TestObject>) => {
-                obj.updateValue(new TestObject("bar"));
+                obj.update(new TestObject("bar"));
                 obj0 = obj;
                 return obj.save();
             })
@@ -66,7 +68,7 @@ describe("Establish Connection tests", () => {
         return connection.get<TestObject>(TEST_KEY, obj0)
             .then((obj: Document<TestObject>) => {
                 const obj1 = _.clone(obj);
-                obj1.updateValue(obj1.currentValue());
+                obj1.update(obj1.current());
                 expect(obj1.isDirty()).toEqual(true);
             });
     });

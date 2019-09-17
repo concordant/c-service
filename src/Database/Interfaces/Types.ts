@@ -7,6 +7,7 @@
  * I've walked a few steps on that direction myself. I think its doable... but something for after the MVP
  */
 import {Document} from "../DataTypes/Interfaces/Types";
+import Sync = PouchDB.Replication.Sync;
 
 export type DataSource = IDataSource;
 export type Connection = IBasicConnection | ITxConnection;
@@ -14,6 +15,9 @@ export type Database = IDB;
 export type DBTxHandler = IDBTxHandlers;
 export type DBSaveAllHandler = IDBSaveAllHandlers;
 export type DatabaseEventEmitter = IDatabaseEventEmitter;
+export type DatabaseHooks = IDatabaseHooks<any>;
+export type DatabaseParams = IDatabaseParams;
+// export type InternalObject<T> = IInternalObject<T>;
 
 export type Key = string | { key: string, bucket: string };
 
@@ -26,6 +30,27 @@ export type Key = string | { key: string, bucket: string };
 export interface IContext {
     /** Compares two contexts */
     compareVersion(other: IContext): CONTEXT_COMPARE;
+}
+
+// export interface IInternalObject<T> {
+//     conflicts?: string[];
+// }
+
+export interface IConnectionParams {
+    autoSave?: boolean;
+    handleConflicts?: boolean;
+    hook?: DatabaseHooks;
+    putRetriesBeforeError?: number;
+    putRetryMaxTimeout?: number;
+}
+
+export interface IDatabaseParams {
+    syncHandlers?: Array<Sync<any> | undefined>;
+    hooks?: DatabaseHooks;
+}
+
+export interface IDatabaseHooks<T> {
+    conflictHandler: (current: Document<T>, objs: Array<Document<T>>) => T;
 }
 
 /** The comparison result of two contexts */
@@ -41,6 +66,7 @@ export enum CONTEXT_COMPARE {
  *  A representation of a database object that the user can interact with
  */
 export interface IDBObject<T> extends IContext {
+    id: string;
 
     /**
      * Commit the current modifications on the object
@@ -52,7 +78,7 @@ export interface IDBObject<T> extends IContext {
      */
     isDirty(): boolean;
 
-    currentValue(): T;
+    current(): T;
 }
 
 /**
@@ -64,30 +90,13 @@ export interface IDataSource {
      *  Starts a new non-transactional session with the database
      *  Get operations retrieve the most recent version of the object
      */
-    connection(autoSave: boolean): Promise<Connection>;
+    connection(params: IConnectionParams): Promise<Connection>;
 
     /**
      * Starts a new transactional session with the database
      * @return a ITxConnection
      */
     txConnection(): Promise<ITxConnection>; // €
-
-    /**
-     * Disconnects from the remote database
-     * User can use objects that were cached locally
-     *
-     * @param flush - tries to flush outstanding changes
-     * Reject promise if impossible to connect or operations were rejected
-     */
-    goOffline(flush?: boolean): Promise<void>;
-
-    /**
-     * Tries to reestablish a connection with the remote database
-     *
-     * @param tryFlush - tries to commit outstanding local operations
-     * Reject promise if impossible to connect or operations were rejected
-     */
-    goOnline(tryFlush?: boolean): Promise<void>;
 }
 
 // TODO: Interface must extend event emitter.
@@ -131,7 +140,7 @@ interface IDB {
      * Stop listening to events of provided EventEmitter
      * @param eventEmitter the event emitter to to be stopped
      */
-    cancelSubscription(eventEmitter: DatabaseEventEmitter): void;
+    cancel(eventEmitter: DatabaseEventEmitter): void;
 
     /**
      * Release object from local store
@@ -149,12 +158,33 @@ interface IDB {
     close(): Promise<void>;
 }
 
+export interface IOfflineSupport extends IDB {
+    /**
+     * Disconnects from the remote database
+     * User can use objects that were cached locally
+     *
+     * @param flush - tries to flush outstanding changes
+     * Reject promise if impossible to connect or operations were rejected
+     */
+    goOffline(flush?: boolean): Promise<void>;
+
+    /**
+     * Tries to reestablish a connection with the remote database
+     *
+     * @param tryFlush - tries to commit outstanding local operations
+     * Reject promise if impossible to connect or operations were rejected
+     */
+    goOnline(tryFlush?: boolean): Promise<void>;
+}
+
 /**
  * A Connection establishes a channel to query the database
  * Different types of connections can have different types of guarantees
  * @comment Channels might be a more appropriate name
  */
-export interface IBasicConnection extends IDB {
+export interface IBasicConnection extends IOfflineSupport {
+
+    registerHooks(hooks: DatabaseHooks): void;
 
     /**
      * Calls save for every object in cache that has outstanding operations
@@ -183,7 +213,7 @@ export interface IBasicConnection extends IDB {
  * Establishes a transactional session with the database.
  * Aims to provide a general interface that programmers can use to delimit transactions
  */
-interface ITxConnection extends IDB {
+interface ITxConnection extends IOfflineSupport {
 
     /**
      * Begins a new transactions.
