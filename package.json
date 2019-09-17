@@ -1,6 +1,6 @@
 {
   "name": "collab2-server",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A p2p collaborative spreadsheet",
   "main": "./dist/main.js",
   "types": "./dist/main.d.ts",
