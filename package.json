@@ -2,8 +2,8 @@
   "name": "collab2-server",
   "version": "1.0.0",
   "description": "A p2p collaborative spreadsheet",
-  "main": "./dist/app.js",
-  "types": "./dist/app.d.ts",
+  "main": "./dist/main.js",
+  "types": "./dist/main.d.ts",
   "files": [
     "dist/**/*"
   ],
@@ -33,9 +33,9 @@
     "@types/pouchdb": "^6.4.0",
     "@types/ws": "^6.0.2",
     "jest": "^24.9.0",
-    "ts-jest": "^24.0.2",
+    "ts-jest": "^24.1.0",
     "tslint": "^5.18.0",
-    "typescript": "^3.5.3"
+    "typescript": "^3.6.3"
   },
   "dependencies": {
     "@types/lodash": "^4.14.138",
