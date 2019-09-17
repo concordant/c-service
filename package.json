@@ -11,6 +11,7 @@
     "start": "tsc && node dist/app.js",
     "server": "tsc && node dist/server.js",
     "test": "jest",
+    "coverage": "jest --coverage",
     "build": "tsc",
     "prepare": "npm run build",
     "prepack": "npm run build"
@@ -43,5 +44,12 @@
     "pouchdb": "^7.1.1",
     "pouchdb-adapter-memory": "^7.1.1",
     "ws": "^7.1.2"
+  },
+  "jest": {
+    "collectCoverage": true,
+    "coverageReporters": [
+      "json",
+      "html"
+    ]
   }
 }

@@ -83,6 +83,8 @@ export interface IDataSource {
     goOnline(tryFlush?: boolean): Promise<void>;
 }
 
+// TODO: Interface must extend event emitter.
+// TODO: BasicConnection emits events on auto save; TxConnection emits events on transaction accept and commit
 interface IDB {
     /**
      * Get an object from the database
@@ -187,7 +189,7 @@ interface ITxConnection extends IDB {
     commit(): IDBTxHandlers;
 }
 
-// TODO: NEED TO DEFINE EVENTS MORE CAREFULLY.
+// TODO: Need to decide required events.
 export interface IDBHandlers<T> {
     change?: ChangeHandler<T>;
 }
