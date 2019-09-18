@@ -14,6 +14,7 @@ import PouchDocument = PouchDB.Core.Document;
 import ExistingDocument = PouchDB.Core.ExistingDocument;
 import Response = PouchDB.Core.Response;
 import Changes = PouchDB.Core.Changes;
+import Sync = PouchDB.Replication.Sync;
 
 const CHANGE_EVENT = "change";
 const NOT_FOUND_ERROR_CODE = 404;
@@ -31,7 +32,7 @@ export default class PouchDB implements IBasicConnection {
     // private eventEmitter: EventEmitter;
     private subscriptions: { [subscriptionId in string]: Changes<any> };
 
-    constructor(private connection: Database, public autoSave: boolean) {
+    constructor(private connection: Database, public autoSave: boolean, public syncHandlers?: Array<Sync<any>>) {
         // this.eventEmitter = new EventEmitter();
         this.subscriptions = {};
     }
@@ -129,6 +130,9 @@ export default class PouchDB implements IBasicConnection {
     }
 
     public close(): Promise<void> {
+        if (this.syncHandlers) {
+            this.syncHandlers.forEach((h) => h.cancel());
+        }
         return this.connection.close();
     }
 

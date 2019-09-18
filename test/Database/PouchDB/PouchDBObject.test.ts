@@ -1,5 +1,6 @@
 import _ from "lodash";
 import {Document} from "../../../src/Database/DataTypes/Interfaces/Types";
+import {PouchDB} from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
 import PouchDBDataSource, {IConnectionParams} from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
 import {CONTEXT_COMPARE, IBasicConnection} from "../../../src/Database/Interfaces/Types";
 
@@ -17,7 +18,7 @@ describe("Establish Connection tests", () => {
             connectionParams: {adapter: "memory"},
             dbName: "testDB",
         };
-        const dataSource = new PouchDBDataSource(params);
+        const dataSource = new PouchDBDataSource(PouchDB, params);
         return dataSource.connection(false)
             .then((pouchConnection) => {
                 connection = pouchConnection;
