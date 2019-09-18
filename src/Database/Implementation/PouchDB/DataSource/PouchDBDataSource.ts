@@ -39,12 +39,13 @@ export default class PouchDBDataSource implements IDataSource {
         }
 
         if (params.remoteDBs) {
-            this.syncHandler = params.remoteDBs.map((db) => this.db
-                .sync(db, {live: true})
-                // .on("change", (ch) => console.log("change", ch))
-                .on("error", (err) => {
-                    // throw err;
-                }));
+            console.log("here");
+            this.syncHandler = params.remoteDBs.map((db) => this.db.sync(db, {
+                live: true,
+                retry: true,
+            }).on("error", (error: any) => console.error("Sync Error", error))
+                .on("change", (info: any) => console.log("Sync change", info))
+                .on("paused", (info: any) => console.log("Sync paused", info)))
         }
     }
 
