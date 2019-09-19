@@ -30,11 +30,13 @@ export default class PouchDB implements IBasicConnection {
     }
 
     // private eventEmitter: EventEmitter;
-    private subscriptions: { [subscriptionId in string]: Changes<any> };
+    private subscriptions: DatabaseEventEmitter[];
+    private activeSyncs: number;
 
     constructor(private connection: Database, public autoSave: boolean, public syncHandlers?: Array<Sync<any>>) {
         // this.eventEmitter = new EventEmitter();
-        this.subscriptions = {};
+        this.subscriptions = [];
+        this.activeSyncs = this.syncHandlers ? this.syncHandlers.length : 0;
     }
 
     public isConnected(): Promise<boolean> {
@@ -97,11 +99,16 @@ export default class PouchDB implements IBasicConnection {
                 }
             });
         }
+        this.subscriptions.push(changes);
         return changes;
     }
 
-    public cancelSubscription(eventEmitter: DatabaseEventEmitter) {
-        eventEmitter.cancel();
+    public cancelSubscription(sub: DatabaseEventEmitter) {
+        const idx = this.subscriptions.findIndex((e) => e === sub);
+        if (idx >= 0) {
+            this.subscriptions.splice(idx, 1);
+            sub.cancel();
+        }
     }
 
     public saveAll(): IDBSaveAllHandlers {
@@ -130,13 +137,28 @@ export default class PouchDB implements IBasicConnection {
     }
 
     public close(): Promise<void> {
+        Object.values(this.subscriptions).forEach((v: DatabaseEventEmitter) => v.cancel());
         if (this.syncHandlers) {
-            this.syncHandlers.forEach((h) => h.cancel());
+            this.syncHandlers.forEach((h) => {
+                h.on("complete", (info: any) => {
+                    this.activeSyncs = this.activeSyncs - 1;
+                });
+                h.cancel();
+            });
         }
-        return this.connection.close();
+        const waitFor = (resolve: any) => {
+            if (this.activeSyncs === 0) {
+                return this.connection.close();
+            } else {
+                setTimeout(() => waitFor(resolve), 1000);
+            }
+        };
+
+        return new Promise((resolve) => waitFor(resolve));
     }
 
-    private create<T>(key: Key, obj: T): Promise<PouchDBObject<T>> {
+    private create<T>(key: Key, obj: T):
+        Promise<PouchDBObject<T>> {
         const doc = obj as PouchDocument<T> & ExistingDocument<T>;
         doc._id = PouchDB.convertKeyToId(key);
         return this.connection.put(obj)

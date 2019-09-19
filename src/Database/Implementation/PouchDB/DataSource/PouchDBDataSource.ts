@@ -18,7 +18,7 @@ export interface IConnectionParams {
     port?: number;
     dbName: string;
     connectionParams?: any;
-    remoteDBs?: Database[];
+    remoteDBs?: string[];
 }
 
 export const DEFAULT_PORT = 3896;
@@ -39,13 +39,16 @@ export default class PouchDBDataSource implements IDataSource {
         }
 
         if (params.remoteDBs) {
-            console.log("here");
-            this.syncHandler = params.remoteDBs.map((db) => this.db.sync(db, {
-                live: true,
-                retry: true,
-            }).on("error", (error: any) => console.error("Sync Error", error))
-                .on("change", (info: any) => console.log("Sync change", info))
-                .on("paused", (info: any) => console.log("Sync paused", info)))
+            this.syncHandler = params.remoteDBs.map((dbUrl) => {
+                const otherDB = new levelUPAdapter(dbUrl);
+                return this.db.sync(otherDB, {
+                    live: true,
+                    retry: true,
+                });
+                // .on("error", (error: any) => console.error("Sync Error", error))
+                // .on("change", (info: any) => console.log("Sync change", info))
+                // .on("paused", (info: any) => console.log("Sync paused", info))
+            });
         }
     }
 
@@ -71,10 +74,5 @@ export default class PouchDBDataSource implements IDataSource {
     public goOnline(tryFlush?: boolean) {
         return Promise.reject("Not Implemented");
     }
-
-    //TODO wait on complete to close
-    // syncHandler.on('complete', function (info) {
-    //     // replication was canceled!
-    // });
 
 }

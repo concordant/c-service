@@ -47,7 +47,7 @@ describe("Get tests", () => {
     beforeAll(() => {
         const params: IConnectionParams = {
             connectionParams: {adapter: "memory"},
-            dbName: "testDB",
+            dbName: "testdb",
         };
         const dataSource = new PouchDBDataSource(PouchDB, params);
         return dataSource.connection(false)
