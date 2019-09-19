@@ -44,7 +44,6 @@ describe("Get tests", () => {
 
 });
 
-
 // // TEST Passes but connection isn't closed in certain situations
 // describe("Sync tests", () => {
 //     const TEST_KEY = uuid();

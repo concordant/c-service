@@ -3,7 +3,8 @@ import PouchDBObject from "./Database/Implementation/PouchDB/DataTypes/PouchDBOb
 import PouchDB from "./Database/Implementation/PouchDB/PouchDB";
 import {Connection, Database, DataSource, DBSaveAllHandler, DBTxHandler, Key} from "./Database/Interfaces/Types";
 
-//TODO: these exports need to be curated
+import {Document} from "./Database/DataTypes/Interfaces/Types";
+// TODO: these exports need to be curated
 import {
     EndpointEvent,
     Handler,
@@ -28,6 +29,7 @@ export {
     Connection,
     Database,
     DataSource,
+    Document,
     DBSaveAllHandler,
     DBTxHandler,
     Key,

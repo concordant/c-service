@@ -34,11 +34,13 @@ export default class PouchDBObject<T> implements Document<T> {
         return this.newDocument ? this.newDocument : this.document;
     }
 
-    public updateValue(value: T): void {
+    public updateValue(value: T): PouchDBObject<T> {
         this.newDocument = {_id: this.document._id, _rev: this.document._rev, ...value};
         if (this.connection.autoSave) {
-            this.save().catch((error) => Promise.reject(error));
+            this.save()
+                .catch((error) => Promise.reject(error));
         }
+        return this;
     }
 
     public compareVersion(other: IContext) {
