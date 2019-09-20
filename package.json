@@ -8,8 +8,7 @@
     "dist/**/*"
   ],
   "scripts": {
-    "start": "tsc && node dist/app.js",
-    "server": "tsc && node dist/server.js",
+    "server": "babel-node --presets env src/server.js",
     "test": "jest",
     "coverage": "jest --coverage",
     "build": "tsc --skipLibCheck",
@@ -27,6 +26,10 @@
   },
   "homepage": "https://github.com/balegas/collab2-server#readme",
   "devDependencies": {
+    "@babel/cli": "^7.6.0",
+    "@babel/core": "^7.6.0",
+    "@babel/node": "^7.6.1",
+    "@babel/preset-env": "^7.6.0",
     "@microsoft/tsdoc": "^0.12.14",
     "@types/express": "^4.17.1",
     "@types/jest": "^24.0.18",
@@ -40,6 +43,7 @@
   },
   "dependencies": {
     "@types/uuid": "^3.4.5",
+    "bonjour": "^3.5.0",
     "express": "^4.17.1",
     "lodash": "^4.17.15",
     "pouchdb": "^7.1.1",
