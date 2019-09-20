@@ -8,7 +8,7 @@
     "dist/**/*"
   ],
   "scripts": {
-    "server": "babel-node --presets env src/server.js",
+    "start": "babel-node src/server.js",
     "test": "jest",
     "coverage": "jest --coverage",
     "build": "tsc --skipLibCheck",
