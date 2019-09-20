@@ -1,3 +1,4 @@
+import uuid from "uuid/v4";
 import {Document} from "../../../src/Database/DataTypes/Interfaces/Types";
 import {PouchDB} from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
 import PouchDBDataSource, {
@@ -18,7 +19,7 @@ describe("Establish Connection tests", () => {
     it("Init local in-memory database", (done) => {
         const params: IConnectionParams = {
             connectionParams: {adapter: "memory"},
-            dbName: "testDB",
+            dbName: "testdb",
         };
         const dataSource = new PouchDBDataSource(PouchDB, params);
         dataSource.connection(false)
@@ -27,7 +28,7 @@ describe("Establish Connection tests", () => {
 
     it("Reject init database", (done) => {
         const params: IConnectionParams = {
-            dbName: "testDB",
+            dbName: "testdb",
             host: "NO-HOST",
             port: DEFAULT_PORT,
             protocol: IConnectionProtocol.HTTPS,
@@ -82,13 +83,14 @@ describe("Get tests", () => {
 
 describe("Modify object tests", () => {
     const TEST_KEY = "test_key";
+    const TEST_KEY_ARRAY = "test_key_array";
 
     let connection: IBasicConnection;
 
     beforeAll(() => {
         const params: IConnectionParams = {
             connectionParams: {adapter: "memory"},
-            dbName: "testDB",
+            dbName: "testdb",
         };
         const dataSource = new PouchDBDataSource(PouchDB, params);
         return dataSource.connection(false)
@@ -119,21 +121,16 @@ describe("Modify object tests", () => {
             .then((() => done()));
 
     });
-
 });
 
 describe("Database events test", () => {
 
-    const TEST_KEY = "test_key0";
-    const TEST_KEY1 = "test_key1";
-
     let connection: IBasicConnection;
-    let dbCounter = 0;
 
     beforeEach(() => {
         const params: IConnectionParams = {
             connectionParams: {adapter: "memory"},
-            dbName: "testDB" + dbCounter++,
+            dbName: "testdb",
         };
         const dataSource = new PouchDBDataSource(PouchDB, params);
         return dataSource.connection(false)
@@ -145,24 +142,26 @@ describe("Database events test", () => {
     });
 
     it("subscribe to changes --- create", (done) => {
-        connection.subscribe<TestObject>(TEST_KEY, {
+        const random = uuid();
+        connection.subscribe<TestObject>(random, {
             change: (key, obj) => {
-                expect(key).toEqual(TEST_KEY);
+                expect(key).toEqual(random);
                 expect(obj.currentValue().foo).toEqual("foo");
                 done();
             },
         });
 
-        connection.get<TestObject>(TEST_KEY, new TestObject())
+        connection.get<TestObject>(random, new TestObject())
             .catch((error) => fail(error));
     });
 
     it("subscribe to changes --- update", (done) => {
-        connection.get<TestObject>(TEST_KEY, new TestObject())
+        const random = uuid();
+        connection.get<TestObject>(random, new TestObject())
             .then((obj: Document<TestObject>) => {
-                connection.subscribe<TestObject>(TEST_KEY, {
+                connection.subscribe<TestObject>(random, {
                     change: (key, newObj) => {
-                        expect(key).toEqual(TEST_KEY);
+                        expect(key).toEqual(random);
                         expect(newObj.currentValue().foo).toEqual("bar");
                         done();
                     },
@@ -174,22 +173,21 @@ describe("Database events test", () => {
             .catch((error) => fail(error));
     });
 
-    afterEach(() => {
-        return connection.close();
-    });
 
     it("subscribe array of keys", (done) => {
         let counter = 0;
-        connection.subscribe<TestObject>([TEST_KEY, TEST_KEY1], {
+        const random0 = uuid();
+        const random1 = uuid();
+        connection.subscribe<TestObject>([random0, random1], {
             change: () => {
                 counter = counter + 1;
             },
         });
 
-        connection.get<TestObject>(TEST_KEY, new TestObject())
+        connection.get<TestObject>(random0, new TestObject())
             .catch((error) => fail(error));
 
-        connection.get<TestObject>(TEST_KEY1, new TestObject())
+        connection.get<TestObject>(random1, new TestObject())
             .catch((error) => fail(error));
         setTimeout(() => {
             expect(counter).toEqual(2);
@@ -199,7 +197,9 @@ describe("Database events test", () => {
 
     it("cancel subscription", (done) => {
         let counter = 0;
-        const eventEmitter: DatabaseEventEmitter = connection.subscribe<TestObject>([TEST_KEY, TEST_KEY1], {
+        const random0 = uuid();
+        const random1 = uuid();
+        const eventEmitter: DatabaseEventEmitter = connection.subscribe<TestObject>([random0, random1], {
             change: () => {
                 counter = counter + 1;
                 if (counter === 2) {
@@ -208,19 +208,22 @@ describe("Database events test", () => {
             },
         });
 
-        connection.get<TestObject>(TEST_KEY, new TestObject())
+        connection.get<TestObject>(random0, new TestObject())
             .then((obj: Document<TestObject>) => {
                 obj.updateValue(new TestObject("bar"));
                 return obj.save();
             })
             .catch((error) => fail(error));
 
-        connection.get<TestObject>(TEST_KEY1, new TestObject())
+        connection.get<TestObject>(random1, new TestObject())
             .catch((error) => fail(error));
 
         setTimeout(() => {
             expect(counter).toEqual(2);
             done();
         }, WAIT_FOR_TEST);
+    });
+    afterEach(() => {
+        return connection.close().catch((err) => console.log(err));
     });
 });

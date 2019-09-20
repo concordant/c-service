@@ -1,3 +1,4 @@
+import _ from "lodash";
 import {Document} from "../../DataTypes/Interfaces/Types";
 import {
     DatabaseEventEmitter,
@@ -31,12 +32,10 @@ export default class PouchDB implements IBasicConnection {
 
     // private eventEmitter: EventEmitter;
     private subscriptions: DatabaseEventEmitter[];
-    private activeSyncs: number;
 
-    constructor(private connection: Database, public autoSave: boolean, public syncHandlers?: Array<Sync<any>>) {
+    constructor(private connection: Database, public autoSave: boolean, public syncHandlers?: Array<Sync<any> | undefined>) {
         // this.eventEmitter = new EventEmitter();
         this.subscriptions = [];
-        this.activeSyncs = this.syncHandlers ? this.syncHandlers.length : 0;
     }
 
     public isConnected(): Promise<boolean> {
@@ -139,16 +138,21 @@ export default class PouchDB implements IBasicConnection {
     public close(): Promise<void> {
         Object.values(this.subscriptions).forEach((v: DatabaseEventEmitter) => v.cancel());
         if (this.syncHandlers) {
-            this.syncHandlers.forEach((h) => {
+            this.syncHandlers.forEach((h, idx) => {
+                if (h === undefined) {
+                    return;
+                }
                 h.on("complete", (info: any) => {
-                    this.activeSyncs = this.activeSyncs - 1;
+                    if (this.syncHandlers) {
+                        this.syncHandlers[idx] = undefined;
+                    }
                 });
                 h.cancel();
             });
         }
         const waitFor = (resolve: any) => {
-            if (this.activeSyncs === 0) {
-                return this.connection.close();
+            if (!this.syncHandlers || this.syncHandlers.every((h) => h === undefined)) {
+                return resolve(this.connection.close());
             } else {
                 setTimeout(() => waitFor(resolve), 1000);
             }

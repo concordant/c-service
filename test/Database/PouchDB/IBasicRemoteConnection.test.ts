@@ -1,4 +1,4 @@
-import uuid from "uuid/v4";
+import uuid = require("uuid");
 import {Document} from "../../../src/Database/DataTypes/Interfaces/Types";
 import {PouchDB} from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
 import PouchDBDataSource, {
@@ -44,7 +44,7 @@ describe("Get tests", () => {
 
 });
 
-// // TEST Passes but connection isn't closed in certain situations
+// TEST Passes but connection isn't closed in certain situations
 // describe("Sync tests", () => {
 //     const TEST_KEY = uuid();
 //     let connection1: IBasicConnection;
