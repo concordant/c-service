@@ -5,7 +5,7 @@ import Sync = PouchDB.Replication.Sync;
 
 export type ConnectionParams = IConnectionParams;
 
-export enum IConnectionProtocol {
+export enum ConnectionProtocol {
     WEBSOCKET = "ws",
     SECURE_WEBSOCKET = "wss",
     HTTP = "http",
@@ -13,7 +13,7 @@ export enum IConnectionProtocol {
 }
 
 export interface IConnectionParams {
-    protocol?: IConnectionProtocol;
+    protocol?: ConnectionProtocol;
     host?: string;
     port?: number;
     dbName: string;

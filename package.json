@@ -8,7 +8,7 @@
     "dist/**/*"
   ],
   "scripts": {
-    "start": "babel-node src/server.js",
+    "start": "tsc --skipLibCheck && babel-node dist/server.js",
     "test": "jest",
     "coverage": "jest --coverage",
     "build": "tsc --skipLibCheck",
@@ -42,10 +42,12 @@
     "typescript": "^3.6.3"
   },
   "dependencies": {
+    "@types/mdns": "0.0.33",
     "@types/uuid": "^3.4.5",
     "bonjour": "^3.5.0",
     "express": "^4.17.1",
     "lodash": "^4.17.15",
+    "mdns": "^2.5.1",
     "pouchdb": "^7.1.1",
     "pouchdb-adapter-asyncstorage": "^6.4.1",
     "pouchdb-adapter-memory": "^7.1.1",

@@ -1,4 +1,4 @@
-import PouchDBDataSource from "./Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
+import PouchDBDataSource, {ConnectionProtocol} from "./Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
 import PouchDBObject from "./Database/Implementation/PouchDB/DataTypes/PouchDBObject";
 import PouchDB from "./Database/Implementation/PouchDB/PouchDB";
 import {Connection, Database, DataSource, DBSaveAllHandler, DBTxHandler, Key} from "./Database/Interfaces/Types";
@@ -15,6 +15,7 @@ import {
 import {IEndpointInfo, IMessage, IRemoteEndpointStub, Protocol, RemoteEndpoint} from "./Network/Utils/NetworkCommon";
 
 export {
+
     IAsyncDuplexEndpoint,
     EndpointEvent,
     Handler,
@@ -27,6 +28,7 @@ export {
     RemoteEndpoint,
 
     Connection,
+    ConnectionProtocol,
     Database,
     DataSource,
     Document,
