@@ -31,6 +31,8 @@ export interface IContext {
 export interface IConnectionParams {
     autoSave?: boolean;
     handleConflicts?: boolean;
+    putRetriesBeforeError?: number;
+    putRetryMaxTimeout?: number;
 }
 
 /** The comparison result of two contexts */
@@ -46,6 +48,7 @@ export enum CONTEXT_COMPARE {
  *  A representation of a database object that the user can interact with
  */
 export interface IDBObject<T> extends IContext {
+    id: string;
 
     /**
      * Commit the current modifications on the object
@@ -57,7 +60,7 @@ export interface IDBObject<T> extends IContext {
      */
     isDirty(): boolean;
 
-    currentValue(): T;
+    current(): T;
 }
 
 /**

@@ -62,7 +62,7 @@ describe("Get tests", () => {
     it("get empty key", (done) => {
         connection.get<TestObject>(TEST_KEY, new TestObject())
             .then((obj: IDBObject<TestObject>) => {
-                const value = obj.currentValue();
+                const value = obj.current();
                 expect(value.foo).toEqual("foo");
                 done();
             });
@@ -73,7 +73,7 @@ describe("Get tests", () => {
             .then(() => connection.get<TestObject>(TEST_KEY, new TestObject("bar")))
             .then(() => connection.get<TestObject>(TEST_KEY))
             .then((obj) => {
-                const value = obj.currentValue();
+                const value = obj.current();
                 expect(value.foo).toEqual("foo");
                 done();
             });
@@ -104,8 +104,8 @@ describe("Modify object tests", () => {
     it("get object and update local", (done) => {
         connection.get<TestObject>(TEST_KEY, new TestObject())
             .then((obj: Document<TestObject>) => {
-                obj.updateValue(new TestObject("bar"));
-                expect(obj.currentValue().foo).toEqual("bar");
+                obj.update(new TestObject("bar"));
+                expect(obj.current().foo).toEqual("bar");
                 done();
             });
     });
@@ -113,11 +113,11 @@ describe("Modify object tests", () => {
     it("get object and save update", (done) => {
         connection.get<TestObject>(TEST_KEY, new TestObject())
             .then((obj: Document<TestObject>) => {
-                obj.updateValue(new TestObject("bar"));
+                obj.update(new TestObject("bar"));
                 return obj.save();
             })
             .then(() => connection.get<TestObject>(TEST_KEY, new TestObject()))
-            .then((obj: Document<TestObject>) => expect(obj.currentValue().foo).toEqual("bar"))
+            .then((obj: Document<TestObject>) => expect(obj.current().foo).toEqual("bar"))
             .then((() => done()));
 
     });
@@ -146,7 +146,7 @@ describe("Database events test", () => {
         connection.subscribe<TestObject>(random, {
             change: (key, obj) => {
                 expect(key).toEqual(random);
-                expect(obj.currentValue().foo).toEqual("foo");
+                expect(obj.current().foo).toEqual("foo");
                 done();
             },
         });
@@ -162,12 +162,12 @@ describe("Database events test", () => {
                 connection.subscribe<TestObject>(random, {
                     change: (key, newObj) => {
                         expect(key).toEqual(random);
-                        expect(newObj.currentValue().foo).toEqual("bar");
+                        expect(newObj.current().foo).toEqual("bar");
                         done();
                     },
                 });
 
-                obj.updateValue(new TestObject("bar"));
+                obj.update(new TestObject("bar"));
                 return obj.save();
             })
             .catch((error) => fail(error));
@@ -210,7 +210,7 @@ describe("Database events test", () => {
 
         connection.get<TestObject>(random0, new TestObject())
             .then((obj: Document<TestObject>) => {
-                obj.updateValue(new TestObject("bar"));
+                obj.update(new TestObject("bar"));
                 return obj.save();
             })
             .catch((error) => fail(error));

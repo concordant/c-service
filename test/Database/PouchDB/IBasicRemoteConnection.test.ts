@@ -32,7 +32,7 @@ describe("Get tests", () => {
             .then(() => connection.get<TestObject>(TEST_KEY, new TestObject("bar")))
             .then(() => connection.get<TestObject>(TEST_KEY))
             .then((obj) => {
-                obj.updateValue(new TestObject("xpto"));
+                obj.update(new TestObject("xpto"));
                 obj.save().then(() => done());
             });
     });

@@ -5,12 +5,14 @@ import PouchDBImpl from "../PouchDB";
 import ExistingDocument = PouchDB.Core.ExistingDocument;
 
 export default class PouchDBObject<T> implements Document<T> {
+    public id: string;
     private newDocument?: ExistingDocument<T>;
 
     constructor(
         private document: ExistingDocument<T>,
         private connection: PouchDBImpl,
         public conflict: boolean = false) {
+        this.id = document._id;
     }
 
     /**
@@ -31,17 +33,23 @@ export default class PouchDBObject<T> implements Document<T> {
     //     return this.document;
     // }
 
-    public currentValue(): T {
+    public current(): T {
         return this.newDocument ? this.newDocument : this.document;
     }
 
-    public updateValue(value: T): PouchDBObject<T> {
-        this.newDocument = {_id: this.document._id, _rev: this.document._rev, ...value};
+    public update(value: T): PouchDBObject<T> {
+        this.updateNoSideEffects(value);
         if (this.connection.isAutoSave()) {
             this.save()
                 .then(() => this)
                 .catch((error) => Promise.reject(error));
         }
+        return this;
+    }
+
+    public updateNoSideEffects(value: T): PouchDBObject<T> {
+        //  Caution: need to keep revision from fetched object
+        this.newDocument = {...value, _id: this.document._id, _rev: this.document._rev};
         return this;
     }
 

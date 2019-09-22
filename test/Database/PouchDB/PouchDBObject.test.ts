@@ -38,7 +38,7 @@ describe("Establish Connection tests", () => {
         return connection.get<TestObject>(TEST_KEY, new TestObject())
             .then((obj: Document<TestObject>) => {
                 const obj1 = _.clone(obj);
-                obj1.updateValue(obj1.currentValue());
+                obj1.update(obj1.current());
                 expect(obj1.compareVersion(obj)).toEqual(CONTEXT_COMPARE.CONCURRENT);
             });
     });
@@ -48,7 +48,7 @@ describe("Establish Connection tests", () => {
 
         connection.get<TestObject>(TEST_KEY, new TestObject())
             .then((obj: Document<TestObject>) => {
-                obj.updateValue(new TestObject("bar"));
+                obj.update(new TestObject("bar"));
                 obj0 = obj;
                 return obj.save();
             })
@@ -67,7 +67,7 @@ describe("Establish Connection tests", () => {
         return connection.get<TestObject>(TEST_KEY, obj0)
             .then((obj: Document<TestObject>) => {
                 const obj1 = _.clone(obj);
-                obj1.updateValue(obj1.currentValue());
+                obj1.update(obj1.current());
                 expect(obj1.isDirty()).toEqual(true);
             });
     });

@@ -1,4 +1,5 @@
 import _ from "lodash";
+import {promiseDelay} from "../../../Utils/Utils";
 import {Document} from "../../DataTypes/Interfaces/Types";
 import {
     DatabaseEventEmitter,
@@ -20,6 +21,9 @@ import AllDocsMeta = PouchDB.Core.AllDocsMeta;
 
 const CHANGE_EVENT = "change";
 const NOT_FOUND_ERROR_CODE = 404;
+const CONFLICT_ERROR_CODE = 409;
+
+const DEFAULT_RETRY_MAX_TIMEOUT = 500; // ms
 
 export default class PouchDB implements IBasicConnection {
     protected static convertKeyToId(key: Key): string {
@@ -44,27 +48,45 @@ export default class PouchDB implements IBasicConnection {
             .catch(() => Promise.reject(new Error("Couldn't Connect to server")));
     }
 
-    public get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<Document<T>> {
+    public get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<PouchDBObject<T>> {
         const {handleConflicts} = this.params;
         if (passThrough) {
             return Promise.reject("Not Implemented");
         }
         return this.connection.get<T>(PouchDB.convertKeyToId(key), {conflicts: handleConflicts})
             .then((obj: (ExistingDocument<T> & AllDocsMeta)) => new PouchDBObject<T>(obj, this, obj._conflicts !== undefined && obj._conflicts.length > 0))
-            .catch((error: Error) => {
-                const pouchError = error as PouchError;
-                if (pouchError.status === NOT_FOUND_ERROR_CODE && (defaultObj !== undefined && defaultObj !== null)) {
+            .catch((error: PouchError) => {
+                if (error.status === NOT_FOUND_ERROR_CODE && (defaultObj !== undefined && defaultObj !== null)) {
                     return this.create<T>(key, defaultObj);
                 }
+
                 return Promise.reject(error);
             });
 
     }
 
     public save<T>(obj: PouchDBObject<T>): Promise<PouchDBObject<T>> {
-        return this.connection.put(obj.currentValue())
+        return this.saveInternal(obj, 0);
+    }
+
+    public saveInternal<T>(obj: PouchDBObject<T>, retryCount: number): Promise<PouchDBObject<T>> {
+        const {putRetriesBeforeError = 0, putRetryMaxTimeout = DEFAULT_RETRY_MAX_TIMEOUT} = this.params;
+        return this.connection.put(obj.current())
             .then((resp: Response) =>
-                new PouchDBObject<T>({_id: resp.id, _rev: resp.rev, ...obj.currentValue()}, this));
+                new PouchDBObject<T>({_id: resp.id, _rev: resp.rev, ...obj.current()}, this))
+            .catch((error: PouchError) => {
+                if (error.status === CONFLICT_ERROR_CODE &&
+                    putRetriesBeforeError && retryCount < putRetriesBeforeError) {
+                    return promiseDelay(null, Math.random() * putRetryMaxTimeout)
+                        .then(() => this.get<T>(obj.id))
+                        .then((objConflicting) => {
+                            return this.saveInternal<T>(objConflicting
+                                .updateNoSideEffects(obj.current()), retryCount + 1);
+                        });
+                }
+                return Promise.reject(error);
+            });
+
     }
 
     public delete(key: Key): Promise<void> {
