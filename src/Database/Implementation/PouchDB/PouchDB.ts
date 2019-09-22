@@ -8,14 +8,15 @@ import {
     IFilter,
     Key,
 } from "../../Interfaces/Types";
+import {ConnectionParams} from "./DataSource/PouchDBDataSource";
 import PouchDBObject from "./DataTypes/PouchDBObject";
 import Database = PouchDB.Database;
 import PouchError = PouchDB.Core.Error;
 import PouchDocument = PouchDB.Core.Document;
 import ExistingDocument = PouchDB.Core.ExistingDocument;
 import Response = PouchDB.Core.Response;
-import Changes = PouchDB.Core.Changes;
 import Sync = PouchDB.Replication.Sync;
+import AllDocsMeta = PouchDB.Core.AllDocsMeta;
 
 const CHANGE_EVENT = "change";
 const NOT_FOUND_ERROR_CODE = 404;
@@ -33,8 +34,7 @@ export default class PouchDB implements IBasicConnection {
     // private eventEmitter: EventEmitter;
     private subscriptions: DatabaseEventEmitter[];
 
-    constructor(private connection: Database, public autoSave: boolean, public syncHandlers?: Array<Sync<any> | undefined>) {
-        // this.eventEmitter = new EventEmitter();
+    constructor(private connection: Database, private params: ConnectionParams, public syncHandlers?: Array<Sync<any> | undefined>) {
         this.subscriptions = [];
     }
 
@@ -45,11 +45,12 @@ export default class PouchDB implements IBasicConnection {
     }
 
     public get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<Document<T>> {
+        const {handleConflicts} = this.params;
         if (passThrough) {
             return Promise.reject("Not Implemented");
         }
-        return this.connection.get<T>(PouchDB.convertKeyToId(key))
-            .then((obj: ExistingDocument<T>) => new PouchDBObject<T>(obj, this))
+        return this.connection.get<T>(PouchDB.convertKeyToId(key), {conflicts: handleConflicts})
+            .then((obj: (ExistingDocument<T> & AllDocsMeta)) => new PouchDBObject<T>(obj, this, obj._conflicts !== undefined && obj._conflicts.length > 0))
             .catch((error: Error) => {
                 const pouchError = error as PouchError;
                 if (pouchError.status === NOT_FOUND_ERROR_CODE && (defaultObj !== undefined && defaultObj !== null)) {
@@ -161,6 +162,14 @@ export default class PouchDB implements IBasicConnection {
         return new Promise((resolve) => waitFor(resolve));
     }
 
+    public isAutoSave(): boolean {
+        return this.params.autoSave || false;
+    }
+
+    public isHandleConflicts(): boolean {
+        return this.params.handleConflicts || false;
+    }
+
     private create<T>(key: Key, obj: T):
         Promise<PouchDBObject<T>> {
         const doc = obj as PouchDocument<T> & ExistingDocument<T>;
@@ -171,4 +180,5 @@ export default class PouchDB implements IBasicConnection {
                 return new PouchDBObject(doc, this);
             });
     }
+
 }

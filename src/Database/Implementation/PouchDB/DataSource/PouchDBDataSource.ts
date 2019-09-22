@@ -1,8 +1,9 @@
-import {IDataSource} from "../../../Interfaces/Types";
+import {IConnectionParams, IDataSource} from "../../../Interfaces/Types";
 import PouchDBImpl from "../PouchDB";
 import Database = PouchDB.Database;
 import Sync = PouchDB.Replication.Sync;
 
+export type AdapterParams = IAdapterParams;
 export type ConnectionParams = IConnectionParams;
 
 export enum ConnectionProtocol {
@@ -12,7 +13,7 @@ export enum ConnectionProtocol {
     HTTPS = "https",
 }
 
-export interface IConnectionParams {
+export interface IAdapterParams {
     protocol?: ConnectionProtocol;
     host?: string;
     port?: number;
@@ -28,8 +29,8 @@ export default class PouchDBDataSource implements IDataSource {
     private db: Database;
     private syncHandler?: Array<Sync<any>>;
 
-    constructor(levelUPAdapter: any, params: ConnectionParams) {
-        const {protocol, host, port, dbName, connectionParams} = params;
+    constructor(levelUPAdapter: any, params: AdapterParams) {
+        const {protocol, host, port, dbName, connectionParams, remoteDBs} = params;
 
         if (!(host || port || protocol)) {
             this.db = new levelUPAdapter(dbName, connectionParams);
@@ -38,8 +39,8 @@ export default class PouchDBDataSource implements IDataSource {
             this.db = new levelUPAdapter(url, connectionParams);
         }
 
-        if (params.remoteDBs) {
-            this.syncHandler = params.remoteDBs.map((dbUrl) => {
+        if (remoteDBs) {
+            this.syncHandler = remoteDBs.map((dbUrl) => {
                 const otherDB = new levelUPAdapter(dbUrl);
                 return this.db.sync(otherDB, {
                     live: true,
@@ -52,12 +53,13 @@ export default class PouchDBDataSource implements IDataSource {
         }
     }
 
-    public connection(autoSave: boolean): Promise<PouchDBImpl> {
+    public connection(params: ConnectionParams): Promise<PouchDBImpl> {
+        const {autoSave = false} = params;
         if (autoSave) {
             return Promise.reject("Not Implemented");
         }
 
-        const connection = new PouchDBImpl(this.db, autoSave, this.syncHandler);
+        const connection = new PouchDBImpl(this.db, params, this.syncHandler);
         return Promise.resolve(connection)
             .then((adapter: PouchDBImpl) => adapter.isConnected())
             .then((result) => result ? connection : Promise.reject(Error(`Error: ${result}`)));

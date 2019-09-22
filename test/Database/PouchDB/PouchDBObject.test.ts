@@ -1,7 +1,7 @@
 import _ from "lodash";
 import {Document} from "../../../src/Database/DataTypes/Interfaces/Types";
 import {PouchDB} from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
-import PouchDBDataSource, {IConnectionParams} from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
+import PouchDBDataSource, {IAdapterParams} from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
 import {CONTEXT_COMPARE, IBasicConnection} from "../../../src/Database/Interfaces/Types";
 
 class TestObject {
@@ -14,12 +14,12 @@ describe("Establish Connection tests", () => {
     let connection: IBasicConnection;
 
     beforeAll(() => {
-        const params: IConnectionParams = {
+        const params: IAdapterParams = {
             connectionParams: {adapter: "memory"},
             dbName: "testDB",
         };
         const dataSource = new PouchDBDataSource(PouchDB, params);
-        return dataSource.connection(false)
+        return dataSource.connection({autoSave: false})
             .then((pouchConnection) => {
                 connection = pouchConnection;
             })

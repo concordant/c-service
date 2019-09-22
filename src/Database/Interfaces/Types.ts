@@ -28,6 +28,11 @@ export interface IContext {
     compareVersion(other: IContext): CONTEXT_COMPARE;
 }
 
+export interface IConnectionParams {
+    autoSave?: boolean;
+    handleConflicts?: boolean;
+}
+
 /** The comparison result of two contexts */
 export enum CONTEXT_COMPARE {
     EQUAL = "EQUAL",
@@ -64,7 +69,7 @@ export interface IDataSource {
      *  Starts a new non-transactional session with the database
      *  Get operations retrieve the most recent version of the object
      */
-    connection(autoSave: boolean): Promise<Connection>;
+    connection(params: IConnectionParams): Promise<Connection>;
 
     /**
      * Starts a new transactional session with the database

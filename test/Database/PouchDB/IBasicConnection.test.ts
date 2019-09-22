@@ -2,9 +2,9 @@ import uuid from "uuid/v4";
 import {Document} from "../../../src/Database/DataTypes/Interfaces/Types";
 import {PouchDB} from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
 import PouchDBDataSource, {
+    AdapterParams,
+    ConnectionProtocol,
     DEFAULT_PORT,
-    IConnectionParams,
-    IConnectionProtocol,
 } from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
 import {DatabaseEventEmitter, IBasicConnection, IDBObject} from "../../../src/Database/Interfaces/Types";
 
@@ -17,24 +17,24 @@ const WAIT_FOR_TEST = process.env.WAIT_FOR_TEST && parseInt(process.env.WAIT_FOR
 
 describe("Establish Connection tests", () => {
     it("Init local in-memory database", (done) => {
-        const params: IConnectionParams = {
+        const params: AdapterParams = {
             connectionParams: {adapter: "memory"},
             dbName: "testdb",
         };
         const dataSource = new PouchDBDataSource(PouchDB, params);
-        dataSource.connection(false)
+        dataSource.connection({autoSave: false})
             .then((result) => result ? done() : fail());
     });
 
     it("Reject init database", (done) => {
-        const params: IConnectionParams = {
+        const params: AdapterParams = {
             dbName: "testdb",
             host: "NO-HOST",
             port: DEFAULT_PORT,
-            protocol: IConnectionProtocol.HTTPS,
+            protocol: ConnectionProtocol.HTTPS,
         };
         const dataSource = new PouchDBDataSource(PouchDB, params);
-        dataSource.connection(false)
+        dataSource.connection({autoSave: false})
             .then(() => fail())
             .catch(() => done());
     });
@@ -46,12 +46,12 @@ describe("Get tests", () => {
     let connection: IBasicConnection;
 
     beforeAll(() => {
-        const params: IConnectionParams = {
+        const params: AdapterParams = {
             connectionParams: {adapter: "memory"},
             dbName: "testdb",
         };
         const dataSource = new PouchDBDataSource(PouchDB, params);
-        return dataSource.connection(false)
+        return dataSource.connection({autoSave: false})
             .then((pouchConnection) => {
                 connection = pouchConnection;
             })
@@ -88,12 +88,12 @@ describe("Modify object tests", () => {
     let connection: IBasicConnection;
 
     beforeAll(() => {
-        const params: IConnectionParams = {
+        const params: AdapterParams = {
             connectionParams: {adapter: "memory"},
             dbName: "testdb",
         };
         const dataSource = new PouchDBDataSource(PouchDB, params);
-        return dataSource.connection(false)
+        return dataSource.connection({autoSave: false})
             .then((pouchConnection) => {
                 connection = pouchConnection;
             })
@@ -128,12 +128,12 @@ describe("Database events test", () => {
     let connection: IBasicConnection;
 
     beforeEach(() => {
-        const params: IConnectionParams = {
+        const params: AdapterParams = {
             connectionParams: {adapter: "memory"},
             dbName: "testdb",
         };
         const dataSource = new PouchDBDataSource(PouchDB, params);
-        return dataSource.connection(false)
+        return dataSource.connection({autoSave: false})
             .then((pouchConnection) => {
                 connection = pouchConnection;
             })

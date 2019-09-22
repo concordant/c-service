@@ -2,8 +2,8 @@ import uuid = require("uuid");
 import {Document} from "../../../src/Database/DataTypes/Interfaces/Types";
 import {PouchDB} from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
 import PouchDBDataSource, {
-    IConnectionParams,
-    IConnectionProtocol,
+    AdapterParams,
+    ConnectionProtocol,
 } from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
 import {IBasicConnection, IDBObject} from "../../../src/Database/Interfaces/Types";
 
@@ -17,12 +17,12 @@ describe("Get tests", () => {
     let connection: IBasicConnection;
 
     beforeAll(() => {
-        const params: IConnectionParams = {
+        const params: AdapterParams = {
             connectionParams: {},
-            dbName: "testdb", host: "localhost", port: 5984, protocol: IConnectionProtocol.HTTP,
+            dbName: "testdb", host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
         };
         const dataSource = new PouchDBDataSource(PouchDB, params);
-        return dataSource.connection(false).then((c) => connection = c);
+        return dataSource.connection({autoSave: false}).then((c) => connection = c);
 
     });
 

@@ -9,7 +9,8 @@ export default class PouchDBObject<T> implements Document<T> {
 
     constructor(
         private document: ExistingDocument<T>,
-        private connection: PouchDBImpl) {
+        private connection: PouchDBImpl,
+        public conflict: boolean = false) {
     }
 
     /**
@@ -36,7 +37,7 @@ export default class PouchDBObject<T> implements Document<T> {
 
     public updateValue(value: T): PouchDBObject<T> {
         this.newDocument = {_id: this.document._id, _rev: this.document._rev, ...value};
-        if (this.connection.autoSave) {
+        if (this.connection.isAutoSave()) {
             this.save()
                 .then(() => this)
                 .catch((error) => Promise.reject(error));
