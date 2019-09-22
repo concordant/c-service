@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "start": "tsc --skipLibCheck && babel-node dist/server.js",
-    "test": "jest",
+    "test": "./setup.sh && jest && ./teardown.sh",
     "coverage": "jest --coverage",
     "build": "tsc --skipLibCheck",
     "prepare": "npm run build",
