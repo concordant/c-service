@@ -3,7 +3,6 @@ import {Document} from "../../../src/Database/DataTypes/Interfaces/Types";
 import {PouchDB} from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
 import PouchDBDataSource, {
     AdapterParams,
-    ConnectionParams,
     ConnectionProtocol,
 } from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
 import {IBasicConnection, IDBObject} from "../../../src/Database/Interfaces/Types";
@@ -13,8 +12,9 @@ class TestObject {
     }
 }
 
+// FIX: TESTS DONT ALWAYS EXIT
 describe("Get tests", () => {
-    const TEST_KEY = "test_key";
+    // const TEST_KEY = "test_key";
     let connection: IBasicConnection;
 
     beforeAll(() => {

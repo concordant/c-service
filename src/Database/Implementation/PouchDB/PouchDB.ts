@@ -2,7 +2,8 @@ import _ from "lodash";
 import {promiseDelay} from "../../../Utils/Utils";
 import {Document} from "../../DataTypes/Interfaces/Types";
 import {
-    DatabaseEventEmitter,
+    DatabaseEventEmitter, DatabaseHooks,
+    DatabaseParams,
     IBasicConnection,
     IDBHandlers,
     IDBSaveAllHandlers,
@@ -16,7 +17,6 @@ import PouchError = PouchDB.Core.Error;
 import PouchDocument = PouchDB.Core.Document;
 import ExistingDocument = PouchDB.Core.ExistingDocument;
 import Response = PouchDB.Core.Response;
-import Sync = PouchDB.Replication.Sync;
 import AllDocsMeta = PouchDB.Core.AllDocsMeta;
 
 const CHANGE_EVENT = "change";
@@ -38,8 +38,17 @@ export default class PouchDB implements IBasicConnection {
     // private eventEmitter: EventEmitter;
     private subscriptions: DatabaseEventEmitter[];
 
-    constructor(private connection: Database, private params: ConnectionParams, public syncHandlers?: Array<Sync<any> | undefined>) {
+    constructor(
+        private connection: Database,
+        private connectionParams: ConnectionParams,
+        private params: DatabaseParams,
+    ) {
         this.subscriptions = [];
+    }
+
+    // TODO: Add support for multiple handdlers per hook
+    public registerHooks(hooks: DatabaseHooks) {
+        this.params.hooks = hooks;
     }
 
     public isConnected(): Promise<boolean> {
@@ -49,12 +58,30 @@ export default class PouchDB implements IBasicConnection {
     }
 
     public get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<PouchDBObject<T>> {
-        const {handleConflicts} = this.params;
+        const {handleConflicts} = this.connectionParams;
+        const {hooks} = this.params;
         if (passThrough) {
             return Promise.reject("Not Implemented");
         }
-        return this.connection.get<T>(PouchDB.convertKeyToId(key), {conflicts: handleConflicts})
-            .then((obj: (ExistingDocument<T> & AllDocsMeta)) => new PouchDBObject<T>(obj, this, obj._conflicts !== undefined && obj._conflicts.length > 0))
+
+        const getParams = {conflicts: handleConflicts};
+
+        const convertedKey = PouchDB.convertKeyToId(key);
+        return this.connection.get<T>(convertedKey, getParams)
+            .then((obj: (ExistingDocument<T> & AllDocsMeta)) => new PouchDBObject<T>(obj, this, obj._conflicts || []))
+            .then((obj) => {
+                if (obj.conflicts.length > 0) {
+                    if (!hooks || !hooks.conflictHandler) {
+                        return Promise.reject("Found conflict, but no conflict handler is registered");
+                    }
+                    return Promise.all(obj.conflicts.map(
+                        (rev: string) => this.connection.get(convertedKey, {rev, ...getParams})))
+                        .then((objs: Array<(ExistingDocument<T> & AllDocsMeta)>) =>
+                            hooks.conflictHandler(obj, objs.map((o) => new PouchDBObject<T>(o, this, []))));
+                } else {
+                    return obj;
+                }
+            })
             .catch((error: PouchError) => {
                 if (error.status === NOT_FOUND_ERROR_CODE && (defaultObj !== undefined && defaultObj !== null)) {
                     return this.create<T>(key, defaultObj);
@@ -70,7 +97,7 @@ export default class PouchDB implements IBasicConnection {
     }
 
     public saveInternal<T>(obj: PouchDBObject<T>, retryCount: number): Promise<PouchDBObject<T>> {
-        const {putRetriesBeforeError = 0, putRetryMaxTimeout = DEFAULT_RETRY_MAX_TIMEOUT} = this.params;
+        const {putRetriesBeforeError = 0, putRetryMaxTimeout = DEFAULT_RETRY_MAX_TIMEOUT} = this.connectionParams;
         return this.connection.put(obj.current())
             .then((resp: Response) =>
                 new PouchDBObject<T>({_id: resp.id, _rev: resp.rev, ...obj.current()}, this))
@@ -125,7 +152,7 @@ export default class PouchDB implements IBasicConnection {
         return changes;
     }
 
-    public cancelSubscription(sub: DatabaseEventEmitter) {
+    public cancel(sub: DatabaseEventEmitter) {
         const idx = this.subscriptions.findIndex((e) => e === sub);
         if (idx >= 0) {
             this.subscriptions.splice(idx, 1);
@@ -159,22 +186,23 @@ export default class PouchDB implements IBasicConnection {
     }
 
     public close(): Promise<void> {
+        const {syncHandlers} = this.params;
         Object.values(this.subscriptions).forEach((v: DatabaseEventEmitter) => v.cancel());
-        if (this.syncHandlers) {
-            this.syncHandlers.forEach((h, idx) => {
+        if (syncHandlers) {
+            syncHandlers.forEach((h, idx) => {
                 if (h === undefined) {
                     return;
                 }
                 h.on("complete", (info: any) => {
-                    if (this.syncHandlers) {
-                        this.syncHandlers[idx] = undefined;
+                    if (syncHandlers) {
+                        syncHandlers[idx] = undefined;
                     }
                 });
                 h.cancel();
             });
         }
         const waitFor = (resolve: any) => {
-            if (!this.syncHandlers || this.syncHandlers.every((h) => h === undefined)) {
+            if (!syncHandlers || syncHandlers.every((h) => h === undefined)) {
                 return resolve(this.connection.close());
             } else {
                 setTimeout(() => waitFor(resolve), 1000);
@@ -185,11 +213,13 @@ export default class PouchDB implements IBasicConnection {
     }
 
     public isAutoSave(): boolean {
-        return this.params.autoSave || false;
+        const {autoSave} = this.connectionParams;
+        return autoSave || false;
     }
 
     public isHandleConflicts(): boolean {
-        return this.params.handleConflicts || false;
+        const {handleConflicts} = this.connectionParams;
+        return handleConflicts || false;
     }
 
     private create<T>(key: Key, obj: T):

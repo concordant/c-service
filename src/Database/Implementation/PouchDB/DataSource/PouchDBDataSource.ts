@@ -27,7 +27,7 @@ export const DEFAULT_PORT = 3896;
 export default class PouchDBDataSource implements IDataSource {
 
     private db: Database;
-    private syncHandler?: Array<Sync<any>>;
+    private syncHandlers?: Array<Sync<any>>;
 
     constructor(levelUPAdapter: any, params: AdapterParams) {
         const {protocol, host, port, dbName, connectionParams, remoteDBs} = params;
@@ -40,7 +40,7 @@ export default class PouchDBDataSource implements IDataSource {
         }
 
         if (remoteDBs) {
-            this.syncHandler = remoteDBs.map((dbUrl) => {
+            this.syncHandlers = remoteDBs.map((dbUrl) => {
                 const otherDB = new levelUPAdapter(dbUrl);
                 return this.db.sync(otherDB, {
                     live: true,
@@ -54,12 +54,13 @@ export default class PouchDBDataSource implements IDataSource {
     }
 
     public connection(params: ConnectionParams): Promise<PouchDBImpl> {
+        const {syncHandlers} = this;
         const {autoSave} = params;
         if (autoSave) {
             return Promise.reject("Not Implemented");
         }
 
-        const connection = new PouchDBImpl(this.db, params, this.syncHandler);
+        const connection = new PouchDBImpl(this.db, params, {syncHandlers});
         return Promise.resolve(connection)
             .then((adapter: PouchDBImpl) => adapter.isConnected())
             .then((result) => result ? connection : Promise.reject(Error(`Error: ${result}`)));

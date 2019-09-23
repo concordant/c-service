@@ -9,8 +9,9 @@ class TestObject {
     }
 }
 
-describe("Establish Connection tests", () => {
-    const TEST_KEY = "test_key";
+describe("PouchDB Object tests", () => {
+    // Need to clear database between tests
+    const TEST_KEY = "test_key_cmp";
     let connection: IBasicConnection;
 
     beforeAll(() => {

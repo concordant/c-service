@@ -7,6 +7,7 @@
  * I've walked a few steps on that direction myself. I think its doable... but something for after the MVP
  */
 import {Document} from "../DataTypes/Interfaces/Types";
+import Sync = PouchDB.Replication.Sync;
 
 export type DataSource = IDataSource;
 export type Connection = IBasicConnection | ITxConnection;
@@ -14,6 +15,9 @@ export type Database = IDB;
 export type DBTxHandler = IDBTxHandlers;
 export type DBSaveAllHandler = IDBSaveAllHandlers;
 export type DatabaseEventEmitter = IDatabaseEventEmitter;
+export type DatabaseHooks = IDatabaseHooks;
+export type DatabaseParams = IDatabaseParams;
+export type InternalObject<T> = IInternalObject;
 
 export type Key = string | { key: string, bucket: string };
 
@@ -28,11 +32,25 @@ export interface IContext {
     compareVersion(other: IContext): CONTEXT_COMPARE;
 }
 
+export interface IInternalObject {
+    conflicts: string[];
+}
+
 export interface IConnectionParams {
     autoSave?: boolean;
     handleConflicts?: boolean;
+    hook?: DatabaseHooks;
     putRetriesBeforeError?: number;
     putRetryMaxTimeout?: number;
+}
+
+export interface IDatabaseParams {
+    syncHandlers?: Array<Sync<any> | undefined>;
+    hooks?: DatabaseHooks;
+}
+
+export interface IDatabaseHooks {
+    conflictHandler: <T, InternalObj extends InternalObject<T>> (current: InternalObj, objs: InternalObj[]) => InternalObj;
 }
 
 /** The comparison result of two contexts */
@@ -139,7 +157,7 @@ interface IDB {
      * Stop listening to events of provided EventEmitter
      * @param eventEmitter the event emitter to to be stopped
      */
-    cancelSubscription(eventEmitter: DatabaseEventEmitter): void;
+    cancel(eventEmitter: DatabaseEventEmitter): void;
 
     /**
      * Release object from local store
@@ -163,6 +181,8 @@ interface IDB {
  * @comment Channels might be a more appropriate name
  */
 export interface IBasicConnection extends IDB {
+
+    registerHooks(hooks: DatabaseHooks): void;
 
     /**
      * Calls save for every object in cache that has outstanding operations

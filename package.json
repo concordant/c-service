@@ -8,8 +8,8 @@
     "dist/**/*"
   ],
   "scripts": {
-    "start": "tsc --skipLibCheck && babel-node dist/server.js",
-    "test": "./setup.sh && jest && ./teardown.sh",
+    "start": "babel-node dist/server.js",
+    "test": "./setup.sh && jest --coverage $TESTS && ./teardown.sh",
     "coverage": "jest --coverage",
     "build": "tsc --skipLibCheck",
     "prepare": "npm run build",

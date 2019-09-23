@@ -57,7 +57,7 @@ describe("Handling conflicts", () => {
             .then(() => obj1.update(new TestObject("obj1")).save())
             .then(() => connection1.get(TEST_KEY))
             .then((conflictObj) => {
-                expect((conflictObj as PouchDBObject<TestObject>).conflict).toEqual(true);
+                expect((conflictObj as PouchDBObject<TestObject>).conflicts.length > 0).toEqual(true);
             })
             .catch((error: Error) => {
                 const pouchError = error as unknown as { status: number };

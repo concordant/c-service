@@ -203,7 +203,7 @@ describe("Database events test", () => {
             change: () => {
                 counter = counter + 1;
                 if (counter === 2) {
-                    connection.cancelSubscription(eventEmitter);
+                    connection.cancel(eventEmitter);
                 }
             },
         });

@@ -3,16 +3,18 @@ import {Document} from "../../../DataTypes/Interfaces/Types";
 import {CONTEXT_COMPARE, IContext} from "../../../Interfaces/Types";
 import PouchDBImpl from "../PouchDB";
 import ExistingDocument = PouchDB.Core.ExistingDocument;
+import AllDocsMeta = PouchDB.Core.AllDocsMeta;
 
 export default class PouchDBObject<T> implements Document<T> {
     public id: string;
     private newDocument?: ExistingDocument<T>;
 
     constructor(
-        private document: ExistingDocument<T>,
+        private document: ExistingDocument<T> & AllDocsMeta,
         private connection: PouchDBImpl,
-        public conflict: boolean = false) {
+        public conflicts: string[] = []) {
         this.id = document._id;
+        this.conflicts = document._conflicts || this.conflicts;
     }
 
     /**
