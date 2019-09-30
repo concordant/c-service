@@ -57,6 +57,16 @@ export default class PouchDB implements IBasicConnection {
             .catch(() => Promise.reject(new Error("Couldn't Connect to server")));
     }
 
+    // TODO
+
+    public goOffline(flush?: boolean): Promise<void> {
+        return Promise.resolve();
+    }
+
+    public goOnline(flush?: boolean): Promise<void> {
+        return Promise.resolve();
+    }
+
     public get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<PouchDBObject<T>> {
         const {handleConflicts} = this.connectionParams;
         const {hooks} = this.params;

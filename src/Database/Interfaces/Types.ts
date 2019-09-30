@@ -97,23 +97,6 @@ export interface IDataSource {
      * @return a ITxConnection
      */
     txConnection(): Promise<ITxConnection>; // €
-
-    /**
-     * Disconnects from the remote database
-     * User can use objects that were cached locally
-     *
-     * @param flush - tries to flush outstanding changes
-     * Reject promise if impossible to connect or operations were rejected
-     */
-    goOffline(flush?: boolean): Promise<void>;
-
-    /**
-     * Tries to reestablish a connection with the remote database
-     *
-     * @param tryFlush - tries to commit outstanding local operations
-     * Reject promise if impossible to connect or operations were rejected
-     */
-    goOnline(tryFlush?: boolean): Promise<void>;
 }
 
 // TODO: Interface must extend event emitter.
@@ -175,12 +158,31 @@ interface IDB {
     close(): Promise<void>;
 }
 
+export interface IOfflineSupport extends IDB {
+    /**
+     * Disconnects from the remote database
+     * User can use objects that were cached locally
+     *
+     * @param flush - tries to flush outstanding changes
+     * Reject promise if impossible to connect or operations were rejected
+     */
+    goOffline(flush?: boolean): Promise<void>;
+
+    /**
+     * Tries to reestablish a connection with the remote database
+     *
+     * @param tryFlush - tries to commit outstanding local operations
+     * Reject promise if impossible to connect or operations were rejected
+     */
+    goOnline(tryFlush?: boolean): Promise<void>;
+}
+
 /**
  * A Connection establishes a channel to query the database
  * Different types of connections can have different types of guarantees
  * @comment Channels might be a more appropriate name
  */
-export interface IBasicConnection extends IDB {
+export interface IBasicConnection extends IOfflineSupport {
 
     registerHooks(hooks: DatabaseHooks): void;
 
@@ -211,7 +213,7 @@ export interface IBasicConnection extends IDB {
  * Establishes a transactional session with the database.
  * Aims to provide a general interface that programmers can use to delimit transactions
  */
-interface ITxConnection extends IDB {
+interface ITxConnection extends IOfflineSupport {
 
     /**
      * Begins a new transactions.
