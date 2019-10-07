@@ -75,28 +75,14 @@ export default class PouchDB implements IBasicConnection {
         }
 
         const getParams = {conflicts: handleConflicts};
-
         const convertedKey = PouchDB.convertKeyToId(key);
+
         return this.connection.get<T>(convertedKey, getParams)
-            .then((obj: (ExistingDocument<T> & AllDocsMeta)) => new PouchDBObject<T>(obj, this, obj._conflicts || []))
-            .then((obj) => {
-                if (obj.conflicts.length > 0) {
-                    if (!hooks || !hooks.conflictHandler) {
-                        return Promise.reject("Found conflict, but no conflict handler is registered");
-                    }
-                    return Promise.all(obj.conflicts.map(
-                        (rev: string) => this.connection.get(convertedKey, {rev, ...getParams})))
-                        .then((objs: Array<(ExistingDocument<T> & AllDocsMeta)>) =>
-                            hooks.conflictHandler(obj, objs.map((o) => new PouchDBObject<T>(o, this, []))));
-                } else {
-                    return obj;
-                }
-            })
+            .then((obj) => this.handleGetResponse(obj))
             .catch((error: PouchError) => {
                 if (error.status === NOT_FOUND_ERROR_CODE && (defaultObj !== undefined && defaultObj !== null)) {
                     return this.create<T>(key, defaultObj);
                 }
-
                 return Promise.reject(error);
             });
 
@@ -135,6 +121,8 @@ export default class PouchDB implements IBasicConnection {
         handlers: IDBHandlers<Document<T>>,
         filter?: IFilter): DatabaseEventEmitter {
         let docIds: string[];
+        const {handleConflicts} = this.connectionParams;
+
         if (keyOrKeys instanceof Array) {
             docIds = keyOrKeys.map((k) => PouchDB.convertKeyToId(k));
         } else if (typeof keyOrKeys === "string") {
@@ -150,11 +138,24 @@ export default class PouchDB implements IBasicConnection {
             live: true,
             since: "now",
         });
+
+        // TODO: cleanup duplicated code
         if (handlers.change) {
             changes.on(CHANGE_EVENT, (change) => {
                 if (handlers.change && change.doc) {
-                    const obj: Document<T> = new PouchDBObject(change.doc, this);
-                    handlers.change(change.id, obj);
+                    if (handleConflicts) {
+                        const getParams = {conflicts: handleConflicts};
+                        this.connection.get<T>(change.doc._id, getParams)
+                            .then((obj) => this.handleGetResponse(obj))
+                            .then((obj: Document<T>) => {
+                                if (handlers.change && change.doc) {
+                                    handlers.change(obj.id, obj);
+                                }
+                            });
+                    } else {
+                        const obj: Document<T> = new PouchDBObject(change.doc, this);
+                        handlers.change(obj.id, obj);
+                    }
                 }
             });
         }
@@ -240,6 +241,30 @@ export default class PouchDB implements IBasicConnection {
             .then((resp: Response) => {
                 doc._rev = resp.rev;
                 return new PouchDBObject(doc, this);
+            });
+    }
+
+    private handleGetResponse<T>(objIn: (ExistingDocument<T> & AllDocsMeta)): Promise<PouchDBObject<T>> {
+        const {hooks} = this.params;
+        const {handleConflicts} = this.connectionParams;
+        const getParams = {conflicts: handleConflicts};
+        return Promise.resolve(new PouchDBObject<T>(objIn, this, objIn._conflicts || []))
+            .then((obj) => {
+                if (obj.conflicts.length > 0) {
+                    if (!hooks || !hooks.conflictHandler) {
+                        return Promise.reject("Found conflict, but no conflict handler is registered");
+                    }
+                    return Promise.all(obj.conflicts.map(
+                        (rev: string) => this.connection.get(objIn._id, {rev, ...getParams})))
+                        .then((objs: Array<(ExistingDocument<T> & AllDocsMeta)>) => {
+                            return hooks.conflictHandler(obj, objs.map((o) => new PouchDBObject(o, this, [])));
+                        })
+                        .then((solved: T) => {
+                            return new PouchDBObject({_id: objIn._id, _rev: objIn._rev, ...solved}, this, []);
+                        });
+                } else {
+                    return obj;
+                }
             });
     }
 

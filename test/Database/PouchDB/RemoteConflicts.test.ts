@@ -14,8 +14,9 @@ class TestObject {
 }
 
 // FIX: TESTS DONT ALWAYS EXIT
-describe("Handling conflicts", () => {
-    const TEST_KEY = uuid();
+// NOTE: The semantics of mixing automatic conflict resolution with resolution hooks is not specified.
+describe("Handling conflicts basic", () => {
+    let TEST_KEY: string;
     let connection1: IBasicConnection;
     let connection2: IBasicConnection;
     const remoteDBs = ["http://localhost:5984/testdb"];
@@ -39,17 +40,21 @@ describe("Handling conflicts", () => {
 
     });
 
-    it("generate conflict", (done) => {
-        const random = uuid();
+    it("conflict handler triggered on get", (done) => {
+        TEST_KEY = uuid();
         let remoteObj: Document<TestObject>;
+        let onlyAfter = false;
 
         const hooks: DatabaseHooks = {
-            conflictHandler: (obj, objs) => {
+            conflictHandler: (obj: Document<TestObject>, objs: Array<Document<TestObject>>) => {
+                if (!onlyAfter) {
+                    fail("Unexpected conflict trigger");
+                }
+
                 if (objs.length > 0) {
                     done();
                     return obj;
                 }
-                fail("No conflicts returned");
                 throw new Error("Unexpected call");
             },
         };
@@ -59,6 +64,7 @@ describe("Handling conflicts", () => {
         const sub = connection1.subscribe<TestObject>(TEST_KEY, {
             change: (key, newObj) => {
                 connection1.cancel(sub);
+                onlyAfter = true;
                 newObj.update(new TestObject("value1"))
                     .save()
                     .then(() => remoteObj.update(new TestObject("value2")).save())
@@ -70,6 +76,53 @@ describe("Handling conflicts", () => {
         connection2.get<TestObject>(TEST_KEY, new TestObject())
             .then((obj: Document<TestObject>) => {
                 remoteObj = obj;
+            })
+            .catch((error) => fail(error));
+    });
+
+    it("conflict handler triggered onChange", (done) => {
+        TEST_KEY = uuid();
+        let remoteObj: Document<TestObject>;
+        let solved = false;
+
+        const hooks: DatabaseHooks = {
+            conflictHandler: () => {
+                return new TestObject("conflict solved");
+            },
+        };
+
+        connection1.registerHooks(hooks);
+        connection2.registerHooks(hooks);
+
+        const sub1 = connection1.subscribe<TestObject>(TEST_KEY, {
+            change: (key, newObj) => {
+                connection1.cancel(sub1);
+                newObj
+                    .update(new TestObject("value1")).save() // Modify created object
+                    .then(() => remoteObj.update(new TestObject("value2")).save()); // save conflicting version
+            },
+        });
+
+        const sub2 = connection2.subscribe<TestObject>(TEST_KEY, {
+            change: (key, newObj) => {
+                if (newObj.current().foo === "conflict solved" && !solved) {
+                    solved = true;
+                    newObj.save().then(() => {
+                        // Make sure the resolution is propagated on save
+                        connection2.get<TestObject>(TEST_KEY)
+                            .then((obj: Document<TestObject>) => {
+                                expect(obj.current().foo).toEqual("conflict solved");
+                                done();
+                            });
+                    });
+                }
+            },
+        });
+
+        // Create object
+        connection2.get<TestObject>(TEST_KEY, new TestObject())
+            .then((obj: Document<TestObject>) => {
+                remoteObj = obj; // keep first retrieved version to generate conflict later
             })
             .catch((error) => fail(error));
     });
@@ -106,12 +159,12 @@ describe("Automatic conflict resolution", () => {
 
     });
 
-    it("Last Write Wins --  default strategy", (done) => {
+    it("Last Write Wins", (done) => {
         const random = uuid();
         let remoteObj: Document<TestObject>;
 
         const hooks: DatabaseHooks = {
-            conflictHandler: (obj, objs) => {
+            conflictHandler: (obj: Document<TestObject>, objs: Array<Document<TestObject>>) => {
                 if (objs.length > 0) {
                     fail();
                 }

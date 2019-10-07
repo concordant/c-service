@@ -15,9 +15,9 @@ export type Database = IDB;
 export type DBTxHandler = IDBTxHandlers;
 export type DBSaveAllHandler = IDBSaveAllHandlers;
 export type DatabaseEventEmitter = IDatabaseEventEmitter;
-export type DatabaseHooks = IDatabaseHooks;
+export type DatabaseHooks = IDatabaseHooks<any>;
 export type DatabaseParams = IDatabaseParams;
-export type InternalObject<T> = IInternalObject;
+// export type InternalObject<T> = IInternalObject<T>;
 
 export type Key = string | { key: string, bucket: string };
 
@@ -32,9 +32,9 @@ export interface IContext {
     compareVersion(other: IContext): CONTEXT_COMPARE;
 }
 
-export interface IInternalObject {
-    conflicts: string[];
-}
+// export interface IInternalObject<T> {
+//     conflicts?: string[];
+// }
 
 export interface IConnectionParams {
     autoSave?: boolean;
@@ -49,8 +49,8 @@ export interface IDatabaseParams {
     hooks?: DatabaseHooks;
 }
 
-export interface IDatabaseHooks {
-    conflictHandler: <T, InternalObj extends InternalObject<T>> (current: InternalObj, objs: InternalObj[]) => InternalObj;
+export interface IDatabaseHooks<T> {
+    conflictHandler: (current: Document<T>, objs: Array<Document<T>>) => T;
 }
 
 /** The comparison result of two contexts */
