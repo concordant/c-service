@@ -69,7 +69,6 @@ export default class PouchDB implements IBasicConnection {
 
     public get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<PouchDBObject<T>> {
         const {handleConflicts} = this.connectionParams;
-        const {hooks} = this.params;
         if (passThrough) {
             return Promise.reject("Not Implemented");
         }
@@ -237,7 +236,7 @@ export default class PouchDB implements IBasicConnection {
         Promise<PouchDBObject<T>> {
         const doc = obj as PouchDocument<T> & ExistingDocument<T>;
         doc._id = PouchDB.convertKeyToId(key);
-        return this.connection.put(obj)
+        return this.connection.put(doc)
             .then((resp: Response) => {
                 doc._rev = resp.rev;
                 return new PouchDBObject(doc, this);

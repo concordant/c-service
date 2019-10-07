@@ -109,7 +109,7 @@ describe("Handling conflicts basic", () => {
                     solved = true;
                     newObj.save().then(() => {
                         // Make sure the resolution is propagated on save
-                        connection2.get<TestObject>(TEST_KEY)
+                        return connection2.get<TestObject>(TEST_KEY)
                             .then((obj: Document<TestObject>) => {
                                 expect(obj.current().foo).toEqual("conflict solved");
                                 done();
