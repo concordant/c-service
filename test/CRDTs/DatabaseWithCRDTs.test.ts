@@ -13,22 +13,21 @@ import {DatabaseHooks, IBasicConnection} from "../../src/Database/Interfaces/Typ
 import {promiseDelay} from "../../src/Utils/Utils";
 
 class CRDTWrapper {
-    public static wrap(object: CRDT, type: string, clientId: string) {
-        return new CRDTWrapper(CRDTCodec.encode(object.state()), type, clientId);
+    public static wrap(object: CRDT, type: string) {
+        return new CRDTWrapper(CRDTCodec.encode(object.state()), type);
     }
 
-    public static unwrap(object: CRDTWrapper) {
-        const unwrapped = CRDT(object.type)(object.clientId);
+    public static unwrap(object: CRDTWrapper, clientId: string) {
+        const unwrapped = CRDT(object.type)(clientId);
         unwrapped.apply(CRDTCodec.decode(object.buffer));
         return unwrapped;
     }
 
     private buffer: any;
 
-    constructor(buffer: any, private type: string, private clientId: string) {
+    constructor(buffer: any, private type: string) {
         this.buffer = buffer;
     }
-
 }
 
 describe("Basic usage", () => {
@@ -58,17 +57,17 @@ describe("Basic usage", () => {
 
     it("Save and update CRDT object", () => {
         TEST_KEY = uuid();
-        const defaultObject = CRDTWrapper.wrap(CRDT("ormap")("client1"), "ormap", "client1");
+        const defaultObject = CRDTWrapper.wrap(CRDT("ormap")("client1"), "ormap");
         return connection2.get<CRDTWrapper>(TEST_KEY, defaultObject)
             .then(() => connection2.get<CRDTWrapper>(TEST_KEY))
             .then((obj: Document<CRDTWrapper>) => {
-                const newCRDT = CRDTWrapper.unwrap(obj.current());
+                const newCRDT = CRDTWrapper.unwrap(obj.current(), "client2");
                 newCRDT.applySub("r1", "ormap", "applySub", "A", "mvreg", "write", "A");
-                return obj.update(CRDTWrapper.wrap(newCRDT, "ormap", "client1")).save();
+                return obj.update(CRDTWrapper.wrap(newCRDT, "ormap")).save();
             })
             .then(() => connection2.get<CRDT>(TEST_KEY))
             .then((obj: Document<CRDTWrapper>) => {
-                const newCRDT = CRDTWrapper.unwrap(obj.current());
+                const newCRDT = CRDTWrapper.unwrap(obj.current(), "client2");
                 expect(newCRDT.value().r1).toBeDefined();
             })
             .catch((error) => fail(error));
@@ -80,7 +79,7 @@ describe("Basic usage", () => {
 
         const client1DefaultObject = CRDT("ormap")("client1");
         // default object is created by client2
-        const client2DefaultObjectWrapped = CRDTWrapper.wrap(CRDT("ormap")("client2"), "ormap", "client2");
+        const client2DefaultObjectWrapped = CRDTWrapper.wrap(CRDT("ormap")("client2"), "ormap");
         let remoteObj: Document<CRDTWrapper>;
         let onlyAfter = false;
 
@@ -92,15 +91,15 @@ describe("Basic usage", () => {
                     fail("Unexpected conflict trigger");
                 }
 
-                const objCRDT = CRDTWrapper.unwrap(obj.current());
+                const objCRDT = CRDTWrapper.unwrap(obj.current(), "client2");
                 if (objs.length > 0) {
                     objs.forEach((o) => {
-                        const other = CRDTWrapper.unwrap(o.current());
+                        const other = CRDTWrapper.unwrap(o.current(), "client2");
                         // console.log("Merging", objCRDT.value(), other.value());
                         objCRDT.apply(other.state());
                     });
                     // console.log("Resulting state", objCRDT.value());
-                    return CRDTWrapper.wrap(objCRDT, "ormap", "client2");
+                    return CRDTWrapper.wrap(objCRDT, "ormap");
                 }
                 throw new Error("Unexpected call");
             },
@@ -112,20 +111,20 @@ describe("Basic usage", () => {
             change: (key, newObj) => {
                 connection1.cancel(sub);
                 onlyAfter = true;
-                const spreadSheetMap1 = CRDTWrapper.unwrap(newObj.current());
+                const spreadSheetMap1 = CRDTWrapper.unwrap(newObj.current(), "client1");
                 spreadSheetMap1.applySub("r1", "ormap", "applySub", "A", "mvreg", "write", "A");
-                newObj.update(CRDTWrapper.wrap(spreadSheetMap1, "ormap", "client1"))
+                newObj.update(CRDTWrapper.wrap(spreadSheetMap1, "ormap"))
                     .save()
                     .then(() => {
                         client1DefaultObject.applySub("r2", "ormap", "applySub", "A", "mvreg", "write", "A");
-                        return remoteObj.update(CRDTWrapper.wrap(client1DefaultObject, "ormap", "client1"))
+                        return remoteObj.update(CRDTWrapper.wrap(client1DefaultObject, "ormap"))
                             .save()
                             .catch((err) => fail(err));
                     })
                     .then(() => promiseDelay(null, 200))
                     .then(() => connection2.get<CRDT>(TEST_KEY))
                     .then((obj) => {
-                        const unwrapped = CRDTWrapper.unwrap(obj.current());
+                        const unwrapped = CRDTWrapper.unwrap(obj.current(), "client1");
                         expect(unwrapped.value().r1).toBeDefined();
                         expect(unwrapped.value().r2).toBeDefined();
                     })

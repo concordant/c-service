@@ -3,7 +3,7 @@ import PouchDB from "pouchdb";
 
 const maxRetryTimeout = 30000;
 const dbUrl = process.env.COUCHDB_URL || "http://localhost:5984/";
-const dbName: string = process.env.DBNAME as string | "";
+const dbName: string = process.env.DBNAME as string || "";
 
 if (!dbName) {
     console.log("Please set DBNAME environment variable");
