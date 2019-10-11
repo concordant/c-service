@@ -173,7 +173,6 @@ describe("Database events test", () => {
             .catch((error) => fail(error));
     });
 
-
     it("subscribe array of keys", (done) => {
         let counter = 0;
         const random0 = uuid();
@@ -225,5 +224,74 @@ describe("Database events test", () => {
     });
     afterEach(() => {
         return connection.close().catch((err) => console.log(err));
+    });
+});
+
+describe("Test offline support", () => {
+    const TEST_KEY = uuid();
+    let connection1: IBasicConnection;
+    let connection2: IBasicConnection;
+    const remoteDBs = ["http://localhost:5984/testdb"];
+    let originalTimeout: number;
+
+    beforeAll(() => {
+        const params1: AdapterParams = {
+            connectionParams: {adapter: "memory"},
+            dbName: "testdb",
+            remoteDBs,
+        };
+        const params2: AdapterParams = {
+            connectionParams: {},
+            dbName: "testdb", host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
+        };
+        const dataSource1 = new PouchDBDataSource(PouchDB, params1);
+        const dataSource2 = new PouchDBDataSource(PouchDB, params2);
+        return dataSource1.connection({autoSave: false})
+            .then((c) => connection1 = c)
+            .then(() => dataSource2.connection({autoSave: false}))
+            .then((c) => connection2 = c);
+
+    });
+
+    // "offline updates"
+    // "go offline and receive remote updates on reconnect"
+    // "go offline and push local updates on reconnect"
+    // "go offline; update; receive remote updates on reconnect; solve conflict"
+
+    beforeEach(() => {
+        originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+        jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+    });
+
+    it("go offline and receive pending updates on reconnect", (done) => {
+        jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+
+        const changeHandler = (key: string, obj: Document<TestObject>) => {
+            expect(connection1.isOnline()).toBe(true);
+            expect(key).toEqual(TEST_KEY);
+            expect(obj.current().foo).toEqual("foo");
+            done();
+        };
+
+        // TODO: On connection should wait for initial sync to complete... use parameter to wait for it
+        new Promise((resolve) => setTimeout(() => resolve(), 500))
+            .then(() => connection1.get<TestObject>(TEST_KEY, new TestObject("first get")))
+            .then(() => {
+                connection1.subscribe<TestObject>(TEST_KEY, {change: changeHandler});
+            })
+            .then(() => connection1.goOffline(true))
+            .then(() => connection2.get<TestObject>(TEST_KEY, new TestObject()))
+            .then((obj) => obj.update(new TestObject("foo")).save())
+            .then(() => new Promise((resolve) => setTimeout(() => resolve(), 200)))
+            .then(() => connection1.goOnline())
+            .catch((error) => fail(error));
+    });
+
+    afterEach(() => {
+        jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
+        return connection1
+            .close()
+            .then(() => connection2.close())
+            .catch((err) => console.log(err));
     });
 });

@@ -10,14 +10,14 @@ import {
     IFilter,
     Key,
 } from "../../Interfaces/Types";
-import {ConnectionParams} from "./DataSource/PouchDBDataSource";
+import PouchDBDataSource, {ConnectionParams} from "./DataSource/PouchDBDataSource";
 import PouchDBObject from "./DataTypes/PouchDBObject";
-import Database = PouchDB.Database;
 import PouchError = PouchDB.Core.Error;
 import PouchDocument = PouchDB.Core.Document;
 import ExistingDocument = PouchDB.Core.ExistingDocument;
 import Response = PouchDB.Core.Response;
 import AllDocsMeta = PouchDB.Core.AllDocsMeta;
+import Database = PouchDB.Database;
 
 const CHANGE_EVENT = "change";
 const NOT_FOUND_ERROR_CODE = 404;
@@ -36,17 +36,21 @@ export default class PouchDB implements IBasicConnection {
     }
 
     // private eventEmitter: EventEmitter;
+    private connection: Database;
     private subscriptions: DatabaseEventEmitter[];
+    // lastSeq is the seq from the last received change.
+    private handlers: Array<{ handlers: IDBHandlers<Document<any>>, docIds: string[], lastSeq: number }> = [];
 
     constructor(
-        private connection: Database,
+        private dataSource: PouchDBDataSource,
         private connectionParams: ConnectionParams,
         private params: DatabaseParams,
     ) {
+        this.connection = dataSource.db;
         this.subscriptions = [];
     }
 
-    // TODO: Add support for multiple handdlers per hook
+    // TODO: Add support for multiple handlers per hook
     public registerHooks(hooks: DatabaseHooks) {
         this.params.hooks = hooks;
     }
@@ -59,12 +63,16 @@ export default class PouchDB implements IBasicConnection {
 
     // TODO
 
-    public goOffline(flush?: boolean): Promise<void> {
-        return Promise.resolve();
+    public isOnline(): boolean {
+        return this.dataSource.activeRemotes().length !== 0;
     }
 
-    public goOnline(flush?: boolean): Promise<void> {
-        return Promise.resolve();
+    public goOffline(waitFlush?: boolean): Promise<void> {
+        return this.dataSource.disconnect();
+    }
+
+    public goOnline(waitFlush?: boolean): Promise<void> {
+        return Promise.resolve(this.dataSource.connect());
     }
 
     public get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<PouchDBObject<T>> {
@@ -138,26 +146,36 @@ export default class PouchDB implements IBasicConnection {
             since: "now",
         });
 
-        // TODO: cleanup duplicated code
+        // Stores the handler definition. Might be useful.
+        const handler = {handlers, docIds, lastSeq: 0};
+        this.handlers.push(handler);
+
         if (handlers.change) {
             changes.on(CHANGE_EVENT, (change) => {
-                if (handlers.change && change.doc) {
+                const callChangeHandler = (obj: PouchDBObject<T>) => {
+                    if (handlers.change && change.doc) {
+                        handlers.change(obj.id, obj);
+                    }
+                };
+
+                if (change.seq !== undefined && typeof change.seq === "number") {
+                    handler.lastSeq = Math.max(handler.lastSeq, change.seq);
+                }
+                if (change.doc) {
                     if (handleConflicts) {
                         const getParams = {conflicts: handleConflicts};
                         this.connection.get<T>(change.doc._id, getParams)
                             .then((obj) => this.handleGetResponse(obj))
-                            .then((obj: Document<T>) => {
-                                if (handlers.change && change.doc) {
-                                    handlers.change(obj.id, obj);
-                                }
+                            .then((obj) => {
+                                callChangeHandler(obj);
                             });
                     } else {
-                        const obj: Document<T> = new PouchDBObject(change.doc, this);
-                        handlers.change(obj.id, obj);
+                        callChangeHandler(new PouchDBObject(change.doc, this));
                     }
                 }
             });
         }
+
         this.subscriptions.push(changes);
         return changes;
     }
@@ -196,30 +214,8 @@ export default class PouchDB implements IBasicConnection {
     }
 
     public close(): Promise<void> {
-        const {syncHandlers} = this.params;
         Object.values(this.subscriptions).forEach((v: DatabaseEventEmitter) => v.cancel());
-        if (syncHandlers) {
-            syncHandlers.forEach((h, idx) => {
-                if (h === undefined) {
-                    return;
-                }
-                h.on("complete", (info: any) => {
-                    if (syncHandlers) {
-                        syncHandlers[idx] = undefined;
-                    }
-                });
-                h.cancel();
-            });
-        }
-        const waitFor = (resolve: any) => {
-            if (!syncHandlers || syncHandlers.every((h) => h === undefined)) {
-                return resolve(this.connection.close());
-            } else {
-                setTimeout(() => waitFor(resolve), 1000);
-            }
-        };
-
-        return new Promise((resolve) => waitFor(resolve));
+        return this.dataSource.close();
     }
 
     public isAutoSave(): boolean {

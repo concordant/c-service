@@ -163,18 +163,20 @@ export interface IOfflineSupport extends IDB {
      * Disconnects from the remote database
      * User can use objects that were cached locally
      *
-     * @param flush - tries to flush outstanding changes
+     * @param waitFlush - try and wait for flushing outstanding changes
      * Reject promise if impossible to connect or operations were rejected
      */
-    goOffline(flush?: boolean): Promise<void>;
+    goOffline(waitFlush?: boolean): Promise<void>;
 
     /**
      * Tries to reestablish a connection with the remote database
      *
-     * @param tryFlush - tries to commit outstanding local operations
+     * @param tryFlush - waits for changes flush to server
      * Reject promise if impossible to connect or operations were rejected
      */
-    goOnline(tryFlush?: boolean): Promise<void>;
+    goOnline(waitFlush?: boolean): Promise<void>;
+
+    isOnline(): boolean;
 }
 
 /**
