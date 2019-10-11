@@ -8,7 +8,7 @@ npm install
 
 Ru server with:
 ```bash
-$DBNAME="input db name here" npm run server
+DBNAME="input db name here" npm run server
 ```
 Need to start a CouchDB server beforehand. Can customize the database url with the environment variable COUCHDB_URL. You might need to change the binding address in CouchDB admin panel to allow peers to connect to the database.
 
