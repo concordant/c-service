@@ -58,7 +58,7 @@ describe("Basic usage", () => {
     it("Save and update CRDT object", () => {
         TEST_KEY = uuid();
         const defaultObject = CRDTWrapper.wrap(CRDT("ormap")("client1"), "ormap");
-        return connection2.get<CRDTWrapper>(TEST_KEY, defaultObject)
+        return connection2.get<CRDTWrapper>(TEST_KEY, () => defaultObject)
             .then(() => connection2.get<CRDTWrapper>(TEST_KEY))
             .then((obj: Document<CRDTWrapper>) => {
                 const newCRDT = CRDTWrapper.unwrap(obj.current(), "client2");
@@ -132,9 +132,115 @@ describe("Basic usage", () => {
             },
         });
 
-        return connection2.get<CRDTWrapper>(TEST_KEY, client2DefaultObjectWrapped)
+        return connection2.get<CRDTWrapper>(TEST_KEY, () => client2DefaultObjectWrapped)
             .then((obj: Document<CRDTWrapper>) => remoteObj = obj)
             .catch((error) => fail(error));
     });
 
+});
+
+describe("Test offline support with CRDTs", () => {
+    const TEST_KEY = uuid();
+    let connection1: IBasicConnection;
+    let connection2: IBasicConnection;
+    const remoteDBs = ["http://localhost:5984/testdb"];
+    let originalTimeout: number;
+
+    beforeAll(() => {
+        const params1: AdapterParams = {
+            connectionParams: {adapter: "memory"},
+            dbName: "testdb",
+            remoteDBs,
+        };
+        const params2: AdapterParams = {
+            connectionParams: {},
+            dbName: "testdb", host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
+        };
+        const dataSource1 = new PouchDBDataSource(PouchDB, params1);
+        const dataSource2 = new PouchDBDataSource(PouchDB, params2);
+        return dataSource1.connection({autoSave: false, handleConflicts: true})
+            .then((c) => connection1 = c)
+            .then(() => dataSource2.connection({autoSave: false, handleConflicts: true}))
+            .then((c) => connection2 = c);
+
+    });
+
+    // "go offline and receive remote updates on reconnect"
+    // "go offline and push local updates on reconnect"
+    // "go offline; update; receive remote updates on reconnect; solve conflict"
+
+    beforeEach(() => {
+        originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+        jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+    });
+
+    it("go offline and receive pending updates on reconnect", (done) => {
+        jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+
+        const client1DefaultObject = CRDT("ormap")("client1");
+        const client2DefaultObjectWrapped = CRDTWrapper.wrap(CRDT("ormap")("client2"), "ormap");
+        let remoteObj: Document<CRDTWrapper>;
+        let onlyAfter = false;
+
+        const hooks: DatabaseHooks = {
+            conflictHandler: (obj: Document<CRDTWrapper>, objs: Array<Document<CRDTWrapper>>) => {
+                if (!onlyAfter) {
+                    fail("Unexpected conflict trigger");
+                }
+                const objCRDT = CRDTWrapper.unwrap(obj.current(), "client2");
+                if (objs.length > 0) {
+                    objs.forEach((o) => {
+                        const other = CRDTWrapper.unwrap(o.current(), "client2");
+                        // console.log("Merging", objCRDT.value(), other.value());
+                        objCRDT.apply(other.state());
+                    });
+                    // console.log("Resulting state", objCRDT.value());
+                    return CRDTWrapper.wrap(objCRDT, "ormap");
+                }
+                throw new Error("Unexpected call");
+            },
+        };
+
+        connection2.registerHooks(hooks);
+
+        const sub = connection1.subscribe<CRDTWrapper>(TEST_KEY, {
+            change: (key, newObj) => {
+                connection1.cancel(sub);
+                onlyAfter = true;
+                const spreadSheetMap1 = CRDTWrapper.unwrap(newObj.current(), "client1");
+                spreadSheetMap1.applySub("r1", "ormap", "applySub", "A", "mvreg", "write", "A");
+                newObj.update(CRDTWrapper.wrap(spreadSheetMap1, "ormap"))
+                    .save()
+                    .then(() => {
+                        client1DefaultObject.applySub("r2", "ormap", "applySub", "A", "mvreg", "write", "A");
+                        return remoteObj.update(CRDTWrapper.wrap(client1DefaultObject, "ormap"))
+                            .save()
+                            .catch((err) => fail(err));
+                    })
+                    .then(() => promiseDelay(null, 200))
+                    // .then(() => connection2.goOnline())
+                    .then(() => connection2.get<CRDT>(TEST_KEY))
+                    .then((obj) => {
+                        const unwrapped = CRDTWrapper.unwrap(obj.current(), "client1");
+                        expect(unwrapped.value().r1).toBeDefined();
+                        expect(unwrapped.value().r2).toBeDefined();
+                    })
+                    .then(() => done());
+            },
+        });
+
+        return connection2.get<CRDTWrapper>(TEST_KEY, () => client2DefaultObjectWrapped)
+            .then((obj: Document<CRDTWrapper>) => remoteObj = obj)
+            .then(() => connection2.goOffline())
+            .catch((error) => fail(error));
+
+    });
+
+    afterEach(() => {
+        jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
+        return connection1
+            .close()
+            .then(() => connection2.close())
+            .catch((err) => console.log(err));
+    });
 });

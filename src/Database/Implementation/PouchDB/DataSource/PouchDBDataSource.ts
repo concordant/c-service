@@ -17,6 +17,7 @@ export interface IAdapterParams {
     protocol?: ConnectionProtocol;
     host?: string;
     port?: number;
+    url?: string;
     dbName: string;
     connectionParams?: any;
     remoteDBs?: string[];
@@ -26,41 +27,37 @@ export const DEFAULT_PORT = 3896;
 
 export default class PouchDBDataSource implements IDataSource {
 
-    private db: Database;
-    private syncHandlers?: Array<Sync<any>>;
+    public db: Database;
+    private active: { [K in string]: Sync<any> } = {};
+    private inactive: string[] = [];
 
-    constructor(levelUPAdapter: any, params: AdapterParams) {
-        const {protocol, host, port, dbName, connectionParams, remoteDBs} = params;
+    constructor(private levelFactory: any, params: AdapterParams) {
+        const {url, protocol, host, port, dbName, connectionParams, remoteDBs} = params;
 
-        if (!(host || port || protocol)) {
-            this.db = new levelUPAdapter(dbName, connectionParams);
+        if (!(host || port || protocol) && !url) {
+            this.db = new levelFactory(dbName, connectionParams);
         } else {
-            const url = `${protocol}://${host}:${port}/${dbName}`;
-            this.db = new levelUPAdapter(url, connectionParams);
+            if (!url) {
+                this.db = new levelFactory(`${protocol}://${host}:${port}/${dbName}`, connectionParams);
+            } else {
+                const slash = url.charAt(url.length - 1) === "/" ? "" : "/";
+                this.db = new levelFactory(url + slash + dbName, connectionParams);
+            }
         }
-
         if (remoteDBs) {
-            this.syncHandlers = remoteDBs.map((dbUrl) => {
-                const otherDB = new levelUPAdapter(dbUrl);
-                return this.db.sync(otherDB, {
-                    live: true,
-                    retry: true,
-                });
-                // .on("error", (error: any) => console.error("Sync Error", error))
-                // .on("change", (info: any) => console.log("Sync change", info))
-                // .on("paused", (info: any) => console.log("Sync paused", info))
-            });
+            remoteDBs.forEach((remoteUrl) => this.connectRemote(remoteUrl));
         }
     }
 
     public connection(params: ConnectionParams): Promise<PouchDBImpl> {
-        const {syncHandlers} = this;
         const {autoSave} = params;
         if (autoSave) {
             return Promise.reject("Not Implemented");
         }
 
-        const connection = new PouchDBImpl(this.db, params, {syncHandlers});
+        const connection = new PouchDBImpl(this, params, {});
+
+        // Wait for connection
         return Promise.resolve(connection)
             .then((adapter: PouchDBImpl) => adapter.isConnected())
             .then((result) => result ? connection : Promise.reject(Error(`Error: ${result}`)));
@@ -70,12 +67,51 @@ export default class PouchDBDataSource implements IDataSource {
         return Promise.reject("Not Implemented");
     }
 
-    public goOffline(flush?: boolean) {
-        return Promise.reject("Not Implemented");
+    public activeRemotes(): string[] {
+        return Object.keys(this.active);
     }
 
-    public goOnline(tryFlush?: boolean) {
-        return Promise.reject("Not Implemented");
+    public disconnect(): Promise<void> {
+        if (Object.keys(this.active).length > 0) {
+            for (const [url, h] of Object.entries(this.active)) {
+                if (h === undefined) {
+                    delete this.active[url];
+                }
+                h.on("complete", () => {
+                    this.inactive.push(url);
+                    delete this.active[url];
+                });
+                h.cancel();
+            }
+        }
+
+        const waitFor = (resolve: any) => {
+            if (Object.keys(this.active).length === 0) {
+                return resolve();
+            } else {
+                setTimeout(() => waitFor(resolve), 1000);
+            }
+        };
+        return new Promise((resolve) => waitFor(resolve));
+    }
+
+    public connect() {
+        this.inactive.forEach((url, idx) => {
+            this.connectRemote(url);
+            delete this.inactive[idx];
+        });
+    }
+
+    public close(): Promise<void> {
+        return this.disconnect().then(() => this.db.close());
+    }
+
+    private connectRemote(url: string) {
+        const remote = new this.levelFactory(url);
+        this.active[url] = this.db.sync(remote, {live: true, retry: true});
+        // .on("error", (error: any) => console.error("Sync Error in", url, error))
+        // .on("change", (info: any) => console.log("Sync change in", url, info))
+        // .on("paused", (info: any) => console.log("Sync paused in", url, info));
     }
 
 }

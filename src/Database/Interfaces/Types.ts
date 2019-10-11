@@ -78,6 +78,9 @@ export interface IDBObject<T> extends IContext {
      */
     isDirty(): boolean;
 
+    /**
+     * Retrieves the current value of the object
+     */
     current(): T;
 }
 
@@ -88,12 +91,13 @@ export interface IDataSource {
 
     /**
      *  Starts a new non-transactional session with the database
-     *  Get operations retrieve the most recent version of the object
+     *  Read operations always retrieve the most recent version of an object
      */
     connection(params: IConnectionParams): Promise<Connection>;
 
     /**
      * Starts a new transactional session with the database
+     * Read operations retrieve object versions based on a snapshot.
      * @return a ITxConnection
      */
     txConnection(): Promise<ITxConnection>; // €
@@ -102,24 +106,32 @@ export interface IDataSource {
 // TODO: Interface must extend event emitter.
 // TODO: BasicConnection emits events on auto save; TxConnection emits events on transaction accept and commit
 interface IDB {
+
+    /**
+     * Register a handler that allows to intersect certain calls in the system
+     * Currently it provides a ConflictHandler, which allows the programmer to
+     * manage multiple conflicting versions of the same object
+     */
+    registerHooks(hooks: DatabaseHooks): void;
+
     /**
      * Get an object from the database
      * Object is cached in the local store until release is called
      *
      * @param key - identifier of the object
-     * @param defaultObj - Reject promise if default object is not provided and object does not exist
+     * @param defaultObjFunc - Reject promise if default object is not provided and object does not exist
      * @param  passThrough - ignore the cached value and fetch a fresh version
      * @return current object associated with the key, empty object if it doesn't exist yet.
      * Reject promise if impossible to get object or object is not of the given type.
      */
 
-    get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<Document<T>>;
+    get<T>(key: Key, defaultObjFunc?: () => T, passThrough?: boolean): Promise<Document<T>>;
 
     // query TODO: Need to think more about this before making decisions. Dont forget GraphQL!
 
     /**
      * Delete the value associated with a key
-     * Implementation might not actually delete the key, dependening on the store
+     * Implementation might not actually delete the key, dependending on the store
      * In that case it must use some tombstone to distinguish empty value from deleted
      *
      * @param key - identifier of the object
@@ -161,20 +173,22 @@ interface IDB {
 export interface IOfflineSupport extends IDB {
     /**
      * Disconnects from the remote database
-     * User can use objects that were cached locally
+     * User can still read and modify objects that were cached locally
      *
-     * @param flush - tries to flush outstanding changes
+     * @param waitFlush - try and wait for flushing outstanding changes
      * Reject promise if impossible to connect or operations were rejected
      */
-    goOffline(flush?: boolean): Promise<void>;
+    goOffline(waitFlush?: boolean): Promise<void>;
 
     /**
      * Tries to reestablish a connection with the remote database
      *
-     * @param tryFlush - tries to commit outstanding local operations
+     * @param waitFlush - waits for changes flush to server
      * Reject promise if impossible to connect or operations were rejected
      */
-    goOnline(tryFlush?: boolean): Promise<void>;
+    goOnline(waitFlush?: boolean): Promise<void>;
+
+    isOnline(): boolean;
 }
 
 /**
@@ -183,9 +197,6 @@ export interface IOfflineSupport extends IDB {
  * @comment Channels might be a more appropriate name
  */
 export interface IBasicConnection extends IOfflineSupport {
-
-    registerHooks(hooks: DatabaseHooks): void;
-
     /**
      * Calls save for every object in cache that has outstanding operations
      */
@@ -197,12 +208,12 @@ export interface IBasicConnection extends IOfflineSupport {
      */
     discard(key: Key): void;
 
-    /*
+    /**
      * Discard local updates for all objects in cache
      */
     discardAll(): void;
 
-    /*
+    /**
      * All objects automatically call save when their state changes
      */
     setAutoSave(): void;

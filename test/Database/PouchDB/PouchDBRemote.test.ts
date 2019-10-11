@@ -12,7 +12,8 @@ class TestObject {
     }
 }
 
-// FIX: TESTS DONT ALWAYS EXIT
+// TODO: Need to create database on server programmatically before running tests
+
 describe("Get tests", () => {
     // const TEST_KEY = "test_key";
     let connection: IBasicConnection;
@@ -68,7 +69,7 @@ describe("Sync tests", () => {
             },
         });
 
-        connection2.get<TestObject>(TEST_KEY, new TestObject())
+        connection2.get<TestObject>(TEST_KEY, () => new TestObject())
             .then((obj: Document<TestObject>) => {
                 obj.update(new TestObject(random));
                 return obj.save();

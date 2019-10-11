@@ -73,7 +73,7 @@ describe("Handling conflicts basic", () => {
             },
         });
 
-        connection2.get<TestObject>(TEST_KEY, new TestObject())
+        connection2.get<TestObject>(TEST_KEY, () => new TestObject())
             .then((obj: Document<TestObject>) => {
                 remoteObj = obj;
             })
@@ -120,7 +120,7 @@ describe("Handling conflicts basic", () => {
         });
 
         // Create object
-        connection2.get<TestObject>(TEST_KEY, new TestObject())
+        connection2.get<TestObject>(TEST_KEY, () => new TestObject())
             .then((obj: Document<TestObject>) => {
                 remoteObj = obj; // keep first retrieved version to generate conflict later
             })
@@ -194,7 +194,7 @@ describe("Automatic conflict resolution", () => {
             },
         });
 
-        connection2.get<TestObject>(random, new TestObject())
+        connection2.get<TestObject>(random, () => new TestObject())
             .then((obj: Document<TestObject>) => {
                 remoteObj = obj;
             })

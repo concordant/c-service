@@ -29,14 +29,14 @@ describe("PouchDB Object tests", () => {
     });
 
     it("compare two equal versions", () => {
-        return connection.get<TestObject>(TEST_KEY, new TestObject())
+        return connection.get<TestObject>(TEST_KEY, () => new TestObject())
             .then((obj: Document<TestObject>) => {
                 expect(obj.compareVersion(obj)).toEqual(CONTEXT_COMPARE.EQUAL);
             });
     });
 
     it("compare modified version", () => {
-        return connection.get<TestObject>(TEST_KEY, new TestObject())
+        return connection.get<TestObject>(TEST_KEY, () => new TestObject())
             .then((obj: Document<TestObject>) => {
                 const obj1 = _.clone(obj);
                 obj1.update(obj1.current());
@@ -47,13 +47,13 @@ describe("PouchDB Object tests", () => {
     it("compare two subsequent versions", (done) => {
         let obj0: Document<TestObject>;
 
-        connection.get<TestObject>(TEST_KEY, new TestObject())
+        connection.get<TestObject>(TEST_KEY, () => new TestObject())
             .then((obj: Document<TestObject>) => {
                 obj.update(new TestObject("bar"));
                 obj0 = obj;
                 return obj.save();
             })
-            .then(() => connection.get<TestObject>(TEST_KEY, new TestObject()))
+            .then(() => connection.get<TestObject>(TEST_KEY, () => new TestObject()))
             .then((obj: Document<TestObject>) => {
                 expect(obj0.compareVersion(obj)).toEqual(CONTEXT_COMPARE.LESS_THAN);
                 expect(obj.compareVersion(obj0)).toEqual(CONTEXT_COMPARE.GREATER_THAN);
@@ -65,13 +65,12 @@ describe("PouchDB Object tests", () => {
 
     it("isDirty", () => {
         const obj0 = new TestObject();
-        return connection.get<TestObject>(TEST_KEY, obj0)
+        return connection.get<TestObject>(TEST_KEY, () => obj0)
             .then((obj: Document<TestObject>) => {
                 const obj1 = _.clone(obj);
                 obj1.update(obj1.current());
                 expect(obj1.isDirty()).toEqual(true);
             });
     });
-
 
 });
