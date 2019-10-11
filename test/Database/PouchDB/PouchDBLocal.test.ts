@@ -253,11 +253,6 @@ describe("Test offline support", () => {
 
     });
 
-    // "offline updates"
-    // "go offline and receive remote updates on reconnect"
-    // "go offline and push local updates on reconnect"
-    // "go offline; update; receive remote updates on reconnect; solve conflict"
-
     beforeEach(() => {
         originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
         jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
@@ -295,3 +290,8 @@ describe("Test offline support", () => {
             .catch((err) => console.log(err));
     });
 });
+
+// "go offline and receive remote updates on reconnect"
+// "go offline and push local updates on reconnect"
+// "go offline; update; receive remote updates on reconnect; solve conflict"
+// "go offline; local read succeeds "
