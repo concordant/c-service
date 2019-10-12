@@ -102,6 +102,9 @@ export interface IDataSource {
 // TODO: Interface must extend event emitter.
 // TODO: BasicConnection emits events on auto save; TxConnection emits events on transaction accept and commit
 interface IDB {
+
+    registerHooks(hooks: DatabaseHooks): void;
+
     /**
      * Get an object from the database
      * Object is cached in the local store until release is called
@@ -185,9 +188,6 @@ export interface IOfflineSupport extends IDB {
  * @comment Channels might be a more appropriate name
  */
 export interface IBasicConnection extends IOfflineSupport {
-
-    registerHooks(hooks: DatabaseHooks): void;
-
     /**
      * Calls save for every object in cache that has outstanding operations
      */
