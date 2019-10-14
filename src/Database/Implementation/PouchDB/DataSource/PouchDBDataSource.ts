@@ -41,7 +41,7 @@ export default class PouchDBDataSource implements IDataSource {
         }
 
         if (remoteDBs) {
-            remoteDBs.forEach(this.connectRemote);
+            remoteDBs.forEach((url) => this.connectRemote(url));
         }
     }
 
@@ -73,7 +73,7 @@ export default class PouchDBDataSource implements IDataSource {
                 if (h === undefined) {
                     delete this.active[url];
                 }
-                h.on("complete", (info: any) => {
+                h.on("complete", () => {
                     this.inactive.push(url);
                     delete this.active[url];
                 });
@@ -92,19 +92,22 @@ export default class PouchDBDataSource implements IDataSource {
     }
 
     public connect() {
-        this.inactive.forEach((url) => this.connectRemote(url));
+        this.inactive.forEach((url, idx) => {
+            this.connectRemote(url);
+            delete this.inactive[idx];
+        });
     }
 
     public close(): Promise<void> {
         return this.disconnect().then(() => this.db.close());
     }
 
-    private connectRemote = (url: string) => {
+    private connectRemote(url: string) {
         const remote = new this.levelFactory(url);
         this.active[url] = this.db.sync(remote, {live: true, retry: true});
         // .on("error", (error: any) => console.error("Sync Error in", url, error))
         // .on("change", (info: any) => console.log("Sync change in", url, info))
         // .on("paused", (info: any) => console.log("Sync paused in", url, info));
-    };
+    }
 
 }
