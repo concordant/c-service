@@ -38,7 +38,13 @@ const connectDB = (timeout = 1000) => db.info()
 //     console.log("Found Service", service)
 // });
 
-const browser = mdns.createBrowser(mdns.tcp("http"));
+const sequence = [
+    mdns.rst.DNSServiceResolve(),
+    "DNSServiceGetAddrInfo" in mdns.dns_sd ? mdns.rst.DNSServiceGetAddrInfo() : mdns.rst.getaddrinfo({families: [4]}),
+    mdns.rst.makeAddressesUnique(),
+];
+const browser = mdns.createBrowser(mdns.tcp('http'), {resolverSequence: sequence});
+
 browser.on("serviceUp", (service: Service) => {
     console.log("service up: ", service);
 });
