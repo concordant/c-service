@@ -1,32 +1,104 @@
-import mdns, {Service} from "mdns";
-import PouchDB from "pouchdb";
+import {ApolloServer, gql} from "apollo-server-express";
+import * as bodyParser from "body-parser";
+import express from "express";
+import {makeExecutableSchema} from "graphql-tools";
+import Nano from "nano";
+import sofa from "sofa-api";
+import {dumpNetworkServices, publishService} from "./Network/Discovery/Advertising/AdvertisingService";
 
 const maxRetryTimeout = 30000;
+// http://USERNAME:PASSWORD/URL:PORT
 const dbUrl = process.env.COUCHDB_URL || "http://localhost:5984/";
-const dbName: string = process.env.DBNAME as string || "";
+const dbName = process.env.DBNAME || "";
+const serviceName = process.env.SERVICE_NAME || "couchdb";
+
+interface IReplicator {
+    id: string;
+    source: string;
+    continuous: boolean;
+    target: string;
+    state: string;
+}
+
+const typeDefs = gql`
+    type Replicator {
+        id: ID,
+        source: String!,
+        target: String,
+        continuous: Boolean,
+        state: String
+    }
+
+    type Object {
+        key : String!
+    }
+
+    type Query {
+        replicators : [Replicator],
+        replicator(id: ID) : Replicator
+    }
+
+    schema {
+        query: Query
+    }
+`;
+
+const resolvers = {
+    Query: {
+        replicator: async (_: any, {id}: any) => replicator.get(id)
+            .then((r: any) => ({
+                continuous: r.continuous,
+                id: r._id,
+                source: r.source.url,
+                state: r._replication_state,
+                target: r.target.url,
+            })),
+        replicators: async (): Promise<IReplicator[]> => {
+            const list = await replicator.list();
+            return Promise.all(list.rows.map((r) => replicator.get(r.id)))
+                .then((rows) =>
+                    rows
+                        .filter((r: any) => r.source !== undefined)
+                        .map((r: any) => ({
+                            continuous: r.continuous,
+                            id: r._id,
+                            source: r.source.url,
+                            state: r._replication_state,
+                            target: r.target.url,
+                        })));
+
+        },
+    },
+};
+
+const app = express();
+
+const schema = makeExecutableSchema({
+    resolvers,
+    typeDefs,
+});
+app.use(sofa({schema}));
+app.use(bodyParser.json());
+
+const server = new ApolloServer({
+    resolvers,
+    typeDefs,
+});
+
+server.applyMiddleware({app});
+
+app.listen({port: 4000}, (): any =>
+    console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`));
 
 if (!dbName) {
     console.log("Please set DBNAME environment variable");
     process.exit(1);
 }
 
-const processURL = (url: string) => {
-    const parts = dbUrl.split(":");
-    return {type: parts[0], port: parts[2].split("/")[0]};
-};
-
-const publishService = (url: string, dbname: string) => {
-    const {type, port} = processURL(url);
-    const service = mdns.createAdvertisement(mdns.tcp(type), parseInt(port, 10), {
-        name: "couchdb",
-    });
-    service.start();
-    console.log("Publishing Service", service);
-};
-
-const connectDB = (timeout = 1000) => db.info()
-    .then(({db_name}) => {
-        publishService(dbUrl, dbName);
+const connectDB = (timeout = 1000) => appDB.info()
+    .then((info) => {
+        console.log("Connected to database", info);
+        publishService(dbUrl, serviceName);
     })
     .catch((error) => {
         const retryIn = Math.min(timeout * 2, maxRetryTimeout);
@@ -34,24 +106,10 @@ const connectDB = (timeout = 1000) => db.info()
         console.log(error, `retry in ${retryIn}`);
     });
 
-// const searchServices = (timeout) => bonjour.find({}, (service) => {
-//     console.log("Found Service", service)
-// });
+const client = Nano(dbUrl);
+const appDB = client.db.use(dbName);
+const replicator = client.db.use("_replicator");
 
-const sequence = [
-    mdns.rst.DNSServiceResolve(),
-    "DNSServiceGetAddrInfo" in mdns.dns_sd ? mdns.rst.DNSServiceGetAddrInfo() : mdns.rst.getaddrinfo({families: [4]}),
-    mdns.rst.makeAddressesUnique(),
-];
-const browser = mdns.createBrowser(mdns.tcp('http'), {resolverSequence: sequence});
-
-browser.on("serviceUp", (service: Service) => {
-    console.log("service up: ", service);
-});
-browser.on("serviceDown", (service: Service) => {
-    console.log("service down: ", service);
-});
-browser.start();
-
-const db = new PouchDB(dbUrl + dbName);
-connectDB().catch((error) => console.log(error));
+console.log("Connecting to", dbUrl);
+dumpNetworkServices();
+connectDB().catch((error: any) => console.log(error));
