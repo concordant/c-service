@@ -2,49 +2,83 @@ import {ApolloServer, gql} from "apollo-server-express";
 import * as bodyParser from "body-parser";
 import express from "express";
 import {makeExecutableSchema} from "graphql-tools";
-import Nano from "nano";
-import sofa from "sofa-api";
+import Nano, {MaybeDocument} from "nano";
+import PouchDBImpl from "pouchdb";
+import {OpenAPI, useSofa} from "sofa-api";
+import {Document} from "./Database/DataTypes/Interfaces/Types";
+import PouchDBDataSource, {
+    AdapterParams,
+    ConnectionProtocol,
+} from "./Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
+import {Connection, DatabaseHooks} from "./Database/Interfaces/Types";
 import {dumpNetworkServices, publishService} from "./Network/Discovery/Advertising/AdvertisingService";
+import CRDTWrapper from "./Utils/CRDTWrapper";
 
 const maxRetryTimeout = 30000;
 // http://USERNAME:PASSWORD/URL:PORT
 const dbUrl = process.env.COUCHDB_URL || "http://localhost:5984/";
 const dbName = process.env.DBNAME || "";
 const serviceName = process.env.SERVICE_NAME || "couchdb";
+const clientId = "STATIC_CLIENT_ID";
 
-interface IReplicator {
-    id: string;
+interface IReplicator extends MaybeDocument {
     source: string;
-    continuous: boolean;
+    continuous?: boolean;
     target: string;
-    state: string;
+    state?: string;
 }
 
 const typeDefs = gql`
     type Replicator {
-        id: ID,
-        source: String!,
+        id: ID!,
+        source: String,
         target: String,
         continuous: Boolean,
         state: String
     }
 
-    type Object {
-        key : String!
+    type AppObject {
+        id : String!,
+        document: String
     }
 
     type Query {
         replicators : [Replicator],
         replicator(id: ID) : Replicator
+        appObjects : [AppObject]
+    }
+
+    type Mutation {
+        replicator(source: String, target: String, continuous: Boolean): String
     }
 
     schema {
-        query: Query
+        query: Query,
+        mutation: Mutation
     }
 `;
 
+let connection: Connection;
+
 const resolvers = {
+    Mutation: {
+        replicator: (_: any, {source, target, continuous}: any) => {
+            return client.db.replicate(source, target, {
+                continuous,
+                create_target: true,
+            }).then((body: any) => body);
+        },
+    },
     Query: {
+        appObjects: () => appDB.list()
+            .then((objs) => objs.rows.map((r) => {
+                return connection.get<CRDTWrapper<any>>(r.id)
+                    .then((obj: Document<CRDTWrapper<any>>) => {
+                        const {unwrapped} = CRDTWrapper.unwrap(obj.current(), "");
+                        return {id: r.id, document: JSON.stringify(unwrapped.value())};
+                    })
+                    .catch((error) => console.log("error", error));
+            })),
         replicator: async (_: any, {id}: any) => replicator.get(id)
             .then((r: any) => ({
                 continuous: r.continuous,
@@ -77,8 +111,29 @@ const schema = makeExecutableSchema({
     resolvers,
     typeDefs,
 });
-app.use(sofa({schema}));
-app.use(bodyParser.json());
+const openApi = OpenAPI({
+    info: {
+        title: "Concordant API",
+        version: "1.0.0",
+    },
+    schema,
+});
+openApi.save("./swagger.yml");
+
+app.use(
+    "/api",
+    bodyParser.json(),
+    useSofa({
+        schema,
+        onRoute(info) {
+            openApi.addRoute(info, {
+                basePath: "/api",
+            });
+        },
+    }),
+);
+
+// app.use(bodyParser.json());
 
 const server = new ApolloServer({
     resolvers,
@@ -111,5 +166,34 @@ const appDB = client.db.use(dbName);
 const replicator = client.db.use("_replicator");
 
 console.log("Connecting to", dbUrl);
-dumpNetworkServices();
+// dumpNetworkServices();
 connectDB().catch((error: any) => console.log(error));
+
+const hooks: DatabaseHooks = {
+    conflictHandler: (obj: Document<CRDTWrapper<any>>, objs: Array<Document<CRDTWrapper<any>>>) => {
+        const {unwrapped: objCRDT} = CRDTWrapper.unwrap(obj.current(), clientId);
+        if (objs.length > 0) {
+            objs.forEach((o) => {
+                const {unwrapped} = CRDTWrapper.unwrap(o.current(), clientId);
+                objCRDT.apply(unwrapped.state());
+            });
+            return CRDTWrapper.wrap(objCRDT, "ormap");
+        }
+        throw new Error("Unexpected call");
+    },
+};
+
+// TODO: support database url parameter. This might not work properly
+const database: AdapterParams = {
+    connectionParams: {},
+    dbName: "testdbcrdt",
+    host: "localhost",
+    port: 5984,
+    protocol: ConnectionProtocol.HTTP,
+};
+
+const dataSource = new PouchDBDataSource(PouchDBImpl, database);
+dataSource.connection({autoSave: false, handleConflicts: true}).then((con) => {
+    connection = con;
+    connection.registerHooks(hooks);
+});
