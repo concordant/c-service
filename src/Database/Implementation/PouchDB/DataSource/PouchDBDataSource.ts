@@ -17,6 +17,7 @@ export interface IAdapterParams {
     protocol?: ConnectionProtocol;
     host?: string;
     port?: number;
+    url?: string;
     dbName: string;
     connectionParams?: any;
     remoteDBs?: string[];
@@ -31,17 +32,22 @@ export default class PouchDBDataSource implements IDataSource {
     private inactive: string[] = [];
 
     constructor(private levelFactory: any, params: AdapterParams) {
-        const {protocol, host, port, dbName, connectionParams, remoteDBs} = params;
+        const {url, protocol, host, port, dbName, connectionParams, remoteDBs} = params;
 
-        if (!(host || port || protocol)) {
+        if (!(host || port || protocol) && !url) {
             this.db = new levelFactory(dbName, connectionParams);
         } else {
-            const url = `${protocol}://${host}:${port}/${dbName}`;
+            if (!url) {
+                this.db = new levelFactory(`${protocol}://${host}:${port}/${dbName}`, connectionParams);
+            } else {
+                const slash = url.charAt(url.length - 1) === "/" ? "" : "/";
+                this.db = new levelFactory(url + slash + dbName, connectionParams);
+            }
             this.db = new levelFactory(url, connectionParams);
         }
 
         if (remoteDBs) {
-            remoteDBs.forEach((url) => this.connectRemote(url));
+            remoteDBs.forEach((remoteUrl) => this.connectRemote(remoteUrl));
         }
     }
 

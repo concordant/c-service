@@ -186,14 +186,13 @@ const hooks: DatabaseHooks = {
 // TODO: support database url parameter. This might not work properly
 const database: AdapterParams = {
     connectionParams: {},
-    dbName: "testdbcrdt",
-    host: "localhost",
-    port: 5984,
-    protocol: ConnectionProtocol.HTTP,
+    dbName,
+    url: dbUrl,
 };
 
 const dataSource = new PouchDBDataSource(PouchDBImpl, database);
-dataSource.connection({autoSave: false, handleConflicts: true}).then((con) => {
-    connection = con;
-    connection.registerHooks(hooks);
-});
+dataSource.connection({autoSave: false, handleConflicts: true})
+    .then((newConnection) => {
+        connection = newConnection;
+        connection.registerHooks(hooks);
+    });
