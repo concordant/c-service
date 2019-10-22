@@ -21,6 +21,9 @@ const dbName = process.env.DBNAME || "";
 const serviceName = process.env.SERVICE_NAME || "couchdb";
 const clientId = "STATIC_CLIENT_ID";
 
+const username = process.env.COUCHDB_USER || undefined;
+const userpass = process.env.COUCHDB_PASSWORD || undefined;
+
 interface IReplicator extends MaybeDocument {
     source: string;
     continuous?: boolean;
@@ -49,7 +52,9 @@ const typeDefs = gql`
     }
 
     type Mutation {
-        replicator(source: String, target: String, continuous: Boolean): String
+        replicator(source: String, target: String, continuous: Boolean): String,
+        createApp(appName: String): String,
+        deleteApp(appName: String): String,
     }
 
     schema {
@@ -62,11 +67,24 @@ let connection: Connection;
 
 const resolvers = {
     Mutation: {
+        createApp: (_: any, {appName}: any) => {
+            return client.db.create(appName).then((body) => {
+                console.log(`Database ${appName} created`, body);
+                return "ok";
+            });
+        },
+        deleteApp: (_: any, {appName}: any) => {
+            client.db.destroy(appName).then((body) => {
+                console.log(`Database ${appName} destroyed`, body);
+                return "ok";
+            });
+        },
         replicator: (_: any, {source, target, continuous}: any) => {
+            console.log("replicator called for params", source, target, continuous);
             return client.db.replicate(source, target, {
                 continuous,
                 create_target: true,
-            }).then((body: any) => body);
+            }).then((body: any) => "ok");
         },
     },
     Query: {
@@ -161,7 +179,17 @@ const connectDB = (timeout = 1000) => appDB.info()
         console.log(error, `retry in ${retryIn}`);
     });
 
-const client = Nano(dbUrl);
+const client = Nano({url: dbUrl, requestDefaults: {jar: true}});
+
+if (username && userpass) {
+    client.auth(username, userpass)
+        .then((res) => {
+            console.log("Authenticated", res);
+            return client.db.create("test");
+        })
+        .catch((err) => console.log(err));
+}
+
 const appDB = client.db.use(dbName);
 const replicator = client.db.use("_replicator");
 
