@@ -185,7 +185,7 @@ if (username && userpass) {
     client.auth(username, userpass)
         .then((res) => {
             console.log("Authenticated", res);
-            return client.db.create("test");
+            // return client.db.create("test");
         })
         .catch((err) => console.log(err));
 }
