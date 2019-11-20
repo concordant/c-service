@@ -250,7 +250,7 @@ export default class PouchDB implements IBasicConnection {
                     }
                     return Promise.all(obj.conflicts.map(
                         (rev: string) => this.connection.get(objIn._id, {rev, ...getParams})))
-                        .then((objs: Array<(ExistingDocument<T> & AllDocsMeta)>) => {
+                        .then((objs: Array<(ExistingDocument<any> & AllDocsMeta)>) => {
                             return hooks.conflictHandler(obj, objs.map((o) => new PouchDBObject(o, this, [])));
                         })
                         .then((solved: T) => {
