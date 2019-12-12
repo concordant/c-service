@@ -122,7 +122,7 @@ interface IDB {
 
     /**
      * Delete the value associated with a key
-     * Implementation might not actually delete the key, dependening on the store
+     * Implementation might not actually delete the key, dependending on the store
      * In that case it must use some tombstone to distinguish empty value from deleted
      *
      * @param key - identifier of the object
