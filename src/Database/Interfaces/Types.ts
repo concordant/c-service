@@ -78,6 +78,9 @@ export interface IDBObject<T> extends IContext {
      */
     isDirty(): boolean;
 
+    /**
+     * Retrieves the current value of the object
+     */
     current(): T;
 }
 
@@ -88,12 +91,13 @@ export interface IDataSource {
 
     /**
      *  Starts a new non-transactional session with the database
-     *  Get operations retrieve the most recent version of the object
+     *  Read operations always retrieve the most recent version of an object
      */
     connection(params: IConnectionParams): Promise<Connection>;
 
     /**
      * Starts a new transactional session with the database
+     * Read operations retrieve object versions based on a snapshot.
      * @return a ITxConnection
      */
     txConnection(): Promise<ITxConnection>; // €
@@ -102,7 +106,12 @@ export interface IDataSource {
 // TODO: Interface must extend event emitter.
 // TODO: BasicConnection emits events on auto save; TxConnection emits events on transaction accept and commit
 interface IDB {
-
+    
+    /**
+     * Register a handler that allows to intersect certain calls in the system
+     * Currently it provides a ConflictHandler, which allows the programmer to
+     * manage multiple conflicting versions of the same object
+     **/
     registerHooks(hooks: DatabaseHooks): void;
 
     /**
@@ -164,7 +173,7 @@ interface IDB {
 export interface IOfflineSupport extends IDB {
     /**
      * Disconnects from the remote database
-     * User can use objects that were cached locally
+     * User can still read and modify objects that were cached locally
      *
      * @param waitFlush - try and wait for flushing outstanding changes
      * Reject promise if impossible to connect or operations were rejected
@@ -199,12 +208,12 @@ export interface IBasicConnection extends IOfflineSupport {
      */
     discard(key: Key): void;
 
-    /*
+    /**
      * Discard local updates for all objects in cache
      */
     discardAll(): void;
 
-    /*
+    /**
      * All objects automatically call save when their state changes
      */
     setAutoSave(): void;
