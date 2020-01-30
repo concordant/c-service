@@ -43,7 +43,6 @@ export default class PouchDBObject<T> implements Document<T> {
         this.updateNoSideEffects(value);
         if (this.connection.isAutoSave()) {
             this.save()
-                .then(() => this)
                 .catch((error) => Promise.reject(error));
         }
         return this;
@@ -51,7 +50,11 @@ export default class PouchDBObject<T> implements Document<T> {
 
     public updateNoSideEffects(value: T): PouchDBObject<T> {
         //  Caution: need to keep revision from fetched object
-        this.newDocument = {...value, _id: this.document._id, _rev: this.document._rev};
+        this.newDocument = {
+            ...value,
+            _id: this.document._id,
+            _rev: this.document._rev,
+        };
         return this;
     }
 

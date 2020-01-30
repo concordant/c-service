@@ -100,7 +100,10 @@ export default class PouchDB implements IBasicConnection {
 
     public saveInternal<T>(obj: PouchDBObject<T>, retryCount: number): Promise<PouchDBObject<T>> {
         const {putRetriesBeforeError = 0, putRetryMaxTimeout = DEFAULT_RETRY_MAX_TIMEOUT} = this.connectionParams;
-        return this.connection.put(obj.current())
+        return Promise.all(obj.conflicts.map((c) => {
+            return this.connection.remove(obj.id, c);
+        }))
+            .then(() => this.connection.put(obj.current()))
             .then((resp: Response) =>
                 new PouchDBObject<T>({_id: resp.id, _rev: resp.rev, ...obj.current()}, this))
             .catch((error: PouchError) => {
@@ -254,7 +257,10 @@ export default class PouchDB implements IBasicConnection {
                             return hooks.conflictHandler(obj, objs.map((o) => new PouchDBObject(o, this, [])));
                         })
                         .then((solved: T) => {
-                            return new PouchDBObject({_id: objIn._id, _rev: objIn._rev, ...solved}, this, []);
+                            console.log("bef", obj);
+                            obj.update(solved);
+                            console.log("after", obj);
+                            return obj;
                         });
                 } else {
                     return obj;
