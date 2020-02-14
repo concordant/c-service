@@ -45,7 +45,7 @@ describe("Handling conflicts", () => {
         let obj1: Document<TestObject>;
         let obj2: Document<TestObject>;
 
-        connection1.get<TestObject>(TEST_KEY, new TestObject())
+        connection1.get<TestObject>(TEST_KEY, () => new TestObject())
             .then((obj) => {
                 obj1 = obj;
                 return connection2.get<TestObject>(TEST_KEY);
@@ -74,7 +74,7 @@ describe("Handling conflicts", () => {
         return dataSource.connection({handleConflicts: true, putRetriesBeforeError: 1})
             .then((pouchConnection) => {
                 retryConnection = pouchConnection;
-                return retryConnection.get<TestObject>(TEST_KEY, new TestObject());
+                return retryConnection.get<TestObject>(TEST_KEY, () => new TestObject());
             })
             .then((obj) => {
                 obj1 = obj;

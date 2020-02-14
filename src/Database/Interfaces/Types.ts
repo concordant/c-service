@@ -106,12 +106,12 @@ export interface IDataSource {
 // TODO: Interface must extend event emitter.
 // TODO: BasicConnection emits events on auto save; TxConnection emits events on transaction accept and commit
 interface IDB {
-    
+
     /**
      * Register a handler that allows to intersect certain calls in the system
      * Currently it provides a ConflictHandler, which allows the programmer to
      * manage multiple conflicting versions of the same object
-     **/
+     */
     registerHooks(hooks: DatabaseHooks): void;
 
     /**
@@ -119,13 +119,13 @@ interface IDB {
      * Object is cached in the local store until release is called
      *
      * @param key - identifier of the object
-     * @param defaultObj - Reject promise if default object is not provided and object does not exist
+     * @param defaultObjFunc - Reject promise if default object is not provided and object does not exist
      * @param  passThrough - ignore the cached value and fetch a fresh version
      * @return current object associated with the key, empty object if it doesn't exist yet.
      * Reject promise if impossible to get object or object is not of the given type.
      */
 
-    get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<Document<T>>;
+    get<T>(key: Key, defaultObjFunc?: () => T, passThrough?: boolean): Promise<Document<T>>;
 
     // query TODO: Need to think more about this before making decisions. Dont forget GraphQL!
 
@@ -183,7 +183,7 @@ export interface IOfflineSupport extends IDB {
     /**
      * Tries to reestablish a connection with the remote database
      *
-     * @param tryFlush - waits for changes flush to server
+     * @param waitFlush - waits for changes flush to server
      * Reject promise if impossible to connect or operations were rejected
      */
     goOnline(waitFlush?: boolean): Promise<void>;

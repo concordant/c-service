@@ -74,7 +74,7 @@ export default class PouchDB implements IBasicConnection {
         return Promise.resolve(this.dataSource.connect());
     }
 
-    public get<T>(key: Key, defaultObj?: T, passThrough?: boolean): Promise<PouchDBObject<T>> {
+    public get<T>(key: Key, defaultObjFunc?: () => T, passThrough?: boolean): Promise<PouchDBObject<T>> {
         const {handleConflicts} = this.connectionParams;
         if (passThrough) {
             return Promise.reject("Not Implemented");
@@ -86,8 +86,8 @@ export default class PouchDB implements IBasicConnection {
         return this.connection.get<T>(convertedKey, getParams)
             .then((obj) => this.handleGetResponse(obj))
             .catch((error: PouchError) => {
-                if (error.status === NOT_FOUND_ERROR_CODE && (defaultObj !== undefined && defaultObj !== null)) {
-                    return this.create<T>(key, defaultObj);
+                if (error.status === NOT_FOUND_ERROR_CODE && (defaultObjFunc !== undefined && defaultObjFunc !== null)) {
+                    return this.create<T>(key, defaultObjFunc());
                 }
                 return Promise.reject(error);
             });
@@ -257,9 +257,7 @@ export default class PouchDB implements IBasicConnection {
                             return hooks.conflictHandler(obj, objs.map((o) => new PouchDBObject(o, this, [])));
                         })
                         .then((solved: T) => {
-                            console.log("bef", obj);
                             obj.update(solved);
-                            console.log("after", obj);
                             return obj;
                         });
                 } else {

@@ -58,7 +58,7 @@ describe("Basic usage", () => {
     it("Save and update CRDT object", () => {
         TEST_KEY = uuid();
         const defaultObject = CRDTWrapper.wrap(CRDT("ormap")("client1"), "ormap");
-        return connection2.get<CRDTWrapper>(TEST_KEY, defaultObject)
+        return connection2.get<CRDTWrapper>(TEST_KEY, () => defaultObject)
             .then(() => connection2.get<CRDTWrapper>(TEST_KEY))
             .then((obj: Document<CRDTWrapper>) => {
                 const newCRDT = CRDTWrapper.unwrap(obj.current(), "client2");
@@ -132,7 +132,7 @@ describe("Basic usage", () => {
             },
         });
 
-        return connection2.get<CRDTWrapper>(TEST_KEY, client2DefaultObjectWrapped)
+        return connection2.get<CRDTWrapper>(TEST_KEY, () => client2DefaultObjectWrapped)
             .then((obj: Document<CRDTWrapper>) => remoteObj = obj)
             .catch((error) => fail(error));
     });
@@ -229,7 +229,7 @@ describe("Test offline support with CRDTs", () => {
             },
         });
 
-        return connection2.get<CRDTWrapper>(TEST_KEY, client2DefaultObjectWrapped)
+        return connection2.get<CRDTWrapper>(TEST_KEY, () => client2DefaultObjectWrapped)
             .then((obj: Document<CRDTWrapper>) => remoteObj = obj)
             .then(() => connection2.goOffline())
             .catch((error) => fail(error));

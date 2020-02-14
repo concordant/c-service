@@ -43,9 +43,7 @@ export default class PouchDBDataSource implements IDataSource {
                 const slash = url.charAt(url.length - 1) === "/" ? "" : "/";
                 this.db = new levelFactory(url + slash + dbName, connectionParams);
             }
-            this.db = new levelFactory(url, connectionParams);
         }
-
         if (remoteDBs) {
             remoteDBs.forEach((remoteUrl) => this.connectRemote(remoteUrl));
         }
