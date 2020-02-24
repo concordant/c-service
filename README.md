@@ -17,3 +17,9 @@ Need to start a CouchDB server beforehand. Can customize the database url with t
 npm test
 ```
 Check permissions of setup.sh and teardown.sh scripts.
+
+# Requirements
+Node: v10.15+
+NPM: v6.13+
+
+(Project might work with older Node and NPM versions)
