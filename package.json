@@ -43,7 +43,6 @@
     "typescript": "^3.6.3"
   },
   "dependencies": {
-    "@types/mdns": "0.0.33",
     "@types/uuid": "^3.4.5",
     "apollo-server-express": "^2.9.6",
     "body-parser": "^1.19.0",
@@ -54,7 +53,6 @@
     "graphql": "^14.5.8",
     "graphql-tools": "^4.0.5",
     "lodash": "^4.17.15",
-    "mdns": "^2.5.1",
     "nano": "^8.1.0",
     "pouchdb": "^7.1.1",
     "pouchdb-adapter-asyncstorage": "^6.4.1",
