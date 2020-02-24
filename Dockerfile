@@ -1,7 +1,10 @@
 FROM node:latest
 
 WORKDIR /usr/src/app
-COPY package*.json ./
+
+RUN     apt-get update; \
+        apt-get -y install libavahi-compat-libdnssd-dev
+COPY package.json ./
 RUN npm install
 COPY . .
 
