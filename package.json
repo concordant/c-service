@@ -1,7 +1,7 @@
 {
   "name": "c-server",
-  "version": "1.1.0",
-  "description": "Storage backend designed for the C-Labbook demo",
+  "version": "1.1.1",
+  "description": "Server backend for Concordant P2P collaborative apps",
   "main": "./dist/main.js",
   "types": "./dist/main.d.ts",
   "files": [
