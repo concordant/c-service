@@ -87,6 +87,7 @@ export enum CONTEXT_COMPARE {
 
 /**
  *  A representation of a database object that the user can interact with
+ * TODO: adapt to Marc's names
  */
 export interface IDBObject<T> extends IContext {
   id: string;
