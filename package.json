@@ -1,7 +1,7 @@
 {
-  "name": "concordant-server",
+  "name": "c-server",
   "version": "1.1.0",
-  "description": "A p2p collaborative spreadsheet",
+  "description": "Storage backend designed for the C-Labbook demo",
   "main": "./dist/main.js",
   "types": "./dist/main.d.ts",
   "files": [
@@ -18,14 +18,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://softech-git.informatik.uni-kl.de/concordant/concordant-server"
+    "url": "git+https://gitlab.inria.fr/concordant/software/c-server.git"
   },
   "author": "Valter Balegas",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://softech-git.informatik.uni-kl.de/concordant/concordant-server/issues"
+    "url": "https://gitlab.inria.fr/concordant/software/c-server/issues"
   },
-  "homepage": "https://softech-git.informatik.uni-kl.de/concordant/concordant-server#readme",
+  "homepage": "https://gitlab.inria.fr/concordant/software/c-server/-/blob/master/README.md",
   "devDependencies": {
     "@babel/cli": "^7.6.0",
     "@babel/core": "^7.6.0",

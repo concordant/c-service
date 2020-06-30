@@ -1,24 +1,31 @@
-# concordant-server
-Server code for the Collab2 demo.
+# c-server
 
-Intall dependencies with:
+Server code for the C-Labbook demo.
+
+Install dependencies with:
+
 ```bash
 npm install
 ```
 
-Ru server with:
+Run server with:
+
 ```bash
 DBNAME="input db name here" npm start
 ```
+
 Need to start a CouchDB server beforehand. Can customize the database url with the environment variable COUCHDB_URL. You might need to change the binding address in CouchDB admin panel to allow peers to connect to the database.
 
- Ru tests with:
- ```bash
+Run tests with:
+
+```bash
 npm test
 ```
+
 Check permissions of setup.sh and teardown.sh scripts.
 
-# Requirements
+## Requirements
+
 Node: v10.15+
 NPM: v6.13+
 
