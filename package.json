@@ -20,8 +20,8 @@
     "type": "git",
     "url": "git+https://gitlab.inria.fr/concordant/software/c-server.git"
   },
-  "author": "Valter Balegas",
-  "license": "Apache-2.0",
+  "author": "info@concordant.io",
+  "license": "MIT",
   "bugs": {
     "url": "https://gitlab.inria.fr/concordant/software/c-server/issues"
   },
