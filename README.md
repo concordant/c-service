@@ -1,5 +1,7 @@
 # c-server
 
+[![License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/licenses/MIT)
+
 Server code for the C-Labbook demo.
 
 Install dependencies with:
