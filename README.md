@@ -10,10 +10,11 @@ Install dependencies with:
 npm install
 ```
 
-Run server with:
+Set database name and credentials and run server:
 
 ```bash
-DBNAME="input db name here" npm start
+export DBNAME=my-database COUCHDB_USER=my-user COUCHDB_PASSWORD=my-passwd
+npm start
 ```
 
 Need to start a CouchDB server beforehand. Can customize the database url with the environment variable COUCHDB_URL. You might need to change the binding address in CouchDB admin panel to allow peers to connect to the database.
