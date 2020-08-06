@@ -30,6 +30,8 @@ import PouchDBDataSource, {
 } from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
 import {IBasicConnection, IDBObject} from "../../../src/Database/Interfaces/Types";
 
+import {dbName, couchdbUser, couchdbPassword, remoteDBurl} from "../../testParams"
+
 class TestObject {
     constructor(public foo: string = "foo") {
     }
@@ -43,8 +45,10 @@ describe("Get tests", () => {
 
     beforeAll(() => {
         const params: AdapterParams = {
-            connectionParams: {},
-            dbName: "testdb", host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
+            connectionParams: {
+		auth: {username: couchdbUser, password: couchdbPassword}
+	    },
+            dbName, host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
         };
         const dataSource = new PouchDBDataSource(PouchDB, params);
         return dataSource.connection({autoSave: false}).then((c) => connection = c);
@@ -62,17 +66,19 @@ describe("Sync tests", () => {
     const TEST_KEY = uuid();
     let connection1: IBasicConnection;
     let connection2: IBasicConnection;
-    const remoteDBs = ["http://localhost:5984/testdb"];
+    const remoteDBs = [remoteDBurl];
 
     beforeAll(() => {
         const params1: AdapterParams = {
             connectionParams: {adapter: "memory"},
-            dbName: "testdb",
+            dbName,
             remoteDBs,
         };
         const params2: AdapterParams = {
-            connectionParams: {},
-            dbName: "testdb", host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
+            connectionParams: {
+		auth: {username: couchdbUser, password: couchdbPassword}
+	    },
+            dbName, host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
         };
         const dataSource1 = new PouchDBDataSource(PouchDB, params1);
         const dataSource2 = new PouchDBDataSource(PouchDB, params2);
