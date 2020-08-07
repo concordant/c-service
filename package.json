@@ -9,9 +9,7 @@
   ],
   "scripts": {
     "start": "babel-node dist/server.js",
-    "pretest": "couchdb -b > couch.log & sleep 5",
     "test": "jest $TESTS",
-    "posttest": "couchdb -d",
     "build": "tsc --skipLibCheck",
     "prepare": "npm run build"
   },
