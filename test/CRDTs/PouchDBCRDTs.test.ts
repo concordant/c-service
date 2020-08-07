@@ -82,6 +82,13 @@ describe("Basic usage", () => {
 
     });
 
+    afterAll(() => {
+        return connection1
+            .close()
+            .then(() => connection2.close())
+            .catch((err) => console.log(err));
+    });
+
     it("Save and update CRDT object", () => {
         TEST_KEY = uuid();
         const defaultObject = CRDTWrapper.wrap(CRDT("ormap")("client1"), "ormap");
@@ -194,6 +201,13 @@ describe("Test offline support with CRDTs", () => {
 
     });
 
+    afterAll(() => {
+        return connection1
+            .close()
+            .then(() => connection2.close())
+            .catch((err) => console.log(err));
+    });
+
     // "go offline and receive remote updates on reconnect"
     // "go offline and push local updates on reconnect"
     // "go offline; update; receive remote updates on reconnect; solve conflict"
@@ -201,6 +215,10 @@ describe("Test offline support with CRDTs", () => {
     beforeEach(() => {
         originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
         jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+    });
+
+    afterEach(() => {
+        jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
     });
 
     it("go offline and receive pending updates on reconnect", (done) => {
@@ -263,13 +281,5 @@ describe("Test offline support with CRDTs", () => {
             .then(() => connection2.goOffline())
             .catch((error) => fail(error));
 
-    });
-
-    afterEach(() => {
-        jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
-        return connection1
-            .close()
-            .then(() => connection2.close())
-            .catch((err) => console.log(err));
     });
 });
