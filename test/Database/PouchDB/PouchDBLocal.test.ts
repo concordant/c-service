@@ -31,7 +31,7 @@ import PouchDBDataSource, {
 } from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
 import {DatabaseEventEmitter, IBasicConnection, IDBObject} from "../../../src/Database/Interfaces/Types";
 
-import {dbName, couchdbUser, couchdbPassword, remoteDBurl} from "../../testParams"
+import {dbName, couchdbHost, couchdbPort, couchdbUser, couchdbPassword, remoteDBurl} from "../../testParams";
 
 class TestObject {
     constructor(public foo: string = "foo") {
@@ -269,7 +269,7 @@ describe("Test offline support", () => {
             connectionParams: {
 		auth: {username: couchdbUser, password: couchdbPassword}
 	    },
-            dbName, host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
+            dbName, host: couchdbHost, port: couchdbPort, protocol: ConnectionProtocol.HTTP,
         };
         const dataSource1 = new PouchDBDataSource(PouchDB, params1);
         const dataSource2 = new PouchDBDataSource(PouchDB, params2);

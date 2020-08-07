@@ -30,7 +30,7 @@ import PouchDBDataSource, {
 } from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
 import {IBasicConnection, IDBObject} from "../../../src/Database/Interfaces/Types";
 
-import {dbName, couchdbUser, couchdbPassword, remoteDBurl} from "../../testParams"
+import {dbName, couchdbHost, couchdbPort, couchdbUser, couchdbPassword, remoteDBurl} from "../../testParams";
 
 class TestObject {
     constructor(public foo: string = "foo") {
@@ -48,7 +48,7 @@ describe("Get tests", () => {
             connectionParams: {
 		auth: {username: couchdbUser, password: couchdbPassword}
 	    },
-            dbName, host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
+            dbName, host: couchdbHost, port: couchdbPort, protocol: ConnectionProtocol.HTTP,
         };
         const dataSource = new PouchDBDataSource(PouchDB, params);
         return dataSource.connection({autoSave: false}).then((c) => connection = c);
@@ -78,7 +78,7 @@ describe("Sync tests", () => {
             connectionParams: {
 		auth: {username: couchdbUser, password: couchdbPassword}
 	    },
-            dbName, host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
+            dbName, host: couchdbHost, port: couchdbPort, protocol: ConnectionProtocol.HTTP,
         };
         const dataSource1 = new PouchDBDataSource(PouchDB, params1);
         const dataSource2 = new PouchDBDataSource(PouchDB, params2);

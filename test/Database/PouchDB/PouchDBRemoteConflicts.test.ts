@@ -31,7 +31,7 @@ import PouchDBObject from "../../../src/Database/Implementation/PouchDB/DataType
 import {DatabaseHooks, IBasicConnection} from "../../../src/Database/Interfaces/Types";
 import {promiseDelay} from "../../../src/Utils/Utils";
 
-import {dbName, couchdbUser, couchdbPassword, remoteDBurl} from "../../testParams"
+import {dbName, couchdbHost, couchdbPort, couchdbUser, couchdbPassword, remoteDBurl} from "../../testParams";
 
 class TestObject {
     constructor(public foo: string = "foo") {
@@ -56,7 +56,7 @@ describe("Handling conflicts basic", () => {
             connectionParams: {
 		auth: {username: couchdbUser, password: couchdbPassword}
 	    },
-            dbName, host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
+            dbName, host: couchdbHost, port: couchdbPort, protocol: ConnectionProtocol.HTTP,
         };
         const dataSource1 = new PouchDBDataSource(PouchDB, params1);
         const dataSource2 = new PouchDBDataSource(PouchDB, params2);
@@ -177,7 +177,7 @@ describe("Automatic conflict resolution", () => {
             connectionParams: {
 		auth: {username: couchdbUser, password: couchdbPassword}
 	    },
-            dbName, host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
+            dbName, host: couchdbHost, port: couchdbPort, protocol: ConnectionProtocol.HTTP,
         };
         const dataSource1 = new PouchDBDataSource(PouchDB, params1);
         const dataSource2 = new PouchDBDataSource(PouchDB, params2);

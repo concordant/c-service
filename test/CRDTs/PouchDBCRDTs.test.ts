@@ -1,4 +1,4 @@
-/**
+ /**
  * MIT License
  * 
  * Copyright (c) 2020, Concordant and contributors
@@ -35,7 +35,7 @@ import PouchDBDataSource, {
 import {DatabaseHooks, IBasicConnection} from "../../src/Database/Interfaces/Types";
 import {promiseDelay} from "../../src/Utils/Utils";
 
-import {dbName, couchdbUser, couchdbPassword, remoteDBurl} from "../testParams"
+import {dbName, couchdbHost, couchdbPort, couchdbUser, couchdbPassword, remoteDBurl} from "../testParams";
 
 class CRDTWrapper {
     public static wrap(object: CRDT, type: string) {
@@ -71,7 +71,7 @@ describe("Basic usage", () => {
             connectionParams: {
 		auth: {username: couchdbUser, password: couchdbPassword}
 	    },
-            dbName, host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
+            dbName, host: couchdbHost, port: couchdbPort, protocol: ConnectionProtocol.HTTP,
         };
         const dataSource1 = new PouchDBDataSource(PouchDB, params1);
         const dataSource2 = new PouchDBDataSource(PouchDB, params2);
@@ -183,7 +183,7 @@ describe("Test offline support with CRDTs", () => {
             connectionParams: {
 		auth: {username: couchdbUser, password: couchdbPassword}
 	    },
-            dbName, host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
+            dbName, host: couchdbHost, port: couchdbPort, protocol: ConnectionProtocol.HTTP,
         };
         const dataSource1 = new PouchDBDataSource(PouchDB, params1);
         const dataSource2 = new PouchDBDataSource(PouchDB, params2);
