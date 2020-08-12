@@ -31,6 +31,8 @@ import PouchDBDataSource, {
 } from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
 import {DatabaseEventEmitter, IBasicConnection, IDBObject} from "../../../src/Database/Interfaces/Types";
 
+import {dbName, couchdbHost, couchdbPort, couchdbUser, couchdbPassword, remoteDBurl} from "../../testParams";
+
 class TestObject {
     constructor(public foo: string = "foo") {
     }
@@ -42,7 +44,7 @@ describe("Establish Connection tests", () => {
     it("Init local in-memory database", (done) => {
         const params: AdapterParams = {
             connectionParams: {adapter: "memory"},
-            dbName: "testdb",
+            dbName,
         };
         const dataSource = new PouchDBDataSource(PouchDB, params);
         dataSource.connection({autoSave: false})
@@ -51,7 +53,7 @@ describe("Establish Connection tests", () => {
 
     it("Reject init database", (done) => {
         const params: AdapterParams = {
-            dbName: "testdb",
+            dbName,
             host: "NO-HOST",
             port: DEFAULT_PORT,
             protocol: ConnectionProtocol.HTTPS,
@@ -71,7 +73,7 @@ describe("Get tests", () => {
     beforeAll(() => {
         const params: AdapterParams = {
             connectionParams: {adapter: "memory"},
-            dbName: "testdb",
+            dbName,
         };
         const dataSource = new PouchDBDataSource(PouchDB, params);
         return dataSource.connection({autoSave: false})
@@ -113,7 +115,7 @@ describe("Modify object tests", () => {
     beforeAll(() => {
         const params: AdapterParams = {
             connectionParams: {adapter: "memory"},
-            dbName: "testdb",
+            dbName,
         };
         const dataSource = new PouchDBDataSource(PouchDB, params);
         return dataSource.connection({autoSave: false})
@@ -153,7 +155,7 @@ describe("Database events test", () => {
     beforeEach(() => {
         const params: AdapterParams = {
             connectionParams: {adapter: "memory"},
-            dbName: "testdb",
+            dbName,
         };
         const dataSource = new PouchDBDataSource(PouchDB, params);
         return dataSource.connection({autoSave: false})
@@ -254,18 +256,20 @@ describe("Test offline support", () => {
     const TEST_KEY = uuid();
     let connection1: IBasicConnection;
     let connection2: IBasicConnection;
-    const remoteDBs = ["http://localhost:5984/testdb"];
+    const remoteDBs = [remoteDBurl];
     let originalTimeout: number;
 
     beforeAll(() => {
         const params1: AdapterParams = {
             connectionParams: {adapter: "memory"},
-            dbName: "testdb",
+            dbName,
             remoteDBs,
         };
         const params2: AdapterParams = {
-            connectionParams: {},
-            dbName: "testdb", host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
+            connectionParams: {
+		auth: {username: couchdbUser, password: couchdbPassword}
+	    },
+            dbName, host: couchdbHost, port: couchdbPort, protocol: ConnectionProtocol.HTTP,
         };
         const dataSource1 = new PouchDBDataSource(PouchDB, params1);
         const dataSource2 = new PouchDBDataSource(PouchDB, params2);
