@@ -15,5 +15,7 @@ module.exports = {
     "plugin:@typescript-eslint/recommended",
     "prettier/@typescript-eslint",
   ],
-  rules: {},
+  rules: {
+    "no-console": ["error", { allow: ["warn", "error"] }]
+  },
 };
