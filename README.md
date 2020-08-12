@@ -24,8 +24,6 @@ Run tests with:
 npm test
 ```
 
-Check permissions of setup.sh and teardown.sh scripts.
-
 ## Requirements
 
 Node: v10.15+
