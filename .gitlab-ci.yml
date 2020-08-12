@@ -1,9 +1,28 @@
 image: node:latest
 
-stages:
-  - install
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .npm/
 
-install:
-  stage: install
+test:
+  variables:
+    COUCHDB_HOST: couchdb
+    COUCHDB_PORT: 5984
+    COUCHDB_URL: http://$COUCHDB_HOST:$COUCHDB_PORT/
+    COUCHDB_USER: admin
+    COUCHDB_PASSWORD: "admin"
+    DBNAME: testdb
+
+  services:
+    - couchdb:latest
+
+  before_script:
+    - npm ci --cache .npm --prefer-offline
+    - curl -u "$COUCHDB_USER:$COUCHDB_PASSWORD"
+           -X PUT $COUCHDB_URL/_users
+    - curl -u "$COUCHDB_USER:$COUCHDB_PASSWORD"
+           -X PUT $COUCHDB_URL/$DBNAME
+
   script:
-    - npm install
+    - npm test
