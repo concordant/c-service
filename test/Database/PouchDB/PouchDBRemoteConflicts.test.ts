@@ -31,6 +31,8 @@ import PouchDBObject from "../../../src/Database/Implementation/PouchDB/DataType
 import {DatabaseHooks, IBasicConnection} from "../../../src/Database/Interfaces/Types";
 import {promiseDelay} from "../../../src/Utils/Utils";
 
+import {dbName, couchdbHost, couchdbPort, couchdbUser, couchdbPassword, remoteDBurl} from "../../testParams";
+
 class TestObject {
     constructor(public foo: string = "foo") {
     }
@@ -42,17 +44,19 @@ describe("Handling conflicts basic", () => {
     let TEST_KEY: string;
     let connection1: IBasicConnection;
     let connection2: IBasicConnection;
-    const remoteDBs = ["http://localhost:5984/testdb"];
+    const remoteDBs = [remoteDBurl];
 
     beforeAll(() => {
         const params1: AdapterParams = {
             connectionParams: {adapter: "memory"},
-            dbName: "testdb",
+            dbName,
             remoteDBs,
         };
         const params2: AdapterParams = {
-            connectionParams: {},
-            dbName: "testdb", host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
+            connectionParams: {
+		auth: {username: couchdbUser, password: couchdbPassword}
+	    },
+            dbName, host: couchdbHost, port: couchdbPort, protocol: ConnectionProtocol.HTTP,
         };
         const dataSource1 = new PouchDBDataSource(PouchDB, params1);
         const dataSource2 = new PouchDBDataSource(PouchDB, params2);
@@ -161,17 +165,19 @@ describe("Automatic conflict resolution", () => {
     const TEST_KEY = uuid();
     let connection1: IBasicConnection;
     let connection2: IBasicConnection;
-    const remoteDBs = ["http://localhost:5984/testdb"];
+    const remoteDBs = [remoteDBurl];
 
     beforeAll(() => {
         const params1: AdapterParams = {
             connectionParams: {adapter: "memory"},
-            dbName: "testdb",
+            dbName,
             remoteDBs,
         };
         const params2: AdapterParams = {
-            connectionParams: {},
-            dbName: "testdb", host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
+            connectionParams: {
+		auth: {username: couchdbUser, password: couchdbPassword}
+	    },
+            dbName, host: couchdbHost, port: couchdbPort, protocol: ConnectionProtocol.HTTP,
         };
         const dataSource1 = new PouchDBDataSource(PouchDB, params1);
         const dataSource2 = new PouchDBDataSource(PouchDB, params2);
