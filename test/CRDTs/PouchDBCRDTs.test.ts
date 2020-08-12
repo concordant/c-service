@@ -1,4 +1,4 @@
-/**
+ /**
  * MIT License
  * 
  * Copyright (c) 2020, Concordant and contributors
@@ -35,6 +35,8 @@ import PouchDBDataSource, {
 import {DatabaseHooks, IBasicConnection} from "../../src/Database/Interfaces/Types";
 import {promiseDelay} from "../../src/Utils/Utils";
 
+import {dbName, couchdbHost, couchdbPort, couchdbUser, couchdbPassword, remoteDBurl} from "../testParams";
+
 class CRDTWrapper {
     public static wrap(object: CRDT, type: string) {
         return new CRDTWrapper(CRDTCodec.encode(object.state()), type);
@@ -57,17 +59,19 @@ describe("Basic usage", () => {
     let TEST_KEY: string;
     let connection1: IBasicConnection;
     let connection2: IBasicConnection;
-    const remoteDBs = ["http://localhost:5984/testdb"];
+    const remoteDBs = [remoteDBurl];
 
     beforeAll(() => {
         const params1: AdapterParams = {
             connectionParams: {adapter: "memory"},
-            dbName: "testdb",
+            dbName,
             remoteDBs,
         };
         const params2: AdapterParams = {
-            connectionParams: {},
-            dbName: "testdb", host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
+            connectionParams: {
+		auth: {username: couchdbUser, password: couchdbPassword}
+	    },
+            dbName, host: couchdbHost, port: couchdbPort, protocol: ConnectionProtocol.HTTP,
         };
         const dataSource1 = new PouchDBDataSource(PouchDB, params1);
         const dataSource2 = new PouchDBDataSource(PouchDB, params2);
@@ -76,6 +80,13 @@ describe("Basic usage", () => {
             .then(() => dataSource2.connection({autoSave: false, handleConflicts: true}))
             .then((c) => connection2 = c);
 
+    });
+
+    afterAll(() => {
+        return connection1
+            .close()
+            .then(() => connection2.close())
+            .catch((err) => console.log(err));
     });
 
     it("Save and update CRDT object", () => {
@@ -166,18 +177,20 @@ describe("Test offline support with CRDTs", () => {
     const TEST_KEY = uuid();
     let connection1: IBasicConnection;
     let connection2: IBasicConnection;
-    const remoteDBs = ["http://localhost:5984/testdb"];
+    const remoteDBs = [remoteDBurl];
     let originalTimeout: number;
 
     beforeAll(() => {
         const params1: AdapterParams = {
             connectionParams: {adapter: "memory"},
-            dbName: "testdb",
+            dbName,
             remoteDBs,
         };
         const params2: AdapterParams = {
-            connectionParams: {},
-            dbName: "testdb", host: "localhost", port: 5984, protocol: ConnectionProtocol.HTTP,
+            connectionParams: {
+		auth: {username: couchdbUser, password: couchdbPassword}
+	    },
+            dbName, host: couchdbHost, port: couchdbPort, protocol: ConnectionProtocol.HTTP,
         };
         const dataSource1 = new PouchDBDataSource(PouchDB, params1);
         const dataSource2 = new PouchDBDataSource(PouchDB, params2);
@@ -188,6 +201,13 @@ describe("Test offline support with CRDTs", () => {
 
     });
 
+    afterAll(() => {
+        return connection1
+            .close()
+            .then(() => connection2.close())
+            .catch((err) => console.log(err));
+    });
+
     // "go offline and receive remote updates on reconnect"
     // "go offline and push local updates on reconnect"
     // "go offline; update; receive remote updates on reconnect; solve conflict"
@@ -195,6 +215,10 @@ describe("Test offline support with CRDTs", () => {
     beforeEach(() => {
         originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
         jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+    });
+
+    afterEach(() => {
+        jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
     });
 
     it("go offline and receive pending updates on reconnect", (done) => {
@@ -257,13 +281,5 @@ describe("Test offline support with CRDTs", () => {
             .then(() => connection2.goOffline())
             .catch((error) => fail(error));
 
-    });
-
-    afterEach(() => {
-        jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
-        return connection1
-            .close()
-            .then(() => connection2.close())
-            .catch((err) => console.log(err));
     });
 });

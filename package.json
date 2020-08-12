@@ -10,6 +10,7 @@
   "scripts": {
     "start": "babel-node dist/server.js",
     "test": "jest $TESTS",
+    "lint": "eslint .",
     "build": "tsc --skipLibCheck",
     "prepare": "npm run build"
   },
