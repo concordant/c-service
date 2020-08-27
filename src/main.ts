@@ -1,18 +1,18 @@
 /**
  * MIT License
- * 
+ *
  * Copyright (c) 2020, Concordant and contributors
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -21,28 +21,40 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import PouchDBDataSource, {AdapterParams, ConnectionParams, ConnectionProtocol} from "./Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
+import PouchDBDataSource, {
+  AdapterParams,
+  ConnectionParams,
+  ConnectionProtocol,
+} from "./Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
 import PouchDBObject from "./Database/Implementation/PouchDB/DataTypes/PouchDBObject";
 import PouchDB from "./Database/Implementation/PouchDB/PouchDB";
-import {Connection, Database, DatabaseEventEmitter, DatabaseHooks, DataSource, DBSaveAllHandler, DBTxHandler, Key} from "./Database/Interfaces/Types";
+import {
+  Connection,
+  Database,
+  DatabaseEventEmitter,
+  DatabaseHooks,
+  DataSource,
+  DBSaveAllHandler,
+  DBTxHandler,
+  Key,
+} from "./Database/Interfaces/Types";
 
-import {Document} from "./Database/DataTypes/Interfaces/Types";
+import { Document } from "./Database/DataTypes/Interfaces/Types";
 
 export {
-    AdapterParams,
-    Connection,
-    ConnectionParams,
-    ConnectionProtocol,
-    Database,
-    DatabaseEventEmitter,
-    DatabaseHooks,
-    DataSource,
-    Document,
-    DBSaveAllHandler,
-    DBTxHandler,
-    Key,
-
-    PouchDBDataSource,
-    PouchDBObject,
-    PouchDB,
+  AdapterParams,
+  Connection,
+  ConnectionParams,
+  ConnectionProtocol,
+  Database,
+  DatabaseEventEmitter,
+  DatabaseHooks,
+  DataSource,
+  Document,
+  DBSaveAllHandler,
+  DBTxHandler,
+  Key,
+  PouchDBDataSource,
+  PouchDBObject,
+  PouchDB,
 };

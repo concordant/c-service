@@ -1,53 +1,53 @@
 openapi: 3.0.0
 info:
-    title: 'Concordant API'
-    version: 1.0.0
+  title: "Concordant API"
+  version: 1.0.0
 paths: {}
 components:
-    schemas:
-        Query:
-            type: object
-            properties:
-                replicators:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/Replicator'
-                replicator:
-                    $ref: '#/components/schemas/Replicator'
-                appObjects:
-                    type: array
-                    items:
-                        $ref: '#/components/schemas/AppObject'
-        Replicator:
-            type: object
-            required:
-                - id
-            properties:
-                id:
-                    type: object
-                source:
-                    type: string
-                target:
-                    type: string
-                continuous:
-                    type: boolean
-                state:
-                    type: string
-        AppObject:
-            type: object
-            required:
-                - id
-            properties:
-                id:
-                    type: string
-                document:
-                    type: string
-        Mutation:
-            type: object
-            properties:
-                replicator:
-                    type: string
-                createApp:
-                    type: string
-                deleteApp:
-                    type: string
+  schemas:
+    Query:
+      type: object
+      properties:
+        replicators:
+          type: array
+          items:
+            $ref: "#/components/schemas/Replicator"
+        replicator:
+          $ref: "#/components/schemas/Replicator"
+        appObjects:
+          type: array
+          items:
+            $ref: "#/components/schemas/AppObject"
+    Replicator:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: object
+        source:
+          type: string
+        target:
+          type: string
+        continuous:
+          type: boolean
+        state:
+          type: string
+    AppObject:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        document:
+          type: string
+    Mutation:
+      type: object
+      properties:
+        replicator:
+          type: string
+        createApp:
+          type: string
+        deleteApp:
+          type: string
