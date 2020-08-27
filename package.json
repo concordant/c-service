@@ -35,7 +35,11 @@
     "@typescript-eslint/eslint-plugin": "^3.6.1",
     "@typescript-eslint/parser": "^3.6.1",
     "eslint": "^7.4.0",
+    "eslint-config-prettier": "^6.11.0",
+    "husky": "^4.2.5",
     "jest": "^24.9.0",
+    "lint-staged": "^10.2.11",
+    "prettier": "^2.0.5",
     "ts-jest": "^24.1.0",
     "typescript": "^3.9.6"
   },
@@ -63,5 +67,14 @@
       "json",
       "html"
     ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,ts}": "eslint --cache --fix",
+    "*.{js,ts,css,md,json,yml}": "prettier --write"
   }
 }
