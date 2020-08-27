@@ -20,9 +20,9 @@ test:
   before_script:
     - npm ci --cache .npm --prefer-offline
     - curl -u "$COUCHDB_USER:$COUCHDB_PASSWORD"
-           -X PUT $COUCHDB_URL/_users
+      -X PUT $COUCHDB_URL/_users
     - curl -u "$COUCHDB_USER:$COUCHDB_PASSWORD"
-           -X PUT $COUCHDB_URL/$DBNAME
+      -X PUT $COUCHDB_URL/$DBNAME
 
   script:
     - npm test
