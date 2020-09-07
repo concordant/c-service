@@ -28,5 +28,5 @@ module.exports = {
     "^.+\\.tsx?$": "ts-jest",
   },
   collectCoverage: true,
-  coverageReporters: ["json", "html"],
+  coverageReporters: ["text", "json", "html"],
 };
