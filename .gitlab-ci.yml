@@ -26,3 +26,5 @@ test:
 
   script:
     - npm test
+
+  coverage: /All files[^|]*\|[^|]*\s+([\d\.]+)/
