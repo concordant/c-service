@@ -29,4 +29,5 @@ module.exports = {
   },
   collectCoverage: true,
   coverageReporters: ["text", "json", "html"],
+  collectCoverageFrom: ["src/**", "!src/**/*.d.ts"],
 };
