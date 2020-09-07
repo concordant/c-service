@@ -1,6 +1,8 @@
 # c-server
 
 [![License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/licenses/MIT)
+[![pipeline status](https://gitlab.inria.fr/concordant/software/c-server/badges/master/pipeline.svg)](https://gitlab.inria.fr/concordant/software/c-server/-/commits/master)
+[![coverage report](https://gitlab.inria.fr/concordant/software/c-server/badges/master/coverage.svg)](https://gitlab.inria.fr/concordant/software/c-server/-/commits/master)
 
 Server code for the C-Labbook demo.
 
