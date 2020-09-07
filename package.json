@@ -61,13 +61,6 @@
     "sofa-api": "^0.5.1",
     "uuid": "^3.3.3"
   },
-  "jest": {
-    "collectCoverage": true,
-    "coverageReporters": [
-      "json",
-      "html"
-    ]
-  },
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"
