@@ -156,7 +156,7 @@ const schema = makeExecutableSchema({
 const openApi = OpenAPI({
   info: {
     title: "Concordant API",
-    version: "1.0.0",
+    version: "1.1.1",
   },
   schema,
 });

@@ -1,8 +1,108 @@
 openapi: 3.0.0
 info:
   title: "Concordant API"
-  version: 1.0.0
-paths: {}
+  version: 1.1.1
+paths:
+  /api/replicators:
+    get:
+      operationId: replicatorsQuery
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Replicator"
+  "/api/replicator/{id}":
+    get:
+      operationId: replicatorQuery
+      parameters:
+        - in: path
+          name: id
+          required: false
+          schema:
+            $ref: "#/components/schemas/ID"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Replicator"
+  /api/app-objects:
+    get:
+      operationId: appObjectsQuery
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AppObject"
+  /api/replicator:
+    post:
+      operationId: replicatorMutation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                source:
+                  type: string
+                target:
+                  type: string
+                continuous:
+                  type: boolean
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: string
+  /api/create-app:
+    post:
+      operationId: createAppMutation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                appName:
+                  type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: string
+  /api/delete-app:
+    post:
+      operationId: deleteAppMutation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                appName:
+                  type: string
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: string
 components:
   schemas:
     Query:
@@ -51,3 +151,5 @@ components:
           type: string
         deleteApp:
           type: string
+    ID:
+      type: string
