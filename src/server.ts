@@ -204,17 +204,12 @@ if (!dbName) {
  * @param dbName new DB name
  */
 function createDB(appDB: Nano.DatabaseScope, dbName: string) {
-  console.log("[SERVER] Creating DB:" + dbName);
-  appDB
-    .create(dbName)
-    .then((body) => {
-      console.log(`[SERVER] database ${dbName} created!`);
-    })
-    .catch((error) => {
-      console.log(`[SERVER][ERROR] Failed creating database ${dbName}`);
-      console.log(error);
-      process.exit(1);
-    });
+  console.warn("[SERVER] Creating DB:" + dbName);
+  appDB.create(dbName).catch((error) => {
+    console.error(`[SERVER][ERROR] Failed creating database ${dbName}`);
+    console.error(error);
+    process.exit(1);
+  });
 }
 
 /**
