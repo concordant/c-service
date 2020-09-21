@@ -13,9 +13,9 @@ The first version of C-Service API.
 
 For the next steps, you will need the following software:
 
-* Make sure you have the latest version of Node.js: [see official installation guide](https://nodejs.org/en/download/);
-* The project uses Git to download some required dependencies: [follow the official install guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-* C-Server runs on top of CouchDB, [see CouchDB's installation guide](https://docs.couchdb.org/en/stable/install/index.html)
+- Make sure you have the latest version of Node.js: [see official installation guide](https://nodejs.org/en/download/);
+- The project uses Git to download some required dependencies: [follow the official install guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
+- C-Server runs on top of CouchDB, [see CouchDB's installation guide](https://docs.couchdb.org/en/stable/install/index.html)
 
 In addition, you will need to enable CORS in CouchDB
 
@@ -45,7 +45,7 @@ You might need to change the binding address in the CouchDB admin panel to allow
 
 You can also run tests using:
 
- ```bash
+```bash
 npm test
 ```
 
