@@ -186,16 +186,48 @@ server.applyMiddleware({ app });
 
 app.listen({ port: 4000 });
 
+/**
+ * DBNAME is required env arg for the application, exit if unset
+ */
 if (!dbName) {
   console.error("Please set DBNAME environment variable");
   process.exit(1);
 }
 
+/**
+ * Creates a new Database, used when DBNAME doesn't exist
+ *
+ * In case of failure, the server will exist with error
+ * TODO: init DB with defaults
+ *
+ * @param appDB CouchDB DatabaseScope instance where to create the new DB
+ * @param dbName new DB name
+ */
+function createDB(appDB: Nano.DatabaseScope, dbName: string) {
+  console.warn("[SERVER] Creating DB:" + dbName);
+  appDB.create(dbName).catch((error) => {
+    console.error(`[SERVER][ERROR] Failed creating database ${dbName}`);
+    console.error(error);
+    process.exit(1);
+  });
+}
+
+/**
+ * Poll appDB waiting for connection ack
+ *
+ * If DBNAME doesn't exist, it will be created
+ *
+ * @param timeout polling sleep duration, multiplied by 2 at each retry
+ */
 const connectDB = (timeout = 1000) =>
   appDB.info().catch((error) => {
     const retryIn = Math.min(timeout * 2, maxRetryTimeout);
     setTimeout(() => connectDB(retryIn), retryIn);
     console.warn(error, `retry in ${retryIn}`);
+    // If DB doesn't exist, create it before first retry
+    if (error && error.error === "not_found" && timeout <= 1000) {
+      createDB(client.db, dbName);
+    }
   });
 
 const client = Nano({ url: dbUrl, requestDefaults: { jar: true } });
