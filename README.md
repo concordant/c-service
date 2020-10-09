@@ -1,10 +1,10 @@
-# c-server
+# C-Service
 
 [![License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/licenses/MIT)
-[![pipeline status](https://gitlab.inria.fr/concordant/software/c-server/badges/master/pipeline.svg)](https://gitlab.inria.fr/concordant/software/c-server/-/commits/master)
-[![coverage report](https://gitlab.inria.fr/concordant/software/c-server/badges/master/coverage.svg)](https://gitlab.inria.fr/concordant/software/c-server/-/commits/master)
+[![pipeline status](https://gitlab.inria.fr/concordant/software/c-service/badges/master/pipeline.svg)](https://gitlab.inria.fr/concordant/software/c-service/-/commits/master)
+[![coverage report](https://gitlab.inria.fr/concordant/software/c-service/badges/master/coverage.svg)](https://gitlab.inria.fr/concordant/software/c-service/-/commits/master)
 
-Server code for the C-Labbook demo.
+Service code for the C-Labbook demo.
 The first version of C-Service API.
 
 ## Getting started
@@ -15,7 +15,7 @@ For the next steps, you will need the following software:
 
 - Make sure you have the latest version of Node.js: [see official installation guide](https://nodejs.org/en/download/);
 - The project uses Git to download some required dependencies: [follow the official install guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-- C-Server runs on top of CouchDB, [see CouchDB's installation guide](https://docs.couchdb.org/en/stable/install/index.html)
+- C-Service runs on top of CouchDB, [see CouchDB's installation guide](https://docs.couchdb.org/en/stable/install/index.html)
 
 In addition, you will need to enable CORS in CouchDB
 
@@ -31,9 +31,9 @@ Go to project root directory and:
 npm install
 ```
 
-2.**Start C-Server**
+2.**Start C-Service**
 
-Set database name and credentials and run server:
+Set database name and credentials and run service:
 
 ```bash
 export DBNAME=my-database COUCHDB_USER=my-user COUCHDB_PASSWORD=my-passwd
