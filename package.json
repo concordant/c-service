@@ -1,5 +1,5 @@
 {
-  "name": "c-server",
+  "name": "c-service",
   "version": "1.1.1",
   "description": "Server backend for Concordant P2P collaborative apps",
   "main": "./dist/main.js",
@@ -8,7 +8,7 @@
     "dist/**/*"
   ],
   "scripts": {
-    "start": "babel-node dist/server.js",
+    "start": "babel-node dist/service.js",
     "test": "jest $TESTS",
     "lint": "eslint .",
     "build": "tsc --skipLibCheck",
@@ -16,14 +16,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.inria.fr/concordant/software/c-server.git"
+    "url": "git+https://gitlab.inria.fr/concordant/software/c-service.git"
   },
   "author": "info@concordant.io",
   "license": "MIT",
   "bugs": {
-    "url": "https://gitlab.inria.fr/concordant/software/c-server/issues"
+    "url": "https://gitlab.inria.fr/concordant/software/c-service/issues"
   },
-  "homepage": "https://gitlab.inria.fr/concordant/software/c-server/-/blob/master/README.md",
+  "homepage": "https://gitlab.inria.fr/concordant/software/c-service/-/blob/master/README.md",
   "devDependencies": {
     "@babel/core": "^7.6.0",
     "@babel/node": "^7.6.1",
