@@ -115,7 +115,7 @@ const resolvers = {
           return connection
             .get<CRDTWrapper<any>>(r.id)
             .then((obj: Document<CRDTWrapper<any>>) => {
-              const { unwrapped } = CRDTWrapper.unwrap(obj.current(), "");
+              const { unwrapped } = CRDTWrapper.unwrap(obj.current());
               return { id: r.id, document: JSON.stringify(unwrapped.value()) };
             })
             .catch((error) => console.error("error", error));
@@ -247,13 +247,13 @@ const hooks: DatabaseHooks = {
     obj: Document<CRDTWrapper<any>>,
     objs: Array<Document<CRDTWrapper<any>>>
   ) => {
-    const { unwrapped: objCRDT } = CRDTWrapper.unwrap(obj.current(), clientId);
+    const crdt = CRDTWrapper.unwrap(obj.current());
     if (objs.length > 0) {
       objs.forEach((o) => {
-        const { unwrapped } = CRDTWrapper.unwrap(o.current(), clientId);
-        objCRDT.apply(unwrapped.state());
+        const otherCrdt = CRDTWrapper.unwrap(o.current());
+        crdt.merge(otherCrdt);
       });
-      return CRDTWrapper.wrap(objCRDT, "ormap");
+      return CRDTWrapper.wrap(crdt);
     }
     throw new Error("Unexpected call");
   },

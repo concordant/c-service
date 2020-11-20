@@ -21,8 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import CRDT from "delta-crdts";
-import CRDTCodec from "delta-crdts-msgpack-codec";
+import { crdtlib } from "c-crdtlib";
 import uuid = require("uuid");
 import { Document } from "../../src/Database/DataTypes/Interfaces/Types";
 import { PouchDB } from "../../src/Database/Implementation/Adapters/PouchDB/Adapter";
@@ -35,6 +34,7 @@ import {
   IBasicConnection,
 } from "../../src/Database/Interfaces/Types";
 import { promiseDelay } from "../../src/Utils/Utils";
+import CRDTWrapper from "../../src/Utils/CRDTWrapper";
 
 import {
   dbName,
@@ -45,28 +45,16 @@ import {
   remoteDBurl,
 } from "../testParams";
 
-class CRDTWrapper {
-  public static wrap(object: CRDT, type: string) {
-    return new CRDTWrapper(CRDTCodec.encode(object.state()), type);
-  }
-
-  public static unwrap(object: CRDTWrapper, clientId: string) {
-    const unwrapped = CRDT(object.type)(clientId);
-    unwrapped.apply(CRDTCodec.decode(object.buffer));
-    return unwrapped;
-  }
-
-  private buffer: any;
-
-  constructor(buffer: any, private type: string) {
-    this.buffer = buffer;
-  }
-}
-
 describe("Basic usage", () => {
   let TEST_KEY: string;
   let connection1: IBasicConnection;
   let connection2: IBasicConnection;
+  const environment1 = new crdtlib.utils.SimpleEnvironment(
+    new crdtlib.utils.DCUId("client1")
+  );
+  const environment2 = new crdtlib.utils.SimpleEnvironment(
+    new crdtlib.utils.DCUId("client2")
+  );
   const remoteDBs = [remoteDBurl];
 
   beforeAll(() => {
@@ -104,56 +92,53 @@ describe("Basic usage", () => {
 
   it("Save and update CRDT object", () => {
     TEST_KEY = uuid();
-    const defaultObject = CRDTWrapper.wrap(CRDT("ormap")("client1"), "ormap");
+    const defaultObject = CRDTWrapper.wrap(new crdtlib.crdt.PNCounter());
     return connection2
-      .get<CRDTWrapper>(TEST_KEY, () => defaultObject)
-      .then(() => connection2.get<CRDTWrapper>(TEST_KEY))
-      .then((obj: Document<CRDTWrapper>) => {
-        const newCRDT = CRDTWrapper.unwrap(obj.current(), "client2");
-        newCRDT.applySub("r1", "ormap", "applySub", "A", "mvreg", "write", "A");
-        return obj.update(CRDTWrapper.wrap(newCRDT, "ormap")).save();
+      .get<CRDTWrapper<any>>(TEST_KEY, () => defaultObject)
+      .then(() => connection2.get<CRDTWrapper<any>>(TEST_KEY))
+      .then((obj: Document<CRDTWrapper<any>>) => {
+        const newCRDT = CRDTWrapper.unwrap(obj.current());
+        newCRDT.increment(42, environment1.getNewTimestamp());
+        return obj.update(CRDTWrapper.wrap(newCRDT)).save();
       })
-      .then(() => connection2.get<CRDT>(TEST_KEY))
-      .then((obj: Document<CRDTWrapper>) => {
-        const newCRDT = CRDTWrapper.unwrap(obj.current(), "client2");
-        expect(newCRDT.value().r1).toBeDefined();
+      .then(() => connection2.get<CRDTWrapper<any>>(TEST_KEY))
+      .then((obj: Document<CRDTWrapper<any>>) => {
+        const newCRDT = CRDTWrapper.unwrap(obj.current());
+        expect(newCRDT.get()).toBe(42);
       })
       .catch((error) => fail(error));
   });
 
   // Based on RemoteConflicts.test.ts
-  it("conflict handler triggered on get", (done) => {
+  it("Conflict handler triggered on get", (done) => {
     TEST_KEY = uuid();
 
-    const client1DefaultObject = CRDT("ormap")("client1");
+    const client1DefaultObject = new crdtlib.crdt.PNCounter();
     // default object is created by client2
     const client2DefaultObjectWrapped = CRDTWrapper.wrap(
-      CRDT("ormap")("client2"),
-      "ormap"
+      new crdtlib.crdt.PNCounter()
     );
-    let remoteObj: Document<CRDTWrapper>;
+    let remoteObj: Document<CRDTWrapper<any>>;
     let onlyAfter = false;
 
     // hooks are handled by client2
     // need to create hooks for different connections to set different clientIds.
     const hooks: DatabaseHooks = {
       conflictHandler: (
-        obj: Document<CRDTWrapper>,
-        objs: Array<Document<CRDTWrapper>>
+        obj: Document<CRDTWrapper<any>>,
+        objs: Array<Document<CRDTWrapper<any>>>
       ) => {
         if (!onlyAfter) {
           fail("Unexpected conflict trigger");
         }
 
-        const objCRDT = CRDTWrapper.unwrap(obj.current(), "client2");
+        const objCRDT = CRDTWrapper.unwrap(obj.current());
         if (objs.length > 0) {
           objs.forEach((o) => {
-            const other = CRDTWrapper.unwrap(o.current(), "client2");
-            // console.log("Merging", objCRDT.value(), other.value());
-            objCRDT.apply(other.state());
+            const other = CRDTWrapper.unwrap(o.current());
+            objCRDT.merge(other);
           });
-          // console.log("Resulting state", objCRDT.value());
-          return CRDTWrapper.wrap(objCRDT, "ormap");
+          return CRDTWrapper.wrap(objCRDT);
         }
         throw new Error("Unexpected call");
       },
@@ -161,52 +146,35 @@ describe("Basic usage", () => {
 
     connection2.registerHooks(hooks);
 
-    const sub = connection1.subscribe<CRDTWrapper>(TEST_KEY, {
+    const sub = connection1.subscribe<CRDTWrapper<any>>(TEST_KEY, {
       change: (key, newObj) => {
         connection1.cancel(sub);
         onlyAfter = true;
-        const spreadSheetMap1 = CRDTWrapper.unwrap(newObj.current(), "client1");
-        spreadSheetMap1.applySub(
-          "r1",
-          "ormap",
-          "applySub",
-          "A",
-          "mvreg",
-          "write",
-          "A"
-        );
+        const crdt = CRDTWrapper.unwrap(newObj.current());
+        crdt.increment(40, environment2.getNewTimestamp());
         newObj
-          .update(CRDTWrapper.wrap(spreadSheetMap1, "ormap"))
+          .update(CRDTWrapper.wrap(crdt))
           .save()
           .then(() => {
-            client1DefaultObject.applySub(
-              "r2",
-              "ormap",
-              "applySub",
-              "A",
-              "mvreg",
-              "write",
-              "A"
-            );
+            client1DefaultObject.increment(2, environment1.getNewTimestamp());
             return remoteObj
-              .update(CRDTWrapper.wrap(client1DefaultObject, "ormap"))
+              .update(CRDTWrapper.wrap(client1DefaultObject))
               .save()
               .catch((err) => fail(err));
           })
           .then(() => promiseDelay(null, 200))
-          .then(() => connection2.get<CRDT>(TEST_KEY))
+          .then(() => connection2.get<CRDTWrapper<any>>(TEST_KEY))
           .then((obj) => {
-            const unwrapped = CRDTWrapper.unwrap(obj.current(), "client1");
-            expect(unwrapped.value().r1).toBeDefined();
-            expect(unwrapped.value().r2).toBeDefined();
+            const unwrapped = CRDTWrapper.unwrap(obj.current());
+            expect(unwrapped.get()).toBe(42);
           })
           .then(() => done());
       },
     });
 
     return connection2
-      .get<CRDTWrapper>(TEST_KEY, () => client2DefaultObjectWrapped)
-      .then((obj: Document<CRDTWrapper>) => (remoteObj = obj))
+      .get<CRDTWrapper<any>>(TEST_KEY, () => client2DefaultObjectWrapped)
+      .then((obj: Document<CRDTWrapper<any>>) => (remoteObj = obj))
       .catch((error) => fail(error));
   });
 });
@@ -215,6 +183,12 @@ describe("Test offline support with CRDTs", () => {
   const TEST_KEY = uuid();
   let connection1: IBasicConnection;
   let connection2: IBasicConnection;
+  const environment1 = new crdtlib.utils.SimpleEnvironment(
+    new crdtlib.utils.DCUId("client1")
+  );
+  const environment2 = new crdtlib.utils.SimpleEnvironment(
+    new crdtlib.utils.DCUId("client2")
+  );
   const remoteDBs = [remoteDBurl];
   let originalTimeout: number;
 
@@ -264,34 +238,31 @@ describe("Test offline support with CRDTs", () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
   });
 
-  it("go offline and receive pending updates on reconnect", (done) => {
+  it("Go offline and receive pending updates on reconnect", (done) => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
 
-    const client1DefaultObject = CRDT("ormap")("client1");
+    const client1DefaultObject = new crdtlib.crdt.PNCounter();
     const client2DefaultObjectWrapped = CRDTWrapper.wrap(
-      CRDT("ormap")("client2"),
-      "ormap"
+      new crdtlib.crdt.PNCounter()
     );
-    let remoteObj: Document<CRDTWrapper>;
+    let remoteObj: Document<CRDTWrapper<any>>;
     let onlyAfter = false;
 
     const hooks: DatabaseHooks = {
       conflictHandler: (
-        obj: Document<CRDTWrapper>,
-        objs: Array<Document<CRDTWrapper>>
+        obj: Document<CRDTWrapper<any>>,
+        objs: Array<Document<CRDTWrapper<any>>>
       ) => {
         if (!onlyAfter) {
           fail("Unexpected conflict trigger");
         }
-        const objCRDT = CRDTWrapper.unwrap(obj.current(), "client2");
+        const objCRDT = CRDTWrapper.unwrap(obj.current());
         if (objs.length > 0) {
           objs.forEach((o) => {
-            const other = CRDTWrapper.unwrap(o.current(), "client2");
-            // console.log("Merging", objCRDT.value(), other.value());
-            objCRDT.apply(other.state());
+            const other = CRDTWrapper.unwrap(o.current());
+            objCRDT.merge(other);
           });
-          // console.log("Resulting state", objCRDT.value());
-          return CRDTWrapper.wrap(objCRDT, "ormap");
+          return CRDTWrapper.wrap(objCRDT);
         }
         throw new Error("Unexpected call");
       },
@@ -299,53 +270,36 @@ describe("Test offline support with CRDTs", () => {
 
     connection2.registerHooks(hooks);
 
-    const sub = connection1.subscribe<CRDTWrapper>(TEST_KEY, {
+    const sub = connection1.subscribe<CRDTWrapper<any>>(TEST_KEY, {
       change: (key, newObj) => {
         connection1.cancel(sub);
         onlyAfter = true;
-        const spreadSheetMap1 = CRDTWrapper.unwrap(newObj.current(), "client1");
-        spreadSheetMap1.applySub(
-          "r1",
-          "ormap",
-          "applySub",
-          "A",
-          "mvreg",
-          "write",
-          "A"
-        );
+        const crdt = CRDTWrapper.unwrap(newObj.current());
+        crdt.increment(40, environment2.getNewTimestamp());
         newObj
-          .update(CRDTWrapper.wrap(spreadSheetMap1, "ormap"))
+          .update(CRDTWrapper.wrap(crdt))
           .save()
           .then(() => {
-            client1DefaultObject.applySub(
-              "r2",
-              "ormap",
-              "applySub",
-              "A",
-              "mvreg",
-              "write",
-              "A"
-            );
+            client1DefaultObject.increment(2, environment1.getNewTimestamp());
             return remoteObj
-              .update(CRDTWrapper.wrap(client1DefaultObject, "ormap"))
+              .update(CRDTWrapper.wrap(client1DefaultObject))
               .save()
               .catch((err) => fail(err));
           })
           .then(() => promiseDelay(null, 200))
           // .then(() => connection2.goOnline())
-          .then(() => connection2.get<CRDT>(TEST_KEY))
+          .then(() => connection2.get<CRDTWrapper<any>>(TEST_KEY))
           .then((obj) => {
-            const unwrapped = CRDTWrapper.unwrap(obj.current(), "client1");
-            expect(unwrapped.value().r1).toBeDefined();
-            expect(unwrapped.value().r2).toBeDefined();
+            const unwrapped = CRDTWrapper.unwrap(obj.current());
+            expect(unwrapped.get()).toBe(42);
           })
           .then(() => done());
       },
     });
 
     return connection2
-      .get<CRDTWrapper>(TEST_KEY, () => client2DefaultObjectWrapped)
-      .then((obj: Document<CRDTWrapper>) => (remoteObj = obj))
+      .get<CRDTWrapper<any>>(TEST_KEY, () => client2DefaultObjectWrapped)
+      .then((obj: Document<CRDTWrapper<any>>) => (remoteObj = obj))
       .then(() => connection2.goOffline())
       .catch((error) => fail(error));
   });
