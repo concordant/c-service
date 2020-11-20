@@ -21,31 +21,39 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import CRDT from "delta-crdts";
-import CRDTCodec from "delta-crdts-msgpack-codec";
+import { crdtlib } from "c-crdtlib";
 
 export default class CRDTWrapper<T> {
-  public static wrap(object: CRDT, type: string) {
-    return new CRDTWrapper(CRDTCodec.encode(object.state()), type);
+  public static wrap<T>(crdt: any): CRDTWrapper<T> {
+    return new CRDTWrapper(crdt.toJson());
   }
 
-  // TODO: Need to improve this. Some browsers and Node handle buffers differently. this solution works, but is inefficient.
-  public static unwrap<T>(object: CRDTWrapper<T>, clientId: string): CRDT<T> {
-    const unwrapped = CRDT(object.type)(clientId);
-    unwrapped.apply(
-      CRDTCodec.decode(Buffer.from(Object.values(object.buffer)))
-    );
-    return { unwrapped, type: object.type };
+  public static unwrap<T>(wrapper: CRDTWrapper<T>): any {
+    const crdtType = JSON.parse(wrapper.crdtJson)["_type"];
+    switch (crdtType) {
+      case "PNCounter":
+        return crdtlib.crdt.PNCounter.Companion.fromJson(wrapper.crdtJson);
+      case "MVRegister":
+        return crdtlib.crdt.MVRegister.Companion.fromJson(wrapper.crdtJson);
+      case "LWWRegister":
+        return crdtlib.crdt.LWWRegister.Companion.fromJson(wrapper.crdtJson);
+      case "Ratchet":
+        return crdtlib.crdt.Ratchet.Companion.fromJson(wrapper.crdtJson);
+      case "RGA":
+        return crdtlib.crdt.RGA.Companion.fromJson(wrapper.crdtJson);
+      case "LWWMap":
+        return crdtlib.crdt.LWWMap.Companion.fromJson(wrapper.crdtJson);
+      case "MVMap":
+        return crdtlib.crdt.MVMap.Companion.fromJson(wrapper.crdtJson);
+      case "Map":
+        return crdtlib.crdt.Map.Companion.fromJson(wrapper.crdtJson);
+      default:
+        break;
+    }
+    throw new Error("Unknown CRDT type");
   }
 
-  public static defaultWrappedCRDTFor<T>(
-    crdtName: string,
-    clientId: string
-  ): CRDTWrapper<T> {
-    return CRDTWrapper.wrap(CRDT(crdtName)(clientId), crdtName);
-  }
-
-  constructor(public buffer: Buffer, public type: string) {
-    this.buffer = buffer;
+  constructor(public crdtJson: string) {
+    this.crdtJson = crdtJson;
   }
 }
