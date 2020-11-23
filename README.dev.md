@@ -58,7 +58,7 @@
 
 - `swagger.yml` OpenAPI Specification
 - `src/` Code
-  - `server.ts` GraphQL schema definition & resolvers
+  - `service.ts` GraphQL schema definition & resolvers
   - `test/` Tests (Jest)
 
 ### Artifacts (untracked):
