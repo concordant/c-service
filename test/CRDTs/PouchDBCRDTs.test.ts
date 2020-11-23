@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import { crdtlib } from "c-crdtlib";
+import { crdtlib } from "@concordant/c-crdtlib";
 import uuid = require("uuid");
 import { Document } from "../../src/Database/DataTypes/Interfaces/Types";
 import { PouchDB } from "../../src/Database/Implementation/Adapters/PouchDB/Adapter";
@@ -50,10 +50,10 @@ describe("Basic usage", () => {
   let connection1: IBasicConnection;
   let connection2: IBasicConnection;
   const environment1 = new crdtlib.utils.SimpleEnvironment(
-    new crdtlib.utils.DCUId("client1")
+    new crdtlib.utils.ClientUId("client1")
   );
   const environment2 = new crdtlib.utils.SimpleEnvironment(
-    new crdtlib.utils.DCUId("client2")
+    new crdtlib.utils.ClientUId("client2")
   );
   const remoteDBs = [remoteDBurl];
 
@@ -98,7 +98,7 @@ describe("Basic usage", () => {
       .then(() => connection2.get<CRDTWrapper<any>>(TEST_KEY))
       .then((obj: Document<CRDTWrapper<any>>) => {
         const newCRDT = CRDTWrapper.unwrap(obj.current());
-        newCRDT.increment(42, environment1.getNewTimestamp());
+        newCRDT.increment(42, environment1.tick());
         return obj.update(CRDTWrapper.wrap(newCRDT)).save();
       })
       .then(() => connection2.get<CRDTWrapper<any>>(TEST_KEY))
@@ -151,12 +151,12 @@ describe("Basic usage", () => {
         connection1.cancel(sub);
         onlyAfter = true;
         const crdt = CRDTWrapper.unwrap(newObj.current());
-        crdt.increment(40, environment2.getNewTimestamp());
+        crdt.increment(40, environment2.tick());
         newObj
           .update(CRDTWrapper.wrap(crdt))
           .save()
           .then(() => {
-            client1DefaultObject.increment(2, environment1.getNewTimestamp());
+            client1DefaultObject.increment(2, environment1.tick());
             return remoteObj
               .update(CRDTWrapper.wrap(client1DefaultObject))
               .save()
@@ -184,10 +184,10 @@ describe("Test offline support with CRDTs", () => {
   let connection1: IBasicConnection;
   let connection2: IBasicConnection;
   const environment1 = new crdtlib.utils.SimpleEnvironment(
-    new crdtlib.utils.DCUId("client1")
+    new crdtlib.utils.ClientUId("client1")
   );
   const environment2 = new crdtlib.utils.SimpleEnvironment(
-    new crdtlib.utils.DCUId("client2")
+    new crdtlib.utils.ClientUId("client2")
   );
   const remoteDBs = [remoteDBurl];
   let originalTimeout: number;
@@ -275,12 +275,12 @@ describe("Test offline support with CRDTs", () => {
         connection1.cancel(sub);
         onlyAfter = true;
         const crdt = CRDTWrapper.unwrap(newObj.current());
-        crdt.increment(40, environment2.getNewTimestamp());
+        crdt.increment(40, environment2.tick());
         newObj
           .update(CRDTWrapper.wrap(crdt))
           .save()
           .then(() => {
-            client1DefaultObject.increment(2, environment1.getNewTimestamp());
+            client1DefaultObject.increment(2, environment1.tick());
             return remoteObj
               .update(CRDTWrapper.wrap(client1DefaultObject))
               .save()
