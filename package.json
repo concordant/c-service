@@ -44,10 +44,10 @@
     "typescript": "^3.9.7"
   },
   "dependencies": {
+    "@concordant/c-crdtlib": "0.0.1",
     "@types/uuid": "^3.4.9",
     "apollo-server-express": "^2.19.0",
     "body-parser": "^1.19.0",
-    "c-crdtlib": "git+ssh://git@gitlab.inria.fr/concordant/software/packages/npm/c-crdtlib.git",
     "express": "^4.17.1",
     "graphql": "^14.7.0",
     "graphql-tools": "^4.0.8",

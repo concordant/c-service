@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import { crdtlib } from "c-crdtlib";
+import { crdtlib } from "@concordant/c-crdtlib";
 
 export default class CRDTWrapper<T> {
   public static wrap<T>(crdt: any): CRDTWrapper<T> {
