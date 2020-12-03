@@ -225,21 +225,16 @@ function updateObject(dbName: string, docName: string, document: string) {
         .use(dbName)
         .get(docName)
         .then((body) => {
+          const newDocument = JSON.parse(document);
+          newDocument._rev = body._rev;
           client.db
             .use(dbName)
-            .get(docName)
-            .then((body) => {
-              const newDocument = JSON.parse(document);
-              newDocument._rev = body._rev;
-              client.db
-                .use(dbName)
-                .insert(newDocument, docName)
-                .catch((error) => {
-                  console.error(
-                    `[SERVER][ERROR] Failed updating document '${docName}' in database '${dbName}'`
-                  );
-                  console.error(error);
-                });
+            .insert(newDocument, docName)
+            .catch((error) => {
+              console.error(
+                `[SERVER][ERROR] Failed updating document '${docName}' in database '${dbName}'`
+              );
+              console.error(error);
             });
         })
         .catch((error) => {
