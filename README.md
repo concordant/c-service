@@ -35,7 +35,7 @@ npm install
 
 2.**Start C-Service**
 
-First one need to compile build the project:
+First, one need to compile build the project:
 
 ```bash
 npm run build
