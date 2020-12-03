@@ -94,15 +94,15 @@ describe("Basic usage", () => {
     TEST_KEY = uuid();
     const defaultObject = CRDTWrapper.wrap(new crdtlib.crdt.PNCounter());
     return connection2
-      .get<CRDTWrapper<any>>(TEST_KEY, () => defaultObject)
-      .then(() => connection2.get<CRDTWrapper<any>>(TEST_KEY))
-      .then((obj: Document<CRDTWrapper<any>>) => {
+      .get<CRDTWrapper>(TEST_KEY, () => defaultObject)
+      .then(() => connection2.get<CRDTWrapper>(TEST_KEY))
+      .then((obj: Document<CRDTWrapper>) => {
         const newCRDT = CRDTWrapper.unwrap(obj.current());
         newCRDT.increment(42, environment1.tick());
         return obj.update(CRDTWrapper.wrap(newCRDT)).save();
       })
-      .then(() => connection2.get<CRDTWrapper<any>>(TEST_KEY))
-      .then((obj: Document<CRDTWrapper<any>>) => {
+      .then(() => connection2.get<CRDTWrapper>(TEST_KEY))
+      .then((obj: Document<CRDTWrapper>) => {
         const newCRDT = CRDTWrapper.unwrap(obj.current());
         expect(newCRDT.get()).toBe(42);
       })
@@ -118,15 +118,15 @@ describe("Basic usage", () => {
     const client2DefaultObjectWrapped = CRDTWrapper.wrap(
       new crdtlib.crdt.PNCounter()
     );
-    let remoteObj: Document<CRDTWrapper<any>>;
+    let remoteObj: Document<CRDTWrapper>;
     let onlyAfter = false;
 
     // hooks are handled by client2
     // need to create hooks for different connections to set different clientIds.
     const hooks: DatabaseHooks = {
       conflictHandler: (
-        obj: Document<CRDTWrapper<any>>,
-        objs: Array<Document<CRDTWrapper<any>>>
+        obj: Document<CRDTWrapper>,
+        objs: Array<Document<CRDTWrapper>>
       ) => {
         if (!onlyAfter) {
           fail("Unexpected conflict trigger");
@@ -146,7 +146,7 @@ describe("Basic usage", () => {
 
     connection2.registerHooks(hooks);
 
-    const sub = connection1.subscribe<CRDTWrapper<any>>(TEST_KEY, {
+    const sub = connection1.subscribe<CRDTWrapper>(TEST_KEY, {
       change: (key, newObj) => {
         connection1.cancel(sub);
         onlyAfter = true;
@@ -163,7 +163,7 @@ describe("Basic usage", () => {
               .catch((err) => fail(err));
           })
           .then(() => promiseDelay(null, 200))
-          .then(() => connection2.get<CRDTWrapper<any>>(TEST_KEY))
+          .then(() => connection2.get<CRDTWrapper>(TEST_KEY))
           .then((obj) => {
             const unwrapped = CRDTWrapper.unwrap(obj.current());
             expect(unwrapped.get()).toBe(42);
@@ -173,8 +173,8 @@ describe("Basic usage", () => {
     });
 
     return connection2
-      .get<CRDTWrapper<any>>(TEST_KEY, () => client2DefaultObjectWrapped)
-      .then((obj: Document<CRDTWrapper<any>>) => (remoteObj = obj))
+      .get<CRDTWrapper>(TEST_KEY, () => client2DefaultObjectWrapped)
+      .then((obj: Document<CRDTWrapper>) => (remoteObj = obj))
       .catch((error) => fail(error));
   });
 });
@@ -245,13 +245,13 @@ describe("Test offline support with CRDTs", () => {
     const client2DefaultObjectWrapped = CRDTWrapper.wrap(
       new crdtlib.crdt.PNCounter()
     );
-    let remoteObj: Document<CRDTWrapper<any>>;
+    let remoteObj: Document<CRDTWrapper>;
     let onlyAfter = false;
 
     const hooks: DatabaseHooks = {
       conflictHandler: (
-        obj: Document<CRDTWrapper<any>>,
-        objs: Array<Document<CRDTWrapper<any>>>
+        obj: Document<CRDTWrapper>,
+        objs: Array<Document<CRDTWrapper>>
       ) => {
         if (!onlyAfter) {
           fail("Unexpected conflict trigger");
@@ -270,7 +270,7 @@ describe("Test offline support with CRDTs", () => {
 
     connection2.registerHooks(hooks);
 
-    const sub = connection1.subscribe<CRDTWrapper<any>>(TEST_KEY, {
+    const sub = connection1.subscribe<CRDTWrapper>(TEST_KEY, {
       change: (key, newObj) => {
         connection1.cancel(sub);
         onlyAfter = true;
@@ -288,7 +288,7 @@ describe("Test offline support with CRDTs", () => {
           })
           .then(() => promiseDelay(null, 200))
           // .then(() => connection2.goOnline())
-          .then(() => connection2.get<CRDTWrapper<any>>(TEST_KEY))
+          .then(() => connection2.get<CRDTWrapper>(TEST_KEY))
           .then((obj) => {
             const unwrapped = CRDTWrapper.unwrap(obj.current());
             expect(unwrapped.get()).toBe(42);
@@ -298,8 +298,8 @@ describe("Test offline support with CRDTs", () => {
     });
 
     return connection2
-      .get<CRDTWrapper<any>>(TEST_KEY, () => client2DefaultObjectWrapped)
-      .then((obj: Document<CRDTWrapper<any>>) => (remoteObj = obj))
+      .get<CRDTWrapper>(TEST_KEY, () => client2DefaultObjectWrapped)
+      .then((obj: Document<CRDTWrapper>) => (remoteObj = obj))
       .then(() => connection2.goOffline())
       .catch((error) => fail(error));
   });
