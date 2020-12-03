@@ -35,10 +35,16 @@ npm install
 
 2.**Start C-Service**
 
+First, one need to compile build the project:
+
+```bash
+npm run build
+```
+
 Set database name and credentials and run service:
 
 ```bash
-export DBNAME=my-database COUCHDB_USER=my-user COUCHDB_PASSWORD=my-passwd
+export COUCHDB_USER=my-user COUCHDB_PASSWORD=my-passwd
 npm start
 ```
 
@@ -48,6 +54,7 @@ You might need to change the binding address in the CouchDB admin panel to allow
 You can also run tests using:
 
 ```bash
+export DBNAME=my-dbname COUCHDB_USER=my-user COUCHDB_PASSWORD=my-passwd
 npm test
 ```
 
