@@ -26,22 +26,10 @@ import * as bodyParser from "body-parser";
 import express from "express";
 import { makeExecutableSchema } from "graphql-tools";
 import Nano, { MaybeDocument } from "nano";
-import PouchDBImpl from "pouchdb";
 import { OpenAPI, useSofa } from "sofa-api";
-import { Document } from "./Database/DataTypes/Interfaces/Types";
-import PouchDBDataSource, {
-  AdapterParams,
-  ConnectionProtocol,
-} from "./Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
-import { Connection, DatabaseHooks } from "./Database/Interfaces/Types";
-import CRDTWrapper from "./Utils/CRDTWrapper";
 
-const maxRetryTimeout = 30000;
 // http://USERNAME:PASSWORD/URL:PORT
 const dbUrl = process.env.COUCHDB_URL || "http://localhost:5984/";
-const dbName = process.env.DBNAME || "";
-const serviceName = process.env.SERVICE_NAME || "couchdb";
-const clientId = "STATIC_CLIENT_ID";
 
 const username = process.env.COUCHDB_USER || undefined;
 const userpass = process.env.COUCHDB_PASSWORD || undefined;
@@ -62,21 +50,18 @@ const typeDefs = gql`
     state: String
   }
 
-  type AppObject {
-    id: String!
-    document: String
-  }
-
   type Query {
+    getObjects(appName: String): [String]
+    getObject(appName: String, id: ID!): String
     replicators: [Replicator]
-    replicator(id: ID): Replicator
-    appObjects: [AppObject]
+    replicator(id: ID!): Replicator
   }
 
   type Mutation {
-    replicator(source: String, target: String, continuous: Boolean): String
     createApp(appName: String): String
     deleteApp(appName: String): String
+    updateObject(appName: String, id: ID!, document: String): String
+    replicator(source: String, target: String, continuous: Boolean): String
   }
 
   schema {
@@ -85,19 +70,16 @@ const typeDefs = gql`
   }
 `;
 
-let connection: Connection;
-
 const resolvers = {
   Mutation: {
-    createApp: (_: any, { appName }: any) => {
-      return client.db.create(appName).then((body) => {
-        return "ok";
-      });
+    createApp(_: any, { appName }: any) {
+      return createApp(appName);
     },
-    deleteApp: (_: any, { appName }: any) => {
-      client.db.destroy(appName).then((body) => {
-        return "ok";
-      });
+    deleteApp(_: any, { appName }: any) {
+      return deleteApp(appName);
+    },
+    updateObject: (_: any, { appName, id, document }: any) => {
+      return updateObject(appName, id, document);
     },
     replicator: (_: any, { source, target, continuous }: any) => {
       return client.db
@@ -105,30 +87,17 @@ const resolvers = {
           continuous,
           create_target: true,
         })
-        .then((body: any) => "ok");
+        .then((body) => "ok")
+        .catch((error) => console.error("error", error));
     },
   },
   Query: {
-    appObjects: () =>
-      appDB.list().then((objs) =>
-        objs.rows.map((r) => {
-          return connection
-            .get<CRDTWrapper<any>>(r.id)
-            .then((obj: Document<CRDTWrapper<any>>) => {
-              const { unwrapped } = CRDTWrapper.unwrap(obj.current());
-              return { id: r.id, document: JSON.stringify(unwrapped.value()) };
-            })
-            .catch((error) => console.error("error", error));
-        })
-      ),
-    replicator: async (_: any, { id }: any) =>
-      replicator.get(id).then((r: any) => ({
-        continuous: r.continuous,
-        id: r._id,
-        source: r.source.url,
-        state: r._replication_state,
-        target: r.target.url,
-      })),
+    getObjects: (_: any, { appName }: any) => {
+      return getObjects(appName);
+    },
+    getObject: (_: any, { appName, id }: any) => {
+      return getObject(appName, id);
+    },
     replicators: async (): Promise<IReplicator[]> => {
       const list = await replicator.list();
       return Promise.all(list.rows.map((r) => replicator.get(r.id))).then(
@@ -144,6 +113,14 @@ const resolvers = {
             }))
       );
     },
+    replicator: async (_: any, { id }: any) =>
+      replicator.get(id).then((r: any) => ({
+        continuous: r.continuous,
+        id: r._id,
+        source: r.source.url,
+        state: r._replication_state,
+        target: r.target.url,
+      })),
   },
 };
 
@@ -175,8 +152,6 @@ app.use(
   })
 );
 
-// app.use(bodyParser.json());
-
 const server = new ApolloServer({
   resolvers,
   typeDefs,
@@ -187,89 +162,163 @@ server.applyMiddleware({ app });
 app.listen({ port: 4000 });
 
 /**
- * DBNAME is required env arg for the application, exit if unset
+ * Creates a new database if it does not already exists
+ *
+ * TODO: init databse with defaults
+ *
+ * @param dbName the new database name
  */
-if (!dbName) {
-  console.error("Please set DBNAME environment variable");
-  process.exit(1);
+function createApp(dbName: string) {
+  console.warn(`[SERVER] Creating database: '${dbName}'`);
+  client.db
+    .use(dbName)
+    .info()
+    .catch((error) => {
+      client.db.create(dbName).catch((error) => {
+        console.error(`[SERVER][ERROR] Failed creating database '${dbName}'`);
+        console.error(error);
+      });
+    });
+  return "OK";
 }
 
 /**
- * Creates a new Database, used when DBNAME doesn't exist
+ * Deletes a database if it exists
  *
- * In case of failure, the server will exist with error
- * TODO: init DB with defaults
- *
- * @param appDB CouchDB DatabaseScope instance where to create the new DB
- * @param dbName new DB name
+ * @param dbName the targeted database name
  */
-function createDB(appDB: Nano.DatabaseScope, dbName: string) {
-  console.warn("[SERVER] Creating DB:" + dbName);
-  appDB.create(dbName).catch((error) => {
-    console.error(`[SERVER][ERROR] Failed creating database ${dbName}`);
-    console.error(error);
-    process.exit(1);
-  });
+function deleteApp(dbName: string) {
+  console.warn(`[SERVER] Deleting database: '${dbName}'`);
+  client.db
+    .use(dbName)
+    .info()
+    .then((body) => {
+      client.db.destroy(dbName).catch((error) => {
+        console.error(`[SERVER][ERROR] Failed deleting database '${dbName}'`);
+        console.error(error);
+      });
+    })
+    .catch((error) => {
+      return;
+    });
+  return "OK";
 }
 
 /**
- * Poll appDB waiting for connection ack
+ * Updates the content of an object inside a database
  *
- * If DBNAME doesn't exist, it will be created
+ * TODO handle concurrent updates
  *
- * @param timeout polling sleep duration, multiplied by 2 at each retry
+ * @param dbName the targeted database name
+ * @param docName the targeted document name
+ * @param document the document new content
  */
-const connectDB = (timeout = 1000) =>
-  appDB.info().catch((error) => {
-    const retryIn = Math.min(timeout * 2, maxRetryTimeout);
-    setTimeout(() => connectDB(retryIn), retryIn);
-    console.warn(error, `retry in ${retryIn}`);
-    // If DB doesn't exist, create it before first retry
-    if (error && error.error === "not_found" && timeout <= 1000) {
-      createDB(client.db, dbName);
-    }
-  });
+function updateObject(dbName: string, docName: string, document: string) {
+  console.warn(
+    `[SERVER] Updating document '${docName}' in database '${dbName}'`
+  );
+  client.db
+    .use(dbName)
+    .info()
+    .then((body) => {
+      client.db
+        .use(dbName)
+        .get(docName)
+        .then((body) => {
+          const newDocument = JSON.parse(document);
+          newDocument._rev = body._rev;
+          client.db
+            .use(dbName)
+            .insert(newDocument, docName)
+            .catch((error) => {
+              console.error(
+                `[SERVER][ERROR] Failed updating document '${docName}' in database '${dbName}'`
+              );
+              console.error(error);
+            });
+        })
+        .catch((error) => {
+          client.db
+            .use(dbName)
+            .insert(JSON.parse(document), docName)
+            .catch((error) => {
+              console.error(
+                `[SERVER][ERROR] Failed updating document '${docName}' in database '${dbName}'`
+              );
+              console.error(error);
+            });
+        });
+    })
+    .catch((error) => {
+      console.error(
+        `[SERVER][ERROR] Failed updating document '${docName}' in database '${dbName}'`
+      );
+      console.error(error);
+    });
+  return "OK";
+}
+
+/**
+ * Gets all documents from a given database.
+ *
+ * @param dbName the targeted database name
+ */
+function getObjects(dbName: string) {
+  return client.db
+    .use(dbName)
+    .list()
+    .then((objs) =>
+      objs.rows.map((r) => {
+        return client.db
+          .use(dbName)
+          .get(r.id)
+          .then((body) => {
+            return JSON.stringify(body);
+          })
+          .catch((error) => {
+            console.error(
+              `[SERVER][ERROR] Failed getting objects in database '${dbName}'`
+            );
+            console.error("error", error);
+          });
+      })
+    )
+    .catch((error) => {
+      console.error(
+        `[SERVER][ERROR] Failed getting objects in database '${dbName}'`
+      );
+      console.error("error", error);
+    });
+}
+
+/**
+ * Gets a given document from a given database.
+ *
+ * @param dbName the targeted database name
+ * @param docName the targeted document name
+ */
+function getObject(dbName: string, docName: string) {
+  return client.db
+    .use(dbName)
+    .get(docName)
+    .then((body) => {
+      return JSON.stringify(body);
+    })
+    .catch((error) => {
+      console.error(
+        `[SERVER][ERROR] Failed getting object '${docName}' in database '${dbName}'`
+      );
+      console.error("error", error);
+    });
+}
 
 const client = Nano({ url: dbUrl, requestDefaults: { jar: true } });
 
 if (username && userpass) {
-  client.auth(username, userpass).catch((err) => console.error(err));
+  client.auth(username, userpass).catch((error) => {
+    console.error("[SERVER][ERROR] Authentification failed");
+    console.error(error);
+  });
 }
 
-const appDB = client.db.use(dbName);
 const replicator = client.db.use("_replicator");
-
-// dumpNetworkServices();
-connectDB().catch((error: any) => console.error(error));
-
-const hooks: DatabaseHooks = {
-  conflictHandler: (
-    obj: Document<CRDTWrapper<any>>,
-    objs: Array<Document<CRDTWrapper<any>>>
-  ) => {
-    const crdt = CRDTWrapper.unwrap(obj.current());
-    if (objs.length > 0) {
-      objs.forEach((o) => {
-        const otherCrdt = CRDTWrapper.unwrap(o.current());
-        crdt.merge(otherCrdt);
-      });
-      return CRDTWrapper.wrap(crdt);
-    }
-    throw new Error("Unexpected call");
-  },
-};
-
-// TODO: support database url parameter. This might not work properly
-const database: AdapterParams = {
-  connectionParams: {},
-  dbName,
-  url: dbUrl,
-};
-
-const dataSource = new PouchDBDataSource(PouchDBImpl, database);
-dataSource
-  .connection({ autoSave: false, handleConflicts: true })
-  .then((newConnection) => {
-    connection = newConnection;
-    connection.registerHooks(hooks);
-  });
