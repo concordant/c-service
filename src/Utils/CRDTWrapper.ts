@@ -23,34 +23,13 @@
  */
 import { crdtlib } from "@concordant/c-crdtlib";
 
-export default class CRDTWrapper<T> {
-  public static wrap<T>(crdt: any): CRDTWrapper<T> {
+export default class CRDTWrapper {
+  public static wrap(crdt: any): CRDTWrapper {
     return new CRDTWrapper(crdt.toJson());
   }
 
-  public static unwrap<T>(wrapper: CRDTWrapper<T>): any {
-    const crdtType = JSON.parse(wrapper.crdtJson)["_type"];
-    switch (crdtType) {
-      case "PNCounter":
-        return crdtlib.crdt.PNCounter.Companion.fromJson(wrapper.crdtJson);
-      case "MVRegister":
-        return crdtlib.crdt.MVRegister.Companion.fromJson(wrapper.crdtJson);
-      case "LWWRegister":
-        return crdtlib.crdt.LWWRegister.Companion.fromJson(wrapper.crdtJson);
-      case "Ratchet":
-        return crdtlib.crdt.Ratchet.Companion.fromJson(wrapper.crdtJson);
-      case "RGA":
-        return crdtlib.crdt.RGA.Companion.fromJson(wrapper.crdtJson);
-      case "LWWMap":
-        return crdtlib.crdt.LWWMap.Companion.fromJson(wrapper.crdtJson);
-      case "MVMap":
-        return crdtlib.crdt.MVMap.Companion.fromJson(wrapper.crdtJson);
-      case "Map":
-        return crdtlib.crdt.Map.Companion.fromJson(wrapper.crdtJson);
-      default:
-        break;
-    }
-    throw new Error("Unknown CRDT type");
+  public static unwrap(wrapper: CRDTWrapper): any {
+    return crdtlib.crdt.DeltaCRDT.Companion.fromJson(wrapper.crdtJson);
   }
 
   constructor(public crdtJson: string) {
