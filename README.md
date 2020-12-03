@@ -25,6 +25,8 @@ npx add-cors-to-couchdb
 
 1.**Install Project dependencies**
 
+Installation requieres a [GitLab token](https://docs.gitlab.com/ee/user/project/deploy_tokens/) to download the private C-CRDTLib npm package.
+
 Go to project root directory and:
 
 ```bash
