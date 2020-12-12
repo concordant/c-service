@@ -247,7 +247,7 @@ describe("Automatic conflict resolution", () => {
     });
 
     let updtCount = 0;
-    const sub2 = connection2.subscribe<TestObject>(random, {
+    connection2.subscribe<TestObject>(random, {
       change: (key, newObj) => {
         updtCount++;
         const pouchObj = newObj as PouchDBObject<TestObject>;
