@@ -25,7 +25,9 @@ npx add-cors-to-couchdb
 
 1.**Install Project dependencies**
 
-Installation requieres a [GitLab token](https://docs.gitlab.com/ee/user/project/deploy_tokens/) to download the private C-CRDTLib npm package.
+Installation requires a [GitLab token](https://docs.gitlab.com/ee/user/project/deploy_tokens/) to download the private C-CRDTLib npm package.
+
+Before running the installer, please make sure that you have configured npm with the required private URL and `gitlab-token` as described in the [c-crdtlib usage guide](https://gitlab.inria.fr/concordant/software/c-crdtlib#usage).
 
 Go to project root directory and:
 
@@ -48,7 +50,7 @@ export COUCHDB_USER=my-user COUCHDB_PASSWORD=my-passwd
 npm start
 ```
 
-**Note:** Need to start a CouchDB server beforehand. Can customize the database URL with the environment variable COUCHDB_URL.
+**Note:** Need to start a CouchDB server beforehand. Can customise the database URL with the environment variable COUCHDB_URL.
 You might need to change the binding address in the CouchDB admin panel to allow peers to connect to the database.
 
 You can also run tests using:
