@@ -123,7 +123,6 @@ describe("Get tests", () => {
 
 describe("Modify object tests", () => {
   const TEST_KEY = "test_key";
-  const TEST_KEY_ARRAY = "test_key_array";
 
   let connection: IBasicConnection;
 
