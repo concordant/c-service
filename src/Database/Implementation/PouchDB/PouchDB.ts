@@ -164,7 +164,7 @@ export default class PouchDB implements IBasicConnection {
           putRetriesBeforeError &&
           retryCount < putRetriesBeforeError
         ) {
-          return promiseDelay(null, Math.random() * putRetryMaxTimeout)
+          return promiseDelay(Math.random() * putRetryMaxTimeout)
             .then(() => this.get<T>(obj.id))
             .then((objConflicting) => {
               return this.saveInternal<T>(
