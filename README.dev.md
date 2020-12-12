@@ -1,4 +1,4 @@
-## Build targets
+# Build targets
 
 (Set up as scripts in package.json)
 
