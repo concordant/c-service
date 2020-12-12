@@ -104,7 +104,7 @@ describe("Sync tests", () => {
   });
   it("test", (done) => {
     const random = uuid();
-    const sub = connection1.subscribe<TestObject>(TEST_KEY, {
+    connection1.subscribe<TestObject>(TEST_KEY, {
       change: (key, newObj) => {
         if (newObj.current().foo === random) {
           done();
