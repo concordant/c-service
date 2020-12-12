@@ -10,7 +10,7 @@
 
 ## Used software
 
-### Dev tools:
+### Dev tools
 
 - tsc: Typescript transpiler (to JavaScript)
 - NPM: package/build manager
@@ -23,7 +23,7 @@
 - Jest: JS testing library tool
 - Gitlab-CI: gitlab Continuous Integration platform
 
-### Libraries:
+### Libraries
 
 - OpenAPI (aka Swagger): language for RESTful interface description
 - Sofa: generate a REST interface from graphQL
@@ -61,7 +61,7 @@
   - `service.ts` GraphQL schema definition & resolvers
   - `test/` Tests (Jest)
 
-### Artifacts (untracked):
+### Artifacts (untracked)
 
 - `node_modules/` Dependencies,
   created & populated by `npm install`
