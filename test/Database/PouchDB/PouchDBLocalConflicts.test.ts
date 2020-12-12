@@ -120,7 +120,6 @@ describe("Handling conflicts", () => {
       })
       .catch((error: Error) => {
         fail(error);
-        done();
       });
   });
 });
