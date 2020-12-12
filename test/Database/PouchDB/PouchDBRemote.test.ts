@@ -30,7 +30,6 @@ import PouchDBDataSource, {
 } from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
 import {
   IBasicConnection,
-  IDBObject,
 } from "../../../src/Database/Interfaces/Types";
 
 import {
