@@ -114,7 +114,7 @@ describe("Handling conflicts basic", () => {
           .update(new TestObject("value1"))
           .save()
           .then(() => remoteObj.update(new TestObject("value2")).save())
-          .then(() => promiseDelay(null, 500))
+          .then(() => promiseDelay(500))
           .then(() => connection2.get<TestObject>(TEST_KEY));
       },
     });
