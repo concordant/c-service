@@ -80,7 +80,7 @@ export default class PouchDB implements IBasicConnection {
   }
 
   // TODO: Add support for multiple handlers per hook
-  public registerHooks(hooks: DatabaseHooks) {
+  public registerHooks(hooks: DatabaseHooks): void {
     this.params.hooks = hooks;
   }
 
@@ -91,16 +91,16 @@ export default class PouchDB implements IBasicConnection {
       .catch(() => Promise.reject(new Error("Couldn't Connect to server")));
   }
 
-  // TODO
-
   public isOnline(): boolean {
     return this.dataSource.activeRemotes().length !== 0;
   }
 
+  // TODO: use waitFlush safety
   public goOffline(waitFlush?: boolean): Promise<void> {
     return this.dataSource.disconnect();
   }
 
+  // TODO: use waitFlush safety
   public goOnline(waitFlush?: boolean): Promise<void> {
     return Promise.resolve(this.dataSource.connect());
   }
@@ -181,6 +181,7 @@ export default class PouchDB implements IBasicConnection {
     return Promise.reject("Not Implemented");
   }
 
+  // TODO: use filtring arg, Needs to be designed with query model in mind.
   public subscribe<T>(
     keyOrKeys: Key | Key[],
     handlers: IDBHandlers<Document<T>>,
@@ -240,7 +241,7 @@ export default class PouchDB implements IBasicConnection {
     return changes;
   }
 
-  public cancel(sub: DatabaseEventEmitter) {
+  public cancel(sub: DatabaseEventEmitter): void {
     const idx = this.subscriptions.findIndex((e) => e === sub);
     if (idx >= 0) {
       this.subscriptions.splice(idx, 1);
@@ -261,15 +262,15 @@ export default class PouchDB implements IBasicConnection {
     throw Error("Not Implemented");
   }
 
-  public discard(key: Key) {
+  public discard(key: Key): void | Error {
     throw Error("Not Implemented");
   }
 
-  public discardAll() {
+  public discardAll(): void | Error {
     throw Error("Not Implemented");
   }
 
-  public setAutoSave() {
+  public setAutoSave(): void | Error {
     throw Error("Not Implemented");
   }
 
