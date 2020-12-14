@@ -23,6 +23,7 @@
  */
 import { crdtlib } from "@concordant/c-crdtlib";
 
+// TODO: now that we have strict typing, the use of "any" here should be avoided
 export default class CRDTWrapper {
   public static wrap(crdt: any): CRDTWrapper {
     return new CRDTWrapper(crdt.toJson());

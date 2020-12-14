@@ -21,7 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import PouchDB from "pouchdb";
 import { Document } from "../../../DataTypes/Interfaces/Types";
 import { CONTEXT_COMPARE, IContext } from "../../../Interfaces/Types";
 import PouchDBImpl from "../PouchDB";
@@ -51,7 +50,7 @@ export default class PouchDBObject<T> implements Document<T> {
   /**
    * Checks if the object has local uncommitted changes
    */
-  public isDirty() {
+  public isDirty(): boolean {
     return this.newDocument !== undefined && this.newDocument !== null;
   }
 
@@ -81,7 +80,7 @@ export default class PouchDBObject<T> implements Document<T> {
     return this;
   }
 
-  public compareVersion(other: IContext) {
+  public compareVersion(other: IContext): CONTEXT_COMPARE {
     if (!(other instanceof PouchDBObject)) {
       return CONTEXT_COMPARE.NON_COMPARABLE;
     }
