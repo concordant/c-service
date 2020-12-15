@@ -149,6 +149,10 @@ app.use(
         basePath: "/api",
       });
     },
+    method: {
+      "Query.getObjects": "POST",
+      "Query.getObject": "POST",
+    },
   })
 );
 
