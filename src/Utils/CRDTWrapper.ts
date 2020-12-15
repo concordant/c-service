@@ -21,31 +21,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import CRDT from "delta-crdts";
-import CRDTCodec from "delta-crdts-msgpack-codec";
+import { crdtlib } from "@concordant/c-crdtlib";
 
-export default class CRDTWrapper<T> {
-  public static wrap(object: CRDT, type: string) {
-    return new CRDTWrapper(CRDTCodec.encode(object.state()), type);
+export default class CRDTWrapper {
+  public static wrap(crdt: any): CRDTWrapper {
+    return new CRDTWrapper(crdt.toJson());
   }
 
-  // TODO: Need to improve this. Some browsers and Node handle buffers differently. this solution works, but is inefficient.
-  public static unwrap<T>(object: CRDTWrapper<T>, clientId: string): CRDT<T> {
-    const unwrapped = CRDT(object.type)(clientId);
-    unwrapped.apply(
-      CRDTCodec.decode(Buffer.from(Object.values(object.buffer)))
-    );
-    return { unwrapped, type: object.type };
+  public static unwrap(wrapper: CRDTWrapper): any {
+    return crdtlib.crdt.DeltaCRDT.Companion.fromJson(wrapper.crdtJson);
   }
 
-  public static defaultWrappedCRDTFor<T>(
-    crdtName: string,
-    clientId: string
-  ): CRDTWrapper<T> {
-    return CRDTWrapper.wrap(CRDT(crdtName)(clientId), crdtName);
-  }
-
-  constructor(public buffer: Buffer, public type: string) {
-    this.buffer = buffer;
+  constructor(public crdtJson: string) {
+    this.crdtJson = crdtJson;
   }
 }

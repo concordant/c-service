@@ -8,16 +8,18 @@ components:
     Query:
       type: object
       properties:
+        getObjects:
+          type: array
+          items:
+            type: string
+        getObject:
+          type: string
         replicators:
           type: array
           items:
             $ref: "#/components/schemas/Replicator"
         replicator:
           $ref: "#/components/schemas/Replicator"
-        appObjects:
-          type: array
-          items:
-            $ref: "#/components/schemas/AppObject"
     Replicator:
       type: object
       required:
@@ -33,21 +35,14 @@ components:
           type: boolean
         state:
           type: string
-    AppObject:
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          type: string
-        document:
-          type: string
     Mutation:
       type: object
       properties:
-        replicator:
-          type: string
         createApp:
           type: string
         deleteApp:
+          type: string
+        updateObject:
+          type: string
+        replicator:
           type: string
