@@ -27,6 +27,7 @@ import express from "express";
 import { makeExecutableSchema } from "graphql-tools";
 import Nano, { MaybeDocument } from "nano";
 import { OpenAPI, useSofa } from "sofa-api";
+import { crdtlib } from "@concordant/c-crdtlib";
 
 // http://USERNAME:PASSWORD/URL:PORT
 const dbUrl = process.env.COUCHDB_URL || "http://localhost:5984/";
@@ -296,7 +297,8 @@ function getObjects(dbName: string) {
 }
 
 /**
- * Gets a given document from a given database.
+ * Gets a given document from a given database if it exists, otherwise return
+ * an initial state CRDT.
  *
  * @param dbName the targeted database name
  * @param docName the targeted document name
@@ -309,10 +311,18 @@ function getObject(dbName: string, docName: string) {
       return JSON.stringify(body);
     })
     .catch((error) => {
-      console.error(
-        `[SERVER][ERROR] Failed getting object '${docName}' in database '${dbName}'`
-      );
-      console.error("error", error);
+      try {
+        docName = JSON.parse(docName);
+        const newCrdt = crdtlib.crdt.DeltaCRDTFactory.createDeltaCRDT(
+          docName.type
+        );
+        return newCrdt.toJson();
+      } catch (error) {
+        console.error(
+          `[SERVER][ERROR] Failed getting object '${docName}' in database '${dbName}'`
+        );
+        console.error(error);
+      }
     });
 }
 
