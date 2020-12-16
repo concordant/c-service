@@ -312,9 +312,9 @@ function getObject(dbName: string, docName: string) {
     })
     .catch((error) => {
       try {
-        docName = JSON.parse(docName);
-        const newCrdt = crdtlib.crdt.DeltaCRDTFactory.createDeltaCRDT(
-          docName.type
+        const objectUId = JSON.parse(docName);
+        const newCrdt = crdtlib.crdt.DeltaCRDTFactory.Companion.createDeltaCRDT(
+          objectUId.type
         );
         return newCrdt.toJson();
       } catch (error) {
