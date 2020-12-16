@@ -97,8 +97,8 @@ describe("Basic usage", () => {
       .get<CRDTWrapper>(TEST_KEY, () => defaultObject)
       .then(() => connection2.get<CRDTWrapper>(TEST_KEY))
       .then((obj: Document<CRDTWrapper>) => {
-        const newCRDT = CRDTWrapper.unwrap(obj.current());
-        newCRDT.increment(42, environment1.tick());
+        const newCRDT = CRDTWrapper.unwrap(obj.current(), environment1);
+        newCRDT.increment(42);
         return obj.update(CRDTWrapper.wrap(newCRDT)).save();
       })
       .then(() => connection2.get<CRDTWrapper>(TEST_KEY))
@@ -113,7 +113,10 @@ describe("Basic usage", () => {
   it("Conflict handler triggered on get", (done) => {
     TEST_KEY = uuid();
 
-    const client1DefaultObject = new crdtlib.crdt.PNCounter();
+    const client1DefaultObject = crdtlib.crdt.DeltaCRDTFactory.Companion.createDeltaCRDT(
+      "PNCounter",
+      environment1
+    );
     // default object is created by client2
     const client2DefaultObjectWrapped = CRDTWrapper.wrap(
       new crdtlib.crdt.PNCounter()
@@ -150,13 +153,13 @@ describe("Basic usage", () => {
       change: (key, newObj) => {
         connection1.cancel(sub);
         onlyAfter = true;
-        const crdt = CRDTWrapper.unwrap(newObj.current());
-        crdt.increment(40, environment2.tick());
+        const crdt = CRDTWrapper.unwrap(newObj.current(), environment2);
+        crdt.increment(40);
         newObj
           .update(CRDTWrapper.wrap(crdt))
           .save()
           .then(() => {
-            client1DefaultObject.increment(2, environment1.tick());
+            client1DefaultObject.increment(2);
             return remoteObj
               .update(CRDTWrapper.wrap(client1DefaultObject))
               .save()
@@ -241,7 +244,10 @@ describe("Test offline support with CRDTs", () => {
   it("Go offline and receive pending updates on reconnect", (done) => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
 
-    const client1DefaultObject = new crdtlib.crdt.PNCounter();
+    const client1DefaultObject = crdtlib.crdt.DeltaCRDTFactory.Companion.createDeltaCRDT(
+      "PNCounter",
+      environment1
+    );
     const client2DefaultObjectWrapped = CRDTWrapper.wrap(
       new crdtlib.crdt.PNCounter()
     );
@@ -274,13 +280,13 @@ describe("Test offline support with CRDTs", () => {
       change: (key, newObj) => {
         connection1.cancel(sub);
         onlyAfter = true;
-        const crdt = CRDTWrapper.unwrap(newObj.current());
-        crdt.increment(40, environment2.tick());
+        const crdt = CRDTWrapper.unwrap(newObj.current(), environment2);
+        crdt.increment(40);
         newObj
           .update(CRDTWrapper.wrap(crdt))
           .save()
           .then(() => {
-            client1DefaultObject.increment(2, environment1.tick());
+            client1DefaultObject.increment(2);
             return remoteObj
               .update(CRDTWrapper.wrap(client1DefaultObject))
               .save()
