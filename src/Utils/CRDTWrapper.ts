@@ -28,8 +28,11 @@ export default class CRDTWrapper {
     return new CRDTWrapper(crdt.toJson());
   }
 
-  public static unwrap(wrapper: CRDTWrapper): any {
-    return crdtlib.crdt.DeltaCRDT.Companion.fromJson(wrapper.crdtJson);
+  public static unwrap(
+    wrapper: CRDTWrapper,
+    env?: crdtlib.utils.Environment
+  ): any {
+    return crdtlib.crdt.DeltaCRDT.Companion.fromJson(wrapper.crdtJson, env);
   }
 
   constructor(public crdtJson: string) {
