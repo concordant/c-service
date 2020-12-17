@@ -212,8 +212,6 @@ function deleteApp(dbName: string) {
 /**
  * Updates the content of an object inside a database
  *
- * TODO handle concurrent updates
- *
  * @param dbName the targeted database name
  * @param docName the targeted document name
  * @param document the document new content
@@ -222,11 +220,11 @@ function updateObject(dbName: string, docName: string, document: string) {
   console.warn(
     `[SERVER] Updating document '${docName}' in database '${dbName}'`
   );
-  client.db
+  return client.db
     .use(dbName)
     .info()
     .then((body) => {
-      client.db
+      return client.db
         .use(dbName)
         .get(docName)
         .then((body) => {
@@ -239,22 +237,26 @@ function updateObject(dbName: string, docName: string, document: string) {
             const newDocument = JSON.parse(bodyCRDT.toJson());
             newDocument._rev = body._rev;
             client.db.use(dbName).insert(newDocument, docName);
+            return "OK";
           } catch (error) {
             console.error(
               `[SERVER][ERROR] Failed updating document '${docName}' in database '${dbName}'`
             );
             console.error(error);
+            return "KO";
           }
         })
         .catch((error) => {
           try {
             const CRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(document);
             client.db.use(dbName).insert(JSON.parse(document), docName);
+            return "OK";
           } catch (error) {
             console.error(
               `[SERVER][ERROR] Failed updating document '${docName}' in database '${dbName}'`
             );
             console.error(error);
+            return "KO";
           }
         });
     })
@@ -263,8 +265,8 @@ function updateObject(dbName: string, docName: string, document: string) {
         `[SERVER][ERROR] Failed updating document '${docName}' in database '${dbName}'`
       );
       console.error(error);
+      return "KO";
     });
-  return "OK";
 }
 
 /**
@@ -308,25 +310,41 @@ function getObjects(dbName: string) {
  * @param docName the targeted document name
  */
 function getObject(dbName: string, docName: string) {
+  console.warn(
+    `[SERVER] Getting document '${docName}' in database '${dbName}'`
+  );
   return client.db
     .use(dbName)
-    .get(docName)
+    .info()
     .then((body) => {
-      return JSON.stringify(body);
+      return client.db
+        .use(dbName)
+        .get(docName)
+        .then((body) => {
+          return JSON.stringify(body);
+        })
+        .catch((error) => {
+          try {
+            const objectUId = JSON.parse(docName);
+            const newCrdt = crdtlib.crdt.DeltaCRDTFactory.Companion.createDeltaCRDT(
+              objectUId.type
+            );
+            return newCrdt.toJson();
+          } catch (error) {
+            console.error(
+              `[SERVER][ERROR] Failed getting object '${docName}' in database '${dbName}'`
+            );
+            console.error(error);
+            return null;
+          }
+        });
     })
     .catch((error) => {
-      try {
-        const objectUId = JSON.parse(docName);
-        const newCrdt = crdtlib.crdt.DeltaCRDTFactory.Companion.createDeltaCRDT(
-          objectUId.type
-        );
-        return newCrdt.toJson();
-      } catch (error) {
-        console.error(
-          `[SERVER][ERROR] Failed getting object '${docName}' in database '${dbName}'`
-        );
-        console.error(error);
-      }
+      console.error(
+        `[SERVER][ERROR] Failed getting object '${docName}' in database '${dbName}'`
+      );
+      console.error(error);
+      return null;
     });
 }
 
