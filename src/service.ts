@@ -27,6 +27,7 @@ import express from "express";
 import { makeExecutableSchema } from "graphql-tools";
 import Nano, { MaybeDocument } from "nano";
 import { OpenAPI, useSofa } from "sofa-api";
+import { crdtlib } from "@concordant/c-crdtlib";
 
 // http://USERNAME:PASSWORD/URL:PORT
 const dbUrl = process.env.COUCHDB_URL || "http://localhost:5984/";
@@ -229,28 +230,32 @@ function updateObject(dbName: string, docName: string, document: string) {
         .use(dbName)
         .get(docName)
         .then((body) => {
-          const newDocument = JSON.parse(document);
-          newDocument._rev = body._rev;
-          client.db
-            .use(dbName)
-            .insert(newDocument, docName)
-            .catch((error) => {
-              console.error(
-                `[SERVER][ERROR] Failed updating document '${docName}' in database '${dbName}'`
-              );
-              console.error(error);
-            });
+          try {
+            const CRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(document);
+            const bodyCRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(
+              JSON.stringify(body)
+            );
+            bodyCRDT.merge(CRDT);
+            const newDocument = JSON.parse(bodyCRDT.toJson());
+            newDocument._rev = body._rev;
+            client.db.use(dbName).insert(newDocument, docName);
+          } catch (error) {
+            console.error(
+              `[SERVER][ERROR] Failed updating document '${docName}' in database '${dbName}'`
+            );
+            console.error(error);
+          }
         })
         .catch((error) => {
-          client.db
-            .use(dbName)
-            .insert(JSON.parse(document), docName)
-            .catch((error) => {
-              console.error(
-                `[SERVER][ERROR] Failed updating document '${docName}' in database '${dbName}'`
-              );
-              console.error(error);
-            });
+          try {
+            const CRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(document);
+            client.db.use(dbName).insert(JSON.parse(document), docName);
+          } catch (error) {
+            console.error(
+              `[SERVER][ERROR] Failed updating document '${docName}' in database '${dbName}'`
+            );
+            console.error(error);
+          }
         });
     })
     .catch((error) => {
