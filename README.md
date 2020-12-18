@@ -46,7 +46,7 @@ Set credentials and run service:
 
 ```bash
 export COUCHDB_USER=my-user COUCHDB_PASSWORD=my-passwd
-npm run start
+npm start
 ```
 
 **Note:** Need to start a CouchDB server beforehand. Can customize the database URL with the environment variable COUCHDB_URL.
@@ -56,7 +56,7 @@ You can also run tests using:
 
 ```bash
 export DBNAME=my-dbname COUCHDB_USER=my-user COUCHDB_PASSWORD=my-passwd
-npm run test
+npm test
 ```
 
 ### Test C-Service using curl
