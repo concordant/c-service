@@ -21,8 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import { CONTEXT_COMPARE, IContext } from "../../../Interfaces/IContext";
-import { Document } from "../../../Interfaces/Types";
+import { CONTEXT_COMPARE, IContext } from "../../../../Interfaces/IContext";
+import { Document } from "../../../../Interfaces/Types";
 import PouchDBImpl from "../PouchDB";
 import ExistingDocument = PouchDB.Core.ExistingDocument;
 import AllDocsMeta = PouchDB.Core.AllDocsMeta;

@@ -24,7 +24,7 @@
 import {
   IConnectionParams,
   IDataSource,
-} from "../../../Interfaces/IConnection";
+} from "../../../../Interfaces/IConnection";
 import PouchDBImpl from "../PouchDB";
 import Database = PouchDB.Database;
 import Sync = PouchDB.Replication.Sync;
