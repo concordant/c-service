@@ -22,15 +22,13 @@
  * SOFTWARE.
  */
 import _ from "lodash";
-import { Document } from "../../../src/Database/DataTypes/Interfaces/Types";
+import { Document } from "../../../src/Database/Interfaces/Types";
 import { PouchDB } from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
 import PouchDBDataSource, {
   IAdapterParams,
 } from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
-import {
-  CONTEXT_COMPARE,
-  IBasicConnection,
-} from "../../../src/Database/Interfaces/Types";
+import { IBasicConnection } from "../../../src/Database/Interfaces/IConnection";
+import { CONTEXT_COMPARE } from "../../../src/Database/Interfaces/IContext";
 
 class TestObject {
   constructor(public foo: string = "foo") {}

@@ -21,7 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import { IConnectionParams, IDataSource } from "../../../Interfaces/Types";
+import {
+  IConnectionParams,
+  IDataSource,
+} from "../../../Interfaces/IConnection";
 import PouchDBImpl from "../PouchDB";
 import Database = PouchDB.Database;
 import Sync = PouchDB.Replication.Sync;
@@ -53,7 +56,8 @@ export default class PouchDBDataSource implements IDataSource {
   private active: { [K in string]: Sync<any> } = {};
   private inactive: string[] = [];
 
-  // TODO: levelFactory should be declared something like: (addr: string, params: IConnectionParams | undefined) => Database 
+  // TODO: levelFactory should be declared something like: (addr: string, params: IConnectionParams | undefined) => Database
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   constructor(private levelFactory: any, params: AdapterParams) {
     const {
       url,

@@ -21,23 +21,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import { crdtlib } from "@concordant/c-crdtlib";
 
-// TODO: now that we have strict typing, the use of "any" here should be avoided
-export default class CRDTWrapper {
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  public static wrap(crdt: any): CRDTWrapper {
-    return new CRDTWrapper(crdt.toJson());
-  }
-
-  public static unwrap(
-    wrapper: CRDTWrapper,
-    env?: crdtlib.utils.Environment
-  ): any {
-    return crdtlib.crdt.DeltaCRDT.Companion.fromJson(wrapper.crdtJson, env);
-  }
-
-  constructor(public crdtJson: string) {
-    this.crdtJson = crdtJson;
-  }
+// TODO: Need to decide required events.
+export interface IDBHandlers<T> {
+  change?: ChangeHandler<T>;
 }
+
+export interface IDBSaveAllHandlers {
+  complete?: SavedHandler<any>;
+}
+
+export interface IDBTxHandlers {
+  commit?: RemoteCommitHandler;
+  accepted?: RemoteCommitHandler;
+}
+
+type ChangeHandler<T> = (key: string, value: T) => void;
+
+type SavedHandler<T> = (key: string, value?: T) => void;
+
+type RemoteCommitHandler = () => void;

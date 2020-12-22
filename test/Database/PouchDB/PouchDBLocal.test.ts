@@ -22,19 +22,14 @@
  * SOFTWARE.
  */
 import uuid from "uuid/v4";
-import { Document } from "../../../src/Database/DataTypes/Interfaces/Types";
 import { PouchDB } from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
 import PouchDBDataSource, {
   AdapterParams,
   ConnectionProtocol,
   DEFAULT_PORT,
 } from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
-import {
-  DatabaseEventEmitter,
-  IBasicConnection,
-  IDBObject,
-} from "../../../src/Database/Interfaces/Types";
-
+import { IBasicConnection } from "../../../src/Database/Interfaces/IConnection";
+import { IDBObject } from "../../../src/Database/Interfaces/IDB";
 import {
   dbName,
   couchdbHost,
@@ -43,6 +38,10 @@ import {
   couchdbPassword,
   remoteDBurl,
 } from "../../testParams";
+import {
+  DBEventEmitter,
+  Document,
+} from "../../../src/Database/Interfaces/Types";
 
 class TestObject {
   constructor(public foo: string = "foo") {}
@@ -243,7 +242,7 @@ describe("Database events test", () => {
     let counter = 0;
     const random0 = uuid();
     const random1 = uuid();
-    const eventEmitter: DatabaseEventEmitter = connection.subscribe<TestObject>(
+    const eventEmitter: DBEventEmitter = connection.subscribe<TestObject>(
       [random0, random1],
       {
         change: () => {

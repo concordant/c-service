@@ -95,10 +95,3 @@ Delete _myapp_ database:
 ```bash
 curl --request POST --header "Content-Type: application/json" --data '{"appName":"myapp"}' http://127.0.0.1:4000/api/delete-app
 ```
-
-## Requirements
-
-Node: v10.15+
-NPM: v6.13+
-
-(Project might work with older Node and NPM versions)

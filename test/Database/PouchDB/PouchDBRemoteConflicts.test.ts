@@ -22,19 +22,14 @@
  * SOFTWARE.
  */
 import uuid = require("uuid");
-import { Document } from "../../../src/Database/DataTypes/Interfaces/Types";
+import { DBHooks, Document } from "../../../src/Database/Interfaces/Types";
 import { PouchDB } from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
 import PouchDBDataSource, {
   AdapterParams,
   ConnectionProtocol,
 } from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
 import PouchDBObject from "../../../src/Database/Implementation/PouchDB/DataTypes/PouchDBObject";
-import {
-  DatabaseHooks,
-  IBasicConnection,
-} from "../../../src/Database/Interfaces/Types";
 import { promiseDelay } from "../../../src/Utils/Utils";
-
 import {
   dbName,
   couchdbHost,
@@ -43,6 +38,7 @@ import {
   couchdbPassword,
   remoteDBurl,
 } from "../../testParams";
+import { IBasicConnection } from "../../../src/Database/Interfaces/IConnection";
 
 class TestObject {
   constructor(public foo: string = "foo") {}
@@ -87,7 +83,7 @@ describe("Handling conflicts basic", () => {
     let remoteObj: Document<TestObject>;
     let onlyAfter = false;
 
-    const hooks: DatabaseHooks = {
+    const hooks: DBHooks = {
       conflictHandler: (
         obj: Document<TestObject>,
         objs: Array<Document<TestObject>>
@@ -132,7 +128,7 @@ describe("Handling conflicts basic", () => {
     let remoteObj: Document<TestObject>;
     let solved = false;
 
-    const hooks: DatabaseHooks = {
+    const hooks: DBHooks = {
       conflictHandler: () => {
         return new TestObject("conflict solved");
       },
@@ -151,7 +147,7 @@ describe("Handling conflicts basic", () => {
       },
     });
 
-    const sub2 = connection2.subscribe<TestObject>(TEST_KEY, {
+    connection2.subscribe<TestObject>(TEST_KEY, {
       change: (key, newObj) => {
         if (newObj.current().foo === "conflict solved" && !solved) {
           solved = true;
@@ -186,7 +182,6 @@ describe("Handling conflicts basic", () => {
 });
 
 describe("Automatic conflict resolution", () => {
-  const TEST_KEY = uuid();
   let connection1: IBasicConnection;
   let connection2: IBasicConnection;
   const remoteDBs = [remoteDBurl];
@@ -221,7 +216,7 @@ describe("Automatic conflict resolution", () => {
     const random = uuid();
     let remoteObj: Document<TestObject>;
 
-    const hooks: DatabaseHooks = {
+    const hooks: DBHooks = {
       conflictHandler: (
         obj: Document<TestObject>,
         objs: Array<Document<TestObject>>
