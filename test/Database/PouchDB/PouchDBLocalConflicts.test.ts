@@ -21,11 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import { PouchDB } from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
+import { PouchDB } from "../../../src/Database/Implementation/Adapters/PouchDB/InMemoryAdapter";
 import PouchDBDataSource, {
   AdapterParams,
-} from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
-import PouchDBObject from "../../../src/Database/Implementation/PouchDB/DataTypes/PouchDBObject";
+} from "../../../src/Database/Implementation/Drivers/PouchDB/DataSource/PouchDBDataSource";
+import PouchDBObject from "../../../src/Database/Implementation/Drivers/PouchDB/DataTypes/PouchDBObject";
 import { Database, DataSource } from "../../../src/Database/Interfaces/Types";
 import { Document } from "../../../src/Database/Interfaces/Types";
 

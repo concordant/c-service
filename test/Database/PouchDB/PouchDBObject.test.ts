@@ -23,10 +23,10 @@
  */
 import _ from "lodash";
 import { Document } from "../../../src/Database/Interfaces/Types";
-import { PouchDB } from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
+import { PouchDB } from "../../../src/Database/Implementation/Adapters/PouchDB/InMemoryAdapter";
 import PouchDBDataSource, {
   IAdapterParams,
-} from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
+} from "../../../src/Database/Implementation/Drivers/PouchDB/DataSource/PouchDBDataSource";
 import { IBasicConnection } from "../../../src/Database/Interfaces/IConnection";
 import { CONTEXT_COMPARE } from "../../../src/Database/Interfaces/IContext";
 

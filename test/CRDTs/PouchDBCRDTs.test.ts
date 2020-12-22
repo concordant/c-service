@@ -23,11 +23,11 @@
  */
 import { crdtlib } from "@concordant/c-crdtlib";
 import uuid = require("uuid");
-import { PouchDB } from "../../src/Database/Implementation/Adapters/PouchDB/Adapter";
+import { PouchDB } from "../../src/Database/Implementation/Adapters/PouchDB/InMemoryAdapter";
 import PouchDBDataSource, {
   AdapterParams,
   ConnectionProtocol,
-} from "../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
+} from "../../src/Database/Implementation/Drivers/PouchDB/DataSource/PouchDBDataSource";
 import { promiseDelay } from "../../src/Utils/Utils";
 import CRDTWrapper from "../../src/Utils/CRDTWrapper";
 

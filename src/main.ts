@@ -25,9 +25,9 @@ import PouchDBDataSource, {
   AdapterParams,
   ConnectionParams,
   ConnectionProtocol,
-} from "./Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
-import PouchDBObject from "./Database/Implementation/PouchDB/DataTypes/PouchDBObject";
-import PouchDB from "./Database/Implementation/PouchDB/PouchDB";
+} from "./Database/Implementation/Drivers/PouchDB/DataSource/PouchDBDataSource";
+import PouchDBObject from "./Database/Implementation/Drivers/PouchDB/DataTypes/PouchDBObject";
+import PouchDB from "./Database/Implementation/Drivers/PouchDB/PouchDB";
 import {
   Connection,
   Database,

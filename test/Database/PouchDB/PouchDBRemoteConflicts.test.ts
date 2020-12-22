@@ -23,12 +23,12 @@
  */
 import uuid = require("uuid");
 import { DBHooks, Document } from "../../../src/Database/Interfaces/Types";
-import { PouchDB } from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
+import { PouchDB } from "../../../src/Database/Implementation/Adapters/PouchDB/InMemoryAdapter";
 import PouchDBDataSource, {
   AdapterParams,
   ConnectionProtocol,
-} from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
-import PouchDBObject from "../../../src/Database/Implementation/PouchDB/DataTypes/PouchDBObject";
+} from "../../../src/Database/Implementation/Drivers/PouchDB/DataSource/PouchDBDataSource";
+import PouchDBObject from "../../../src/Database/Implementation/Drivers/PouchDB/DataTypes/PouchDBObject";
 import { promiseDelay } from "../../../src/Utils/Utils";
 import {
   dbName,

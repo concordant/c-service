@@ -21,17 +21,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import { promiseDelay } from "../../../Utils/Utils";
-import { IBasicConnection } from "../../Interfaces/IConnection";
-import { IFilter } from "../../Interfaces/IDB";
-import { IDBHandlers, IDBSaveAllHandlers } from "../../Interfaces/IHandlers";
+import { promiseDelay } from "../../../../Utils/Utils";
+import { IBasicConnection } from "../../../Interfaces/IConnection";
+import { IFilter } from "../../../Interfaces/IDB";
+import { IDBHandlers, IDBSaveAllHandlers } from "../../../Interfaces/IHandlers";
 import {
   DBEventEmitter,
   DBHooks,
   DBParams,
   Document,
   Key,
-} from "../../Interfaces/Types";
+} from "../../../Interfaces/Types";
 import PouchDBDataSource, {
   ConnectionParams,
 } from "./DataSource/PouchDBDataSource";

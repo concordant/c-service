@@ -22,12 +22,12 @@
  * SOFTWARE.
  */
 import uuid from "uuid/v4";
-import { PouchDB } from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
+import { PouchDB } from "../../../src/Database/Implementation/Adapters/PouchDB/InMemoryAdapter";
 import PouchDBDataSource, {
   AdapterParams,
   ConnectionProtocol,
   DEFAULT_PORT,
-} from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
+} from "../../../src/Database/Implementation/Drivers/PouchDB/DataSource/PouchDBDataSource";
 import { IBasicConnection } from "../../../src/Database/Interfaces/IConnection";
 import { IDBObject } from "../../../src/Database/Interfaces/IDB";
 import {
