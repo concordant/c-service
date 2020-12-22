@@ -22,16 +22,12 @@
  * SOFTWARE.
  */
 import uuid = require("uuid");
-import { Document } from "../../../src/Database/DataTypes/Interfaces/Types";
+import { Document } from "../../../src/Database/Interfaces/Types";
 import { PouchDB } from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
 import PouchDBDataSource, {
   AdapterParams,
   ConnectionProtocol,
 } from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
-import {
-  IBasicConnection,
-} from "../../../src/Database/Interfaces/Types";
-
 import {
   dbName,
   couchdbHost,
@@ -40,6 +36,7 @@ import {
   couchdbPassword,
   remoteDBurl,
 } from "../../testParams";
+import { IBasicConnection } from "../../../src/Database/Interfaces/IConnection";
 
 class TestObject {
   constructor(public foo: string = "foo") {}

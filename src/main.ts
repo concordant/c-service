@@ -31,15 +31,14 @@ import PouchDB from "./Database/Implementation/PouchDB/PouchDB";
 import {
   Connection,
   Database,
-  DatabaseEventEmitter,
-  DatabaseHooks,
   DataSource,
+  DBEventEmitter,
+  DBHooks,
   DBSaveAllHandler,
   DBTxHandler,
+  Document,
   Key,
 } from "./Database/Interfaces/Types";
-
-import { Document } from "./Database/DataTypes/Interfaces/Types";
 
 export {
   AdapterParams,
@@ -47,8 +46,8 @@ export {
   ConnectionParams,
   ConnectionProtocol,
   Database,
-  DatabaseEventEmitter,
-  DatabaseHooks,
+  DBEventEmitter,
+  DBHooks,
   DataSource,
   Document,
   DBSaveAllHandler,

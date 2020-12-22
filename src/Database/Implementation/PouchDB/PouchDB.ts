@@ -22,15 +22,14 @@
  * SOFTWARE.
  */
 import { promiseDelay } from "../../../Utils/Utils";
-import { Document } from "../../DataTypes/Interfaces/Types";
+import { IBasicConnection } from "../../Interfaces/IConnection";
+import { IFilter } from "../../Interfaces/IDB";
+import { IDBHandlers, IDBSaveAllHandlers } from "../../Interfaces/IHandlers";
 import {
-  DatabaseEventEmitter,
-  DatabaseHooks,
-  DatabaseParams,
-  IBasicConnection,
-  IDBHandlers,
-  IDBSaveAllHandlers,
-  IFilter,
+  DBEventEmitter,
+  DBHooks,
+  DBParams,
+  Document,
   Key,
 } from "../../Interfaces/Types";
 import PouchDBDataSource, {
@@ -62,7 +61,7 @@ export default class PouchDB implements IBasicConnection {
 
   // private eventEmitter: EventEmitter;
   private connection: Database;
-  private subscriptions: DatabaseEventEmitter[];
+  private subscriptions: DBEventEmitter[];
   // lastSeq is the seq from the last received change.
   private handlers: Array<{
     handlers: IDBHandlers<Document<any>>;
@@ -73,14 +72,14 @@ export default class PouchDB implements IBasicConnection {
   constructor(
     private dataSource: PouchDBDataSource,
     private connectionParams: ConnectionParams,
-    private params: DatabaseParams
+    private params: DBParams
   ) {
     this.connection = dataSource.db;
     this.subscriptions = [];
   }
 
   // TODO: Add support for multiple handlers per hook
-  public registerHooks(hooks: DatabaseHooks): void {
+  public registerHooks(hooks: DBHooks): void {
     this.params.hooks = hooks;
   }
 
@@ -177,6 +176,7 @@ export default class PouchDB implements IBasicConnection {
       });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public delete(key: Key): Promise<void> {
     return Promise.reject("Not Implemented");
   }
@@ -186,7 +186,7 @@ export default class PouchDB implements IBasicConnection {
     keyOrKeys: Key | Key[],
     handlers: IDBHandlers<Document<T>>,
     filter?: IFilter
-  ): DatabaseEventEmitter {
+  ): DBEventEmitter {
     let docIds: string[];
     const { handleConflicts } = this.connectionParams;
 
@@ -241,7 +241,7 @@ export default class PouchDB implements IBasicConnection {
     return changes;
   }
 
-  public cancel(sub: DatabaseEventEmitter): void {
+  public cancel(sub: DBEventEmitter): void {
     const idx = this.subscriptions.findIndex((e) => e === sub);
     if (idx >= 0) {
       this.subscriptions.splice(idx, 1);
@@ -254,6 +254,7 @@ export default class PouchDB implements IBasicConnection {
     return {};
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public release(key: Key): void | Error {
     throw Error("Not Implemented");
   }
@@ -262,6 +263,7 @@ export default class PouchDB implements IBasicConnection {
     throw Error("Not Implemented");
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public discard(key: Key): void | Error {
     throw Error("Not Implemented");
   }
@@ -275,7 +277,7 @@ export default class PouchDB implements IBasicConnection {
   }
 
   public close(): Promise<void> {
-    Object.values(this.subscriptions).forEach((v: DatabaseEventEmitter) =>
+    Object.values(this.subscriptions).forEach((v: DBEventEmitter) =>
       v.cancel()
     );
     return this.dataSource.close();

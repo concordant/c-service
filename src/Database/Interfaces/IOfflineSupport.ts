@@ -21,6 +21,26 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import IRegister from "./IRegister";
 
-export type Document<T> = IRegister<T>;
+import IDB from "./IDB";
+
+export default interface IOfflineSupport extends IDB {
+  /**
+   * Disconnects from the remote database
+   * User can still read and modify objects that were cached locally
+   *
+   * @param waitFlush - try and wait for flushing outstanding changes
+   * Reject promise if impossible to connect or operations were rejected
+   */
+  goOffline(waitFlush?: boolean): Promise<void>;
+
+  /**
+   * Tries to reestablish a connection with the remote database
+   *
+   * @param waitFlush - waits for changes flush to server
+   * Reject promise if impossible to connect or operations were rejected
+   */
+  goOnline(waitFlush?: boolean): Promise<void>;
+
+  isOnline(): boolean;
+}
