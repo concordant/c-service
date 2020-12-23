@@ -21,6 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+/**
+ * AsyncStorage is a PouchDB adapter designed for React Native
+ */
+
 import AsyncStorage from "pouchdb-adapter-asyncstorage";
 import PouchDB from "pouchdb-react-native";
 
