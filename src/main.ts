@@ -25,21 +25,20 @@ import PouchDBDataSource, {
   AdapterParams,
   ConnectionParams,
   ConnectionProtocol,
-} from "./Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
-import PouchDBObject from "./Database/Implementation/PouchDB/DataTypes/PouchDBObject";
-import PouchDB from "./Database/Implementation/PouchDB/PouchDB";
+} from "./Database/Implementation/Drivers/PouchDB/DataSource/PouchDBDataSource";
+import PouchDBObject from "./Database/Implementation/Drivers/PouchDB/DataTypes/PouchDBObject";
+import PouchDB from "./Database/Implementation/Drivers/PouchDB/PouchDB";
 import {
   Connection,
   Database,
-  DatabaseEventEmitter,
-  DatabaseHooks,
   DataSource,
+  DBEventEmitter,
+  DBHooks,
   DBSaveAllHandler,
   DBTxHandler,
+  Document,
   Key,
 } from "./Database/Interfaces/Types";
-
-import { Document } from "./Database/DataTypes/Interfaces/Types";
 
 export {
   AdapterParams,
@@ -47,8 +46,8 @@ export {
   ConnectionParams,
   ConnectionProtocol,
   Database,
-  DatabaseEventEmitter,
-  DatabaseHooks,
+  DBEventEmitter,
+  DBHooks,
   DataSource,
   Document,
   DBSaveAllHandler,

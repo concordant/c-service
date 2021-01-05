@@ -21,18 +21,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import { promiseDelay } from "../../../Utils/Utils";
-import { Document } from "../../DataTypes/Interfaces/Types";
+import { promiseDelay } from "../../../../Utils/Utils";
+import { IBasicConnection } from "../../../Interfaces/IConnection";
+import { IFilter } from "../../../Interfaces/IDB";
+import { IDBHandlers, IDBSaveAllHandlers } from "../../../Interfaces/IHandlers";
 import {
-  DatabaseEventEmitter,
-  DatabaseHooks,
-  DatabaseParams,
-  IBasicConnection,
-  IDBHandlers,
-  IDBSaveAllHandlers,
-  IFilter,
+  DBEventEmitter,
+  DBHooks,
+  DBParams,
+  Document,
   Key,
-} from "../../Interfaces/Types";
+} from "../../../Interfaces/Types";
 import PouchDBDataSource, {
   ConnectionParams,
 } from "./DataSource/PouchDBDataSource";
@@ -62,7 +61,7 @@ export default class PouchDB implements IBasicConnection {
 
   // private eventEmitter: EventEmitter;
   private connection: Database;
-  private subscriptions: DatabaseEventEmitter[];
+  private subscriptions: DBEventEmitter[];
   // lastSeq is the seq from the last received change.
   private handlers: Array<{
     handlers: IDBHandlers<Document<any>>;
@@ -73,14 +72,14 @@ export default class PouchDB implements IBasicConnection {
   constructor(
     private dataSource: PouchDBDataSource,
     private connectionParams: ConnectionParams,
-    private params: DatabaseParams
+    private params: DBParams
   ) {
     this.connection = dataSource.db;
     this.subscriptions = [];
   }
 
   // TODO: Add support for multiple handlers per hook
-  public registerHooks(hooks: DatabaseHooks) {
+  public registerHooks(hooks: DBHooks): void {
     this.params.hooks = hooks;
   }
 
@@ -91,16 +90,16 @@ export default class PouchDB implements IBasicConnection {
       .catch(() => Promise.reject(new Error("Couldn't Connect to server")));
   }
 
-  // TODO
-
   public isOnline(): boolean {
     return this.dataSource.activeRemotes().length !== 0;
   }
 
+  // TODO: use waitFlush safety
   public goOffline(waitFlush?: boolean): Promise<void> {
     return this.dataSource.disconnect();
   }
 
+  // TODO: use waitFlush safety
   public goOnline(waitFlush?: boolean): Promise<void> {
     return Promise.resolve(this.dataSource.connect());
   }
@@ -164,7 +163,7 @@ export default class PouchDB implements IBasicConnection {
           putRetriesBeforeError &&
           retryCount < putRetriesBeforeError
         ) {
-          return promiseDelay(null, Math.random() * putRetryMaxTimeout)
+          return promiseDelay(Math.random() * putRetryMaxTimeout)
             .then(() => this.get<T>(obj.id))
             .then((objConflicting) => {
               return this.saveInternal<T>(
@@ -177,15 +176,17 @@ export default class PouchDB implements IBasicConnection {
       });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public delete(key: Key): Promise<void> {
     return Promise.reject("Not Implemented");
   }
 
+  // TODO: use filtring arg, Needs to be designed with query model in mind.
   public subscribe<T>(
     keyOrKeys: Key | Key[],
     handlers: IDBHandlers<Document<T>>,
     filter?: IFilter
-  ): DatabaseEventEmitter {
+  ): DBEventEmitter {
     let docIds: string[];
     const { handleConflicts } = this.connectionParams;
 
@@ -240,7 +241,7 @@ export default class PouchDB implements IBasicConnection {
     return changes;
   }
 
-  public cancel(sub: DatabaseEventEmitter) {
+  public cancel(sub: DBEventEmitter): void {
     const idx = this.subscriptions.findIndex((e) => e === sub);
     if (idx >= 0) {
       this.subscriptions.splice(idx, 1);
@@ -253,6 +254,7 @@ export default class PouchDB implements IBasicConnection {
     return {};
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public release(key: Key): void | Error {
     throw Error("Not Implemented");
   }
@@ -261,20 +263,21 @@ export default class PouchDB implements IBasicConnection {
     throw Error("Not Implemented");
   }
 
-  public discard(key: Key) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public discard(key: Key): void | Error {
     throw Error("Not Implemented");
   }
 
-  public discardAll() {
+  public discardAll(): void | Error {
     throw Error("Not Implemented");
   }
 
-  public setAutoSave() {
+  public setAutoSave(): void | Error {
     throw Error("Not Implemented");
   }
 
   public close(): Promise<void> {
-    Object.values(this.subscriptions).forEach((v: DatabaseEventEmitter) =>
+    Object.values(this.subscriptions).forEach((v: DBEventEmitter) =>
       v.cancel()
     );
     return this.dataSource.close();
