@@ -23,16 +23,11 @@
  */
 import { crdtlib } from "@concordant/c-crdtlib";
 import uuid = require("uuid");
-import { Document } from "../../src/Database/DataTypes/Interfaces/Types";
-import { PouchDB } from "../../src/Database/Implementation/Adapters/PouchDB/Adapter";
+import { PouchDB } from "../../src/Database/Implementation/Adapters/PouchDB/InMemoryAdapter";
 import PouchDBDataSource, {
   AdapterParams,
   ConnectionProtocol,
-} from "../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
-import {
-  DatabaseHooks,
-  IBasicConnection,
-} from "../../src/Database/Interfaces/Types";
+} from "../../src/Database/Implementation/Drivers/PouchDB/DataSource/PouchDBDataSource";
 import { promiseDelay } from "../../src/Utils/Utils";
 import CRDTWrapper from "../../src/Utils/CRDTWrapper";
 
@@ -44,6 +39,8 @@ import {
   couchdbPassword,
   remoteDBurl,
 } from "../testParams";
+import { IBasicConnection } from "../../src/Database/Interfaces/IConnection";
+import { DBHooks, Document } from "../../src/Database/Interfaces/Types";
 
 describe("Basic usage", () => {
   let TEST_KEY: string;
@@ -126,7 +123,7 @@ describe("Basic usage", () => {
 
     // hooks are handled by client2
     // need to create hooks for different connections to set different clientIds.
-    const hooks: DatabaseHooks = {
+    const hooks: DBHooks = {
       conflictHandler: (
         obj: Document<CRDTWrapper>,
         objs: Array<Document<CRDTWrapper>>
@@ -254,7 +251,7 @@ describe("Test offline support with CRDTs", () => {
     let remoteObj: Document<CRDTWrapper>;
     let onlyAfter = false;
 
-    const hooks: DatabaseHooks = {
+    const hooks: DBHooks = {
       conflictHandler: (
         obj: Document<CRDTWrapper>,
         objs: Array<Document<CRDTWrapper>>

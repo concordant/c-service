@@ -21,23 +21,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import { crdtlib } from "@concordant/c-crdtlib";
 
-// TODO: now that we have strict typing, the use of "any" here should be avoided
-export default class CRDTWrapper {
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  public static wrap(crdt: any): CRDTWrapper {
-    return new CRDTWrapper(crdt.toJson());
-  }
+/**
+ * Places a transaction or an object version in position of the database timeline
+ * Used to compare object versions
+ * If underlying store does not allow the comparison of object version, the result of compareTo
+ * is NON_COMPARABLE
+ */
+export interface IContext {
+  /** Compares two contexts */
+  compareVersion(other: IContext): CONTEXT_COMPARE;
+}
 
-  public static unwrap(
-    wrapper: CRDTWrapper,
-    env?: crdtlib.utils.Environment
-  ): any {
-    return crdtlib.crdt.DeltaCRDT.Companion.fromJson(wrapper.crdtJson, env);
-  }
-
-  constructor(public crdtJson: string) {
-    this.crdtJson = crdtJson;
-  }
+/** The comparison result of two contexts */
+export enum CONTEXT_COMPARE {
+  EQUAL = "EQUAL",
+  LESS_THAN = "LESS_THAN",
+  GREATER_THAN = "GREATER_THAN",
+  CONCURRENT = "CONCURRENT",
+  NON_COMPARABLE = "NON_COMPARABLE",
 }

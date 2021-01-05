@@ -21,7 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import { IDBObject } from "../../Interfaces/Types";
+
+import { IDBObject } from "./IDB";
 
 export default interface IRegister<T> extends IDBObject<T> {
   current(): T;

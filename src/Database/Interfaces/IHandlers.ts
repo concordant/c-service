@@ -21,9 +21,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import AsyncStorage from "pouchdb-adapter-asyncstorage";
-import PouchDB from "pouchdb-react-native";
 
-PouchDB.plugin(AsyncStorage);
+// TODO: Need to decide required events.
+export interface IDBHandlers<T> {
+  change?: ChangeHandler<T>;
+}
 
-export { PouchDB };
+export interface IDBSaveAllHandlers {
+  complete?: SavedHandler<any>;
+}
+
+export interface IDBTxHandlers {
+  commit?: RemoteCommitHandler;
+  accepted?: RemoteCommitHandler;
+}
+
+type ChangeHandler<T> = (key: string, value: T) => void;
+
+type SavedHandler<T> = (key: string, value?: T) => void;
+
+type RemoteCommitHandler = () => void;
