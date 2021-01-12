@@ -23,6 +23,7 @@
  */
 import { ApolloServer, gql } from "apollo-server-express";
 import * as bodyParser from "body-parser";
+import cors from "cors";
 import express from "express";
 import { makeExecutableSchema } from "graphql-tools";
 import Nano, { MaybeDocument } from "nano";
@@ -127,6 +128,20 @@ const resolvers = {
 
 const app = express();
 
+const coreOptions: cors.CorsOptions = {
+  allowedHeaders: [
+    "Origin",
+    "X-Requested-With",
+    "Content-Type",
+    "Accept",
+    "X-Access-Token",
+  ],
+  credentials: true,
+  methods: "GET,HEAD,OPTIONS,PUT,PATCH,POST,DELETE",
+  origin: "*",
+  preflightContinue: false,
+};
+
 const schema = makeExecutableSchema({
   resolvers,
   typeDefs,
@@ -142,6 +157,7 @@ openApi.save("./swagger.yml");
 
 app.use(
   "/api",
+  cors(coreOptions),
   bodyParser.json(),
   useSofa({
     schema,
