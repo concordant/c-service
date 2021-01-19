@@ -16,7 +16,7 @@ for documentation.
 For the next steps, you will need the following software:
 
 - Make sure you have the latest stable version of [Node.js](https://nodejs.org/en/download/);
-- C-Service runs on top of [CouchDB](https://docs.couchdb.org/en/stable/install/index.html)
+- C-Service runs on top of [CouchDB](https://docs.couchdb.org/en/stable/install/index.html).
 
 In addition, you will need to enable CORS in CouchDB.
 You can use the [dedicated NPM package from PouchDB](https://github.com/pouchdb/add-cors-to-couchdb):
@@ -35,7 +35,7 @@ The C-Service depends on the C-CRDTlib,
 which is delivered as an NPM package in a private [Gitlab Packages registry](https://gitlab.inria.fr/concordant/software/c-crdtlib/-/packages).
 
 Before running the installer, please make sure that NPM is set up
-as described in the [c-crdtlib guide](https://gitlab.inria.fr/concordant/software/c-crdtlib).
+as described in the [c-crdtlib guide](https://gitlab.inria.fr/concordant/software/c-crdtlib/-/blob/master/README.md#npm-install).
 
 Go to project root directory and run:
 
