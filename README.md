@@ -4,7 +4,19 @@
 [![pipeline status](https://gitlab.inria.fr/concordant/software/c-service/badges/master/pipeline.svg)](https://gitlab.inria.fr/concordant/software/c-service/-/commits/master)
 [![coverage report](https://gitlab.inria.fr/concordant/software/c-service/badges/master/coverage.svg)](https://gitlab.inria.fr/concordant/software/c-service/-/commits/master)
 
-The first version of C-Service API.
+The first version of C-Service: a distributed database service
+for CRDTs of the [C-CRDTlib](https://gitlab.inria.fr/concordant/software/c-crdtlib).
+
+The C-Service is meant to run on edge devices (terminal or PoP)
+and (will) support transactions and replication between services.
+It (will) run as a ServiceWorker in web browsers
+or as a standalone application.
+
+The C-Service exposes a REST API which should not be accessed directly,
+as it may not be stable; use the [C-Client library](https://gitlab.inria.fr/concordant/software/c-client) instead.
+
+See also the [wiki](https://gitlab.inria.fr/concordant/software/c-service/-/wikis/)
+for documentation.
 
 ## Getting started
 
@@ -12,25 +24,29 @@ The first version of C-Service API.
 
 For the next steps, you will need the following software:
 
-- Make sure you have the latest stable version of Node.js: [see official installation guide](https://nodejs.org/en/download/);
-- The project uses Git to download some required dependencies: [follow the official install guide](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-- C-Service runs on top of CouchDB, [see CouchDB's installation guide](https://docs.couchdb.org/en/stable/install/index.html)
+- Make sure you have the latest stable version of [Node.js](https://nodejs.org/en/download/);
+- C-Service runs on top of [CouchDB](https://docs.couchdb.org/en/stable/install/index.html).
 
-In addition, you will need to enable CORS in CouchDB by using command line
+In addition, you will need to enable CORS in CouchDB.
+You can use the [dedicated NPM package from PouchDB](https://github.com/pouchdb/add-cors-to-couchdb):
 
 ```shell
-npx add-cors-to-couchdb
+npx add-cors-to-couchdb [http://mycouchDBserver.org] \
+    [-u myusername] [-p mypassword]
+(server defaults to localhost)
 ```
 
-or using the [CouchDB user panel](http://127.0.0.1:5984/_utils/).
+or the [CouchDB user panel](http://127.0.0.1:5984/_utils/).
 
-### Install Project dependencies
+### Install Project dependencies and build
 
-Installation requires a [GitLab token](https://docs.gitlab.com/ee/user/project/deploy_tokens/) to download the private C-CRDTLib npm package.
+The C-Service depends on the C-CRDTlib,
+which is delivered as an NPM package in a private [Gitlab Packages registry](https://gitlab.inria.fr/concordant/software/c-crdtlib/-/packages).
 
-Before running the installer, please make sure that you have configured npm with the required private URL and `gitlab-token` as described in the [c-crdtlib usage guide](https://gitlab.inria.fr/concordant/software/c-crdtlib#usage).
+Before running the installer, please make sure that NPM is set up
+as described in the [c-crdtlib guide](https://gitlab.inria.fr/concordant/software/c-crdtlib/-/blob/master/README.md#npm-install).
 
-Go to project root directory and:
+Go to project root directory and run:
 
 ```bash
 npm install
@@ -38,60 +54,79 @@ npm install
 
 ### Start C-Service
 
-First, one need to compile build the project:
+Ensure CouchDB is running before starting C-Service.
+If it is running on another host, set the `COUCHDB_URL` accordingly.
+You will also need to provide CouchDB credentials:
 
 ```bash
-npm run build
+export COUCHDB_URL=my-couchdb-server.org
+export COUCHDB_USER=my-user COUCHDB_PASSWORD=my-passwd
 ```
 
-Set credentials and run service:
+Then run the service (using dev server):
 
 ```bash
-export COUCHDB_USER=my-user COUCHDB_PASSWORD=my-passwd
 npm start
 ```
 
-**Note:** Need to start a CouchDB server beforehand. Can customise the database URL with the environment variable COUCHDB_URL.
-You might need to change the binding address in the CouchDB admin panel to allow peers to connect to the database.
+This launches an Express server listening on TCP port 4000.
 
 You can also run tests using:
 
 ```bash
-export DBNAME=my-dbname COUCHDB_USER=my-user COUCHDB_PASSWORD=my-passwd
+export DBNAME=my-test-dbname
 npm test
 ```
 
 ### Test C-Service using curl
 
-Once your C-Service is running you can query its REST API through using curl.
+The C-Service exposes a REST API on `/api`,
+whose description can be found in file `swagger.yml`.
+
+Once your C-Service is running you can query its REST API with curl.
 You can view your changes in the [CouchDB user pannel](http://127.0.0.1:5984/_utils/).
 
-Create the _myapp_ database:
+Create the `myapp` database:
 
 ```bash
-curl --request POST --header "Content-Type: application/json" --data '{"appName":"myapp"}' http://127.0.0.1:4000/api/create-app
+curl --request POST                               \
+     --header "Content-Type: application/json"    \
+     --data '{"appName":"myapp"}'                 \
+     http://127.0.0.1:4000/api/create-app
 ```
 
-Insert/update a PNCounter named _myobject_ in _myapp_ database:
+Insert/update a PNCounter named `myobject` in `myapp` database:
 
 ```bash
-curl --request POST --header "Content-Type: application/json" --data '{"appName":"myapp","id":"{\"name\":\"myobject\",\"type\":\"PNCounter\"}","document":"{\"type\":\"PNCounter\",\"metadata\":{\"increment\":[{\"name\":\"clientid\"},{\"first\":60,\"second\":{\"uid\":{\"name\":\"clientid\"},\"cnt\":-21474836}}],\"decrement\":[]},\"value\":60}"}' http://127.0.0.1:4000/api/update-object
+curl --request POST                               \
+     --header "Content-Type: application/json"    \
+     --data '{"appName":"myapp","id":"{\"name\":\"myobject\",\"type\":\"PNCounter\"}","document":"{\"type\":\"PNCounter\",\"metadata\":{\"increment\":[{\"name\":\"clientid\"},{\"first\":60,\"second\":{\"uid\":{\"name\":\"clientid\"},\"cnt\":-21474836}}],\"decrement\":[]},\"value\":60}"}'  \
+     http://127.0.0.1:4000/api/update-object
 ```
 
-Get the PNCounter named _myobject_ in _myapp_ database:
+Get the PNCounter named `myobject` in `myapp` database:
 
 ```bash
-curl --request POST --header "Content-Type: application/json" --data '{"appName":"myapp","id":"{\"name\":\"myobject\",\"type\":\"PNCounter\"}"}' http://127.0.0.1:4000/api/get-object
+curl --request POST                               \
+     --header "Content-Type: application/json"    \
+     --data '{"appName":"myapp","id":"{\"name\":\"myobject\",\"type\":\"PNCounter\"}"}'                       \
+     http://127.0.0.1:4000/api/get-object
 ```
 
-Get all objects of _myapp_ database:
+Get all objects of `myapp` database:
 
 ```bash
-curl --request POST --header "Content-Type: application/json" --data '{"appName":"myapp"}' http://127.0.0.1:4000/api/get-objects
+curl --request POST                               \
+     --header "Content-Type: application/json"    \
+     --data '{"appName":"myapp"}'                 \
+     http://127.0.0.1:4000/api/get-objects
 ```
 
-Delete _myapp_ database:
+Delete `myapp` database:
 
 ```bash
-curl --request POST --header "Content-Type: application/json" --data '{"appName":"myapp"}' http://127.0.0.1:4000/api/delete-app
+curl --request POST                               \
+     --header "Content-Type: application/json"    \
+     --data '{"appName":"myapp"}'                 \
+     http://127.0.0.1:4000/api/delete-app
 ```

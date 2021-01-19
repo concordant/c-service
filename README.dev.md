@@ -1,12 +1,15 @@
-# Build targets
+## Build
 
-(Set up as scripts in package.json)
+The build is managed by NPM.
+Typescript sources (code and tests) are transpiled to JavaScript.
+NPM targets (set up as scripts in `package.json`) are as follows:
 
-- `prepare`: lifecycle script (→ build)
-- `build`: should be removed (merge with prepare)
+- `install`: install dependencies and prepare (compile)
+- `run prepare`: lifecycle script (→ build)
+- `run build`: should be removed (merge with prepare)
 - `test`: run jest (tests & coverage)
 - `start`: dev server, listens on TCP port 4000
-- `lint`: run eslint
+- `run lint`: run eslint
 
 ## Used software
 
@@ -30,6 +33,7 @@
 - Apollo: graphQL library
 - Express: web server
 - Nano: couchDB client library
+- C-CRDTlib: our CRDT library
 
 ## Files
 
@@ -56,7 +60,7 @@
 
 ### Code
 
-- `swagger.yml` OpenAPI Specification
+- `swagger.yml` OpenAPI Specification, auto-generated from GraphQL
 - `src/` Code
   - `service.ts` GraphQL schema definition & resolvers
   - `test/` Tests (Jest)
