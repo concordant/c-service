@@ -33,6 +33,7 @@ NPM targets (set up as scripts in `package.json`) are as follows:
 - Apollo: graphQL library
 - Express: web server
 - Nano: couchDB client library
+- C-CRDTlib: our CRDT library
 
 ## Files
 

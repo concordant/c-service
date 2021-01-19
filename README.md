@@ -4,7 +4,16 @@
 [![pipeline status](https://gitlab.inria.fr/concordant/software/c-service/badges/master/pipeline.svg)](https://gitlab.inria.fr/concordant/software/c-service/-/commits/master)
 [![coverage report](https://gitlab.inria.fr/concordant/software/c-service/badges/master/coverage.svg)](https://gitlab.inria.fr/concordant/software/c-service/-/commits/master)
 
-The first version of C-Service API.
+The first version of C-Service: a distributed database service
+for CRDTs of the [C-CRDTlib](https://gitlab.inria.fr/concordant/software/c-crdtlib).
+
+The C-Service is meant to run on edge devices (terminal or PoP)
+and (will) support transactions and replication between services.
+It (will) run as a ServiceWorker in web browsers
+or as a standalone application.
+
+The C-Service exposes a REST API which should not be accessed directly,
+as it may not be stable; use the [C-Client library](https://gitlab.inria.fr/concordant/software/c-client) instead.
 
 See also the [wiki](https://gitlab.inria.fr/concordant/software/c-service/-/wikis/)
 for documentation.
