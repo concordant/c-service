@@ -180,7 +180,7 @@ const server = new ApolloServer({
 
 server.applyMiddleware({ app });
 
-app.listen({ port: 4000 });
+app.listen(4000, "0.0.0.0");
 
 /**
  * Creates a new database if it does not already exists
