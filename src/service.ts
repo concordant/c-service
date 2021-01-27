@@ -232,7 +232,11 @@ function deleteApp(dbName: string) {
  * @param docName the targeted document name
  * @param document the document new content
  */
-function updateObject(dbName: string, docName: string, document: string) {
+function updateObject(
+  dbName: string,
+  docName: string,
+  document: string
+): Promise<string> {
   console.warn(
     `[SERVER] Updating document '${docName}' in database '${dbName}'`
   );
@@ -252,8 +256,15 @@ function updateObject(dbName: string, docName: string, document: string) {
             bodyCRDT.merge(CRDT);
             const newDocument = JSON.parse(bodyCRDT.toJson());
             newDocument._rev = body._rev;
-            client.db.use(dbName).insert(newDocument, docName);
-            return "OK";
+            return client.db
+              .use(dbName)
+              .insert(newDocument, docName)
+              .then((body) => {
+                return "OK";
+              })
+              .catch((error) => {
+                return updateObject(dbName, docName, document);
+              });
           } catch (error) {
             console.error(
               `[SERVER][ERROR] Failed updating document '${docName}' in database '${dbName}'`
@@ -265,8 +276,15 @@ function updateObject(dbName: string, docName: string, document: string) {
         .catch((error) => {
           try {
             const CRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(document);
-            client.db.use(dbName).insert(JSON.parse(document), docName);
-            return "OK";
+            return client.db
+              .use(dbName)
+              .insert(JSON.parse(document), docName)
+              .then((body) => {
+                return "OK";
+              })
+              .catch((error) => {
+                return updateObject(dbName, docName, document);
+              });
           } catch (error) {
             console.error(
               `[SERVER][ERROR] Failed updating document '${docName}' in database '${dbName}'`
