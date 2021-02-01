@@ -250,7 +250,7 @@ function updateObject(
         .then((body) => {
           try {
             const CRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(
-              document.replace("\\'", "'")
+              document.replace(/\\'/g, "'")
             );
             const bodyCRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(
               JSON.stringify(body)
@@ -279,7 +279,7 @@ function updateObject(
           try {
             return client.db
               .use(dbName)
-              .insert(JSON.parse(document.replace("\\'", "'")), docName)
+              .insert(JSON.parse(document.replace(/\\'/g, "'")), docName)
               .then((body) => {
                 return "OK";
               })
