@@ -78,6 +78,29 @@ export DBNAME=my-test-dbname
 npm test
 ```
 
+### Setup C-Service as a Systemd service
+
+Before starting C-Service, ensure CouchDB is running as a systemd service named "couchdb.service" or adapt the name in c-service.service file.
+
+Put the c-service folder in /opt/ or adapt the c-service.service file.
+
+Put the provided file c-service.service in the repository /etc/systemd/system/.
+
+Create the file /etc/systemd/system/c-service.conf containing:
+
+```shell
+COUCHDB_USER=<couchdb_id>
+COUCHDB_PASSWORD=<couchdb_password>
+```
+
+(replace <couchdb_id> and <couchdb_pass> with a CouchDB admin username and password)
+
+Start the service :
+
+```shell
+systemctl start c-service
+```
+
 ### Test C-Service using curl
 
 The C-Service exposes a REST API on `/api`,
