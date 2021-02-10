@@ -158,7 +158,7 @@ openApi.save("./swagger.yml");
 app.use(
   "/api",
   cors(coreOptions),
-  bodyParser.json(),
+  bodyParser.json({limit: '10mb'}),
   useSofa({
     schema,
     onRoute(info) {
