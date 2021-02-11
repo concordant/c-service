@@ -1,0 +1,13 @@
+[Unit]
+Description=Concordant Service
+Wants=couchdb.service
+After=network.target couchdb.service
+
+[Service]
+WorkingDirectory=/opt/c-service
+EnvironmentFile=/etc/systemd/system/c-service.conf
+ExecStart=/usr/bin/npm start
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
