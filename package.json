@@ -1,7 +1,23 @@
 {
-  "name": "c-service",
+  "name": "@concordant/c-service",
   "version": "1.1.2",
-  "description": "Server backend for Concordant P2P collaborative apps",
+  "description": "Background service for the Concordant platform",
+  "keywords": [
+    "concordant",
+    "crdt",
+    "conflict-free",
+    "replicated datatypes"
+  ],
+  "homepage": "https://concordant.io",
+  "author": "Concordant",
+  "bugs": {
+    "email": "support@concordant.io"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.inria.fr/concordant/software/c-service.git"
+  },
   "main": "./dist/main.js",
   "types": "./dist/main.d.ts",
   "files": [
@@ -14,16 +30,6 @@
     "build": "tsc --skipLibCheck",
     "prepare": "npm run build"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://gitlab.inria.fr/concordant/software/c-service.git"
-  },
-  "author": "info@concordant.io",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://gitlab.inria.fr/concordant/software/c-service/issues"
-  },
-  "homepage": "https://gitlab.inria.fr/concordant/software/c-service/-/blob/master/README.md",
   "devDependencies": {
     "@babel/core": "^7.12.3",
     "@babel/node": "^7.12.6",
