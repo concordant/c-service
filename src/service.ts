@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * MIT License
  *
@@ -158,7 +160,7 @@ openApi.save("./swagger.yml");
 app.use(
   "/api",
   cors(coreOptions),
-  bodyParser.json({limit: '10mb'}),
+  bodyParser.json({ limit: "10mb" }),
   useSofa({
     schema,
     onRoute(info) {
