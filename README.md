@@ -38,20 +38,6 @@ npx add-cors-to-couchdb [http://mycouchDBserver.org] \
 
 or the [CouchDB user panel](http://127.0.0.1:5984/_utils/).
 
-### Install Project dependencies and build
-
-The C-Service depends on the C-CRDTlib,
-which is delivered as an NPM package in a private [Gitlab Packages registry](https://gitlab.inria.fr/concordant/software/c-crdtlib/-/packages).
-
-Before running the installer, please make sure that NPM is set up
-as described in the [c-crdtlib guide](https://gitlab.inria.fr/concordant/software/c-crdtlib/-/blob/master/README.md#npm-install).
-
-Go to project root directory and run:
-
-```bash
-npm install
-```
-
 ### Start C-Service
 
 Ensure CouchDB is running before starting C-Service.
@@ -63,45 +49,38 @@ export COUCHDB_URL=my-couchdb-server.org
 export COUCHDB_USER=my-user COUCHDB_PASSWORD=my-passwd
 ```
 
-Then run the service (using dev server):
+Then run the service:
 
 ```bash
-npm start
+npx @concordant/c-service
 ```
 
 This launches an Express server listening on TCP port 4000.
 
-You can also run tests using:
+## Setup C-Service as a Systemd service
 
-```bash
-export DBNAME=my-test-dbname
-npm test
-```
+First ensure CouchDB is setup as a systemd service named `couchdb.service`
+(or adapt the name in `c-service.service` file).
 
-### Setup C-Service as a Systemd service
+Put the c-service folder in `/opt/` or adapt the `c-service.service` file.
 
-Before starting C-Service, ensure CouchDB is running as a systemd service named "couchdb.service" or adapt the name in c-service.service file.
+Put the provided file `c-service.service` in `/etc/systemd/system/`.
 
-Put the c-service folder in /opt/ or adapt the c-service.service file.
-
-Put the provided file c-service.service in the repository /etc/systemd/system/.
-
-Create the file /etc/systemd/system/c-service.conf containing:
+Create the file `/etc/systemd/system/c-service.conf`
+containing CouchDB admin credentials:
 
 ```shell
 COUCHDB_USER=<couchdb_id>
 COUCHDB_PASSWORD=<couchdb_password>
 ```
 
-(replace <couchdb_id> and <couchdb_pass> with a CouchDB admin username and password)
-
-Start the service :
+Then start the service:
 
 ```shell
 systemctl start c-service
 ```
 
-### Test C-Service using curl
+## Test C-Service using curl
 
 The C-Service exposes a REST API on `/api`,
 whose description can be found in file `swagger.yml`.
