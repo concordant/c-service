@@ -1,33 +1,37 @@
 {
-  "name": "c-service",
+  "name": "@concordant/c-service",
   "version": "1.1.2",
-  "description": "Server backend for Concordant P2P collaborative apps",
-  "main": "./dist/main.js",
-  "types": "./dist/main.d.ts",
-  "files": [
-    "dist/**/*"
+  "description": "Background service for the Concordant platform",
+  "keywords": [
+    "concordant",
+    "crdt",
+    "conflict-free",
+    "replicated datatypes"
   ],
-  "scripts": {
-    "start": "babel-node dist/service.js",
-    "test": "jest $TESTS",
-    "lint": "eslint .",
-    "build": "tsc --skipLibCheck",
-    "prepare": "npm run build"
+  "homepage": "https://concordant.io",
+  "author": "Concordant",
+  "bugs": {
+    "email": "support@concordant.io"
   },
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://gitlab.inria.fr/concordant/software/c-service.git"
   },
-  "author": "info@concordant.io",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://gitlab.inria.fr/concordant/software/c-service/issues"
+  "bin": "./dist/service.js",
+  "main": "./dist/service.js",
+  "types": "./dist/service.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "start": "dist/service.js",
+    "test": "jest $TESTS",
+    "lint": "eslint .",
+    "build": "tsc --skipLibCheck && chmod +x dist/service.js",
+    "prepare": "npm run build"
   },
-  "homepage": "https://gitlab.inria.fr/concordant/software/c-service/-/blob/master/README.md",
   "devDependencies": {
-    "@babel/core": "^7.12.3",
-    "@babel/node": "^7.12.6",
-    "@babel/preset-env": "^7.12.1",
     "@types/cors": "^2.8.9",
     "@types/express": "^4.17.8",
     "@types/jest": "^24.0.18",

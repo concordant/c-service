@@ -1,3 +1,20 @@
+## Private releases
+
+The C-Service, and the C-CRDTlib it depends on,
+are delivered as NPM packages.
+Public releases are published on [npmjs](https://www.npmjs.com/),
+while development releases are published
+to a private [Gitlab Packages registry](https://gitlab.inria.fr/concordant/software/c-crdtlib/-/packages).
+
+To use development releases, set up NPM
+as described in the [c-crdtlib guide](https://gitlab.inria.fr/concordant/software/c-crdtlib/-/blob/master/README.dev.md#javascripttypescript-and-npm)
+
+Go to project root directory and run:
+
+```bash
+npm install
+```
+
 ## Build
 
 The build is managed by NPM.
@@ -7,7 +24,8 @@ NPM targets (set up as scripts in `package.json`) are as follows:
 - `install`: install dependencies and prepare (compile)
 - `run prepare`: lifecycle script (→ build)
 - `run build`: should be removed (merge with prepare)
-- `test`: run jest (tests & coverage)
+- `test`: run jest (tests & coverage);
+  `DBNAME` must be set, and will be used as database name for tests.
 - `start`: dev server, listens on TCP port 4000
 - `run lint`: run eslint
 
@@ -63,7 +81,7 @@ NPM targets (set up as scripts in `package.json`) are as follows:
 - `swagger.yml` OpenAPI Specification, auto-generated from GraphQL
 - `src/` Code
   - `service.ts` GraphQL schema definition & resolvers
-  - `test/` Tests (Jest)
+- `test/` Tests (Jest)
 
 ### Artifacts (untracked)
 
