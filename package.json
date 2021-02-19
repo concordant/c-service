@@ -18,22 +18,20 @@
     "type": "git",
     "url": "git+https://gitlab.inria.fr/concordant/software/c-service.git"
   },
-  "main": "./dist/main.js",
-  "types": "./dist/main.d.ts",
+  "bin": "./dist/service.js",
+  "main": "./dist/service.js",
+  "types": "./dist/service.d.ts",
   "files": [
     "dist/**/*"
   ],
   "scripts": {
-    "start": "babel-node dist/service.js",
+    "start": "dist/service.js",
     "test": "jest $TESTS",
     "lint": "eslint .",
-    "build": "tsc --skipLibCheck",
+    "build": "tsc --skipLibCheck && chmod +x dist/service.js",
     "prepare": "npm run build"
   },
   "devDependencies": {
-    "@babel/core": "^7.12.3",
-    "@babel/node": "^7.12.6",
-    "@babel/preset-env": "^7.12.1",
     "@types/cors": "^2.8.9",
     "@types/express": "^4.17.8",
     "@types/jest": "^24.0.18",
