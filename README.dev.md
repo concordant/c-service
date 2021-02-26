@@ -9,6 +9,9 @@ to a private [Gitlab Packages registry](https://gitlab.inria.fr/concordant/softw
 To use development releases, set up NPM
 as described in the [c-crdtlib guide](https://gitlab.inria.fr/concordant/software/c-crdtlib/-/blob/master/README.dev.md#javascripttypescript-and-npm)
 
+See also the [wiki](https://gitlab.inria.fr/concordant/software/c-service/-/wikis/)
+for documentation.
+
 Go to project root directory and run:
 
 ```bash
