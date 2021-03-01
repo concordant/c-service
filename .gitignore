@@ -1,6 +1,7 @@
 docs
 dist
 .idea
+swagger.yml
 
 # Logs
 logs

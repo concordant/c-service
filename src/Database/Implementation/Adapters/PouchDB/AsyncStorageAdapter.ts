@@ -21,23 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import { crdtlib } from "@concordant/c-crdtlib";
+/**
+ * AsyncStorage is a PouchDB adapter designed for React Native
+ */
 
-// TODO: now that we have strict typing, the use of "any" here should be avoided
-export default class CRDTWrapper {
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  public static wrap(crdt: any): CRDTWrapper {
-    return new CRDTWrapper(crdt.toJson());
-  }
+import AsyncStorage from "pouchdb-adapter-asyncstorage";
+import PouchDB from "pouchdb-react-native";
 
-  public static unwrap(
-    wrapper: CRDTWrapper,
-    env?: crdtlib.utils.Environment
-  ): any {
-    return crdtlib.crdt.DeltaCRDT.Companion.fromJson(wrapper.crdtJson, env);
-  }
+PouchDB.plugin(AsyncStorage);
 
-  constructor(public crdtJson: string) {
-    this.crdtJson = crdtJson;
-  }
-}
+export { PouchDB };
