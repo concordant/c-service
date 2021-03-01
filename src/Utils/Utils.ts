@@ -21,6 +21,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-export const promiseDelay = (v: any, t: number) => {
-  return new Promise((resolve) => setTimeout(resolve.bind(null, v), t));
+export const promiseDelay = (t: number): Promise<unknown> => {
+  return new Promise((resolve) => setTimeout(resolve.bind(null, null), t));
 };

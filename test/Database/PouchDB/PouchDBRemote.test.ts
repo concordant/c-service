@@ -22,17 +22,12 @@
  * SOFTWARE.
  */
 import uuid = require("uuid");
-import { Document } from "../../../src/Database/DataTypes/Interfaces/Types";
-import { PouchDB } from "../../../src/Database/Implementation/Adapters/PouchDB/Adapter";
+import { Document } from "../../../src/Database/Interfaces/Types";
+import { PouchDB } from "../../../src/Database/Implementation/Adapters/PouchDB/InMemoryAdapter";
 import PouchDBDataSource, {
   AdapterParams,
   ConnectionProtocol,
-} from "../../../src/Database/Implementation/PouchDB/DataSource/PouchDBDataSource";
-import {
-  IBasicConnection,
-  IDBObject,
-} from "../../../src/Database/Interfaces/Types";
-
+} from "../../../src/Database/Implementation/Drivers/PouchDB/DataSource/PouchDBDataSource";
 import {
   dbName,
   couchdbHost,
@@ -41,6 +36,7 @@ import {
   couchdbPassword,
   remoteDBurl,
 } from "../../testParams";
+import { IBasicConnection } from "../../../src/Database/Interfaces/IConnection";
 
 class TestObject {
   constructor(public foo: string = "foo") {}
@@ -104,7 +100,7 @@ describe("Sync tests", () => {
   });
   it("test", (done) => {
     const random = uuid();
-    const sub = connection1.subscribe<TestObject>(TEST_KEY, {
+    connection1.subscribe<TestObject>(TEST_KEY, {
       change: (key, newObj) => {
         if (newObj.current().foo === random) {
           done();
