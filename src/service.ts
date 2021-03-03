@@ -25,12 +25,13 @@
  */
 import { ApolloServer, gql } from "apollo-server-express";
 import * as bodyParser from "body-parser";
+import { crdtlib } from "@concordant/c-crdtlib";
 import cors from "cors";
 import express from "express";
 import { makeExecutableSchema } from "graphql-tools";
 import Nano, { MaybeDocument } from "nano";
 import { OpenAPI, useSofa } from "sofa-api";
-import { crdtlib } from "@concordant/c-crdtlib";
+import { graphQLSchema } from "./schema";
 
 // http://USERNAME:PASSWORD/URL:PORT
 const dbUrl = process.env.COUCHDB_URL || "http://localhost:5984/";
@@ -45,34 +46,7 @@ interface IReplicator extends MaybeDocument {
   state?: string;
 }
 
-const typeDefs = gql`
-  type Replicator {
-    id: ID!
-    source: String
-    target: String
-    continuous: Boolean
-    state: String
-  }
-
-  type Query {
-    getObjects(appName: String): [String]
-    getObject(appName: String, id: ID!): String
-    replicators: [Replicator]
-    replicator(id: ID!): Replicator
-  }
-
-  type Mutation {
-    createApp(appName: String): String
-    deleteApp(appName: String): String
-    updateObject(appName: String, id: ID!, document: String): String
-    replicator(source: String, target: String, continuous: Boolean): String
-  }
-
-  schema {
-    query: Query
-    mutation: Mutation
-  }
-`;
+const typeDefs = gql(graphQLSchema);
 
 const resolvers = {
   Mutation: {
