@@ -45,7 +45,6 @@ export interface IDataSource {
 }
 
 export interface IConnectionParams {
-  adapter?: string;
   autoSave?: boolean;
   handleConflicts?: boolean;
   hook?: DBHooks;
