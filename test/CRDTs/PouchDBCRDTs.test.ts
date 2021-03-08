@@ -162,7 +162,7 @@ describe("Basic usage", () => {
               .save()
               .catch((err) => fail(err));
           })
-          .then(() => promiseDelay(null, 200))
+          .then(() => promiseDelay(200))
           .then(() => connection2.get<CRDTWrapper>(TEST_KEY))
           .then((obj) => {
             const unwrapped = CRDTWrapper.unwrap(obj.current());
@@ -289,7 +289,7 @@ describe("Test offline support with CRDTs", () => {
               .save()
               .catch((err) => fail(err));
           })
-          .then(() => promiseDelay(null, 200))
+          .then(() => promiseDelay(200))
           // .then(() => connection2.goOnline())
           .then(() => connection2.get<CRDTWrapper>(TEST_KEY))
           .then((obj) => {

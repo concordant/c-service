@@ -28,6 +28,7 @@ import PouchDBDataSource, {
 import PouchDBObject from "../../../src/Database/Implementation/Drivers/PouchDB/DataTypes/PouchDBObject";
 import { Database, DataSource } from "../../../src/Database/Interfaces/Types";
 import { Document } from "../../../src/Database/Interfaces/Types";
+import { dbName } from "../../testParams";
 
 class TestObject {
   constructor(public foo: string = "foo") {}
@@ -42,7 +43,7 @@ describe("Handling conflicts", () => {
   beforeAll(() => {
     const params: AdapterParams = {
       connectionParams: { adapter: "memory" },
-      dbName: "testdb",
+      dbName,
     };
     dataSource = new PouchDBDataSource(PouchDB, params);
     return dataSource
