@@ -45,7 +45,7 @@ export interface IAdapterParams {
   port?: number;
   url?: string;
   dbName: string;
-  connectionParams?: IConnectionParams;
+  connectionParams?: any; //IConnectionParams;
   remoteDBs?: string[];
 }
 
