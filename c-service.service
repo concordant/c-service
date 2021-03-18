@@ -4,10 +4,13 @@ Wants=couchdb.service
 After=network.target couchdb.service
 
 [Service]
-WorkingDirectory=/opt/c-service
+User=node
+WorkingDirectory=/home/node/c-service
 EnvironmentFile=/etc/systemd/system/c-service.conf
-ExecStart=/usr/bin/npm start
+ExecStart=/usr/bin/npx @concordant/c-service
 Restart=on-failure
+
+Environment=NODE_ENV=production
 
 [Install]
 WantedBy=multi-user.target
