@@ -22,12 +22,12 @@
  * SOFTWARE.
  */
 
-import { IDBObject } from "./IDB";
-
-export default interface IRegister<T> extends IDBObject<T> {
-  current(): T;
-
-  update(value: T): IRegister<T>;
-
-  save(): Promise<IRegister<T>>;
-}
+/**
+ * Promise with delay.
+ * @param timeout delay in millisecond.
+ */
+export const promiseDelay = (timeout: number): Promise<unknown> => {
+  return new Promise((resolve) =>
+    setTimeout(resolve.bind(null, null), timeout)
+  );
+};
