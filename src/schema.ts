@@ -42,8 +42,8 @@ export const graphQLSchema = `
   }
 
   type Mutation {
-    createApp(appName: String): String
-    deleteApp(appName: String): String
+    createApp(appName: String): Boolean
+    deleteApp(appName: String): Boolean
     updateObject(appName: String, id: ID!, document: String): String
     replicator(source: String, target: String, continuous: Boolean): String
   }
