@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Changed
     - Put GraphQL schema in a separate file
     - Systemd service is using npx with package from npmjs
-    - Clean and update code abstraction over PouchDB
+    - Clean and update the code abstraction over PouchDB
     - Use our PouchDB datasource
   - Deprecated
   - Removed

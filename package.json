@@ -1,6 +1,6 @@
 {
   "name": "@concordant/c-service",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Background service for the Concordant platform",
   "keywords": [
     "concordant",
