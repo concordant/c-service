@@ -22,12 +22,34 @@
  * SOFTWARE.
  */
 
-import { IDBObject } from "./IDB";
+/**
+ * GraphQL schema API for Concordant service.
+ */
+export const graphQLSchema = `
+  type Replicator {
+    id: ID!
+    source: String
+    target: String
+    continuous: Boolean
+    state: String
+  }
 
-export default interface IRegister<T> extends IDBObject<T> {
-  current(): T;
+  type Query {
+    getObjects(appName: String): [String]
+    getObject(appName: String, id: ID!): String
+    replicators: [Replicator]
+    replicator(id: ID!): Replicator
+  }
 
-  update(value: T): IRegister<T>;
+  type Mutation {
+    createApp(appName: String): Boolean
+    deleteApp(appName: String): Boolean
+    updateObject(appName: String, id: ID!, document: String): String
+    replicator(source: String, target: String, continuous: Boolean): String
+  }
 
-  save(): Promise<IRegister<T>>;
-}
+  schema {
+    query: Query
+    mutation: Mutation
+  }
+`;
