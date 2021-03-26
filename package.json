@@ -28,8 +28,7 @@
     "start": "dist/service.js",
     "test": "jest $TESTS",
     "lint": "eslint .",
-    "build": "tsc --skipLibCheck && chmod +x dist/service.js",
-    "prepare": "npm run build"
+    "prepare": "tsc --skipLibCheck && chmod +x dist/service.js"
   },
   "devDependencies": {
     "@types/cors": "^2.8.10",
