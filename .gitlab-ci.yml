@@ -1,4 +1,4 @@
-image: node:14.15.1
+image: node:14.16.0
 
 cache: &global_cache # per-branch cache
   key: ${CI_COMMIT_REF_SLUG}
@@ -11,6 +11,9 @@ build:
   stage: build
   script:
     - npm ci --cache .npm --prefer-offline
+    # prepare script is skipped by install/ci when running NPM 6 as root.
+    # This line can be safely removed with NPM 7+ (see NPM Changelog)
+    - npm run prepare
   artifacts:
     paths:
       - node_modules/
