@@ -55,9 +55,9 @@ deliver-internal:
     - build
   before_script:
     - npm config set
-      @concordant:registry "https://gitlab.inria.fr/api/v4/packages/npm/"
+      @concordant:registry "https://gitlab.inria.fr/api/v4/projects/${CI_PROJECT_ID}/packages/npm/"
     - npm config set
-      '//gitlab.inria.fr/api/v4/packages/npm/:_authToken' "${CI_JOB_TOKEN}"
+      '//gitlab.inria.fr/api/v4/projects/${CI_PROJECT_ID}/packages/npm/:_authToken' "${CI_JOB_TOKEN}"
   script:
     - npm publish
 
