@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed
   - Security
 
-- [1.1.5] - 2021-03-25
+- [1.1.6] - 2021-04-01
   - Added
   - Changed
     - Put GraphQL schema in a separate file
