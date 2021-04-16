@@ -14,6 +14,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed
   - Security
 
+- [1.1.7] - 2021-04-16
+
+  - Added
+  - Changed
+    - updateObject confirms the update
+    - Change references from Github to Gitlab
+  - Deprecated
+  - Removed
+  - Fixed
+  - Security
+
 - [1.1.6] - 2021-04-01
   - Added
   - Changed
