@@ -148,7 +148,7 @@ export default class PouchDBDataSource implements DataSource {
               newDocument._rev = body._rev;
               return this.database
                 .put(newDocument)
-                .then(() => newDocument)
+                .then(() => "OK")
                 .catch((error) => this.updateObject(docName, document));
             } catch (error) {
               return Promise.reject(error);
@@ -160,7 +160,7 @@ export default class PouchDBDataSource implements DataSource {
               newDocument._id = docName;
               return this.database
                 .put(newDocument)
-                .then(() => newDocument)
+                .then(() => "OK")
                 .catch((error) => this.updateObject(docName, document));
             } catch (error) {
               return Promise.reject(error);
