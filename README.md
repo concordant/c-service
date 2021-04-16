@@ -13,7 +13,10 @@ It (will) run as a ServiceWorker in web browsers
 or as a standalone application.
 
 The C-Service exposes a REST API which should not be accessed directly,
-as it may not be stable; use the [C-Client library](https://github.com/concordant/c-client) instead.
+as it may not be stable; use the [c-client library](https://gitlab.inria.fr/concordant/software/c-client/) instead.
+
+The main repository is in [the Inria gitlab](https://gitlab.inria.fr/concordant/software/c-service/) (this is where you can post tickets.  There is an identical clone in  [GitHub](https://github.com/concordant/c-service) (tickets here might be ignored).
+
 
 ## Getting started
 
