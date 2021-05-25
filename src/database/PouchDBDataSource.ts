@@ -21,8 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 import { crdtlib } from "@concordant/c-crdtlib";
-import { promiseDelay } from "../utils";
 import DataSource from "./DataSource";
 import PouchDB from "pouchdb";
 
@@ -75,6 +75,30 @@ export default class PouchDBDataSource implements DataSource {
   }
 
   /**
+   * Perform bidirectional replication between the local database and the remote database.
+   * @param remoteDB the remote database.
+   */
+  public sync(remoteDB: PouchDBDataSource) {
+    this.database
+      .sync(remoteDB.database, {
+        live: true,
+        retry: true,
+      })
+      .on("change", function (change) {
+        // do nothing.
+      })
+      .on("paused", function (info) {
+        // do nothing.
+      })
+      .on("active", function () {
+        // do nothing.
+      })
+      .on("error", function (err) {
+        // do nothing.
+      });
+  }
+
+  /**
    * Get a given object from the database.
    * @param docName unique identifier of the targeted document.
    * Return a promise to a string object.
@@ -90,9 +114,10 @@ export default class PouchDBDataSource implements DataSource {
           .catch((error) => {
             try {
               const objectUId = JSON.parse(docName);
-              const newCrdt = crdtlib.crdt.DeltaCRDTFactory.Companion.createDeltaCRDT(
-                objectUId.type
-              );
+              const newCrdt =
+                crdtlib.crdt.DeltaCRDTFactory.Companion.createDeltaCRDT(
+                  objectUId.type
+                );
               return Promise.resolve(newCrdt.toJson());
             } catch (error) {
               return Promise.reject(error);
