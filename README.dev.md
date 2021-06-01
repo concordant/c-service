@@ -37,9 +37,8 @@ NPM targets (set up as scripts in `package.json`) are as follows:
 ### Dev tools
 
 - tsc: Typescript transpiler (to JavaScript)
+- webpack: JavaScript bundler, used to bundle the ServiceWorker
 - NPM: package/build manager
-- babel-node: development nodeJS/Babel environment,
-  _not meant for production use_
 - Husky: git hooks manager
 - lint-staged: apply pre-commit hooks to changed files only ; runs:
   - ESlint: linter (static code analyser)
@@ -53,7 +52,7 @@ NPM targets (set up as scripts in `package.json`) are as follows:
 - Sofa: generate a REST interface from graphQL
 - Apollo: graphQL library
 - Express: web server
-- Nano: couchDB client library
+- PouchDB: JavaScript CouchDB implementation & client
 - C-CRDTlib: our CRDT library
 
 ## Files
@@ -83,7 +82,11 @@ NPM targets (set up as scripts in `package.json`) are as follows:
 
 - `swagger.yml` OpenAPI Specification, auto-generated from GraphQL
 - `src/` Code
-  - `service.ts` GraphQL schema definition & resolvers
+  - `schema.ts` GraphQL schema definition
+  - `service.ts` GraphQL resolvers
+  - `c-service-worker.js` Service worker implementation
+  - `config.json` Service Worker configuration
+  - `database/` storage connectors
 - `test/` Tests (Jest)
 
 ### Artifacts (untracked)
