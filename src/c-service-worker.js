@@ -41,6 +41,18 @@ self.addEventListener("activate", function (event) {
   event.waitUntil(self.clients.claim());
 });
 
+function onChange(doc) {
+  self.clients.matchAll().then(function (clients) {
+    clients.forEach(function (client) {
+      var message = {
+        type: "update",
+        data: doc,
+      };
+      client.postMessage(JSON.stringify(message));
+    });
+  });
+}
+
 function connectDB(dbName) {
   const localDB = new PouchDBDataSource({ dbName });
 
@@ -51,7 +63,7 @@ function connectDB(dbName) {
     dbName,
   };
   const remoteDB = new PouchDBDataSource(params);
-  localDB.sync(remoteDB);
+  localDB.sync(remoteDB, onChange);
 
   self.db[dbName] = localDB;
 }
