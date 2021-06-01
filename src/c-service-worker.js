@@ -34,7 +34,7 @@ const password = CONFIG.password;
 /* eslint-disable no-undef */
 self.addEventListener("install", function (event) {
   self.db = {};
-  event.waitUntil(self.skipWaiting());
+  self.skipWaiting();
 });
 
 self.addEventListener("activate", function (event) {
@@ -69,49 +69,36 @@ self.addEventListener("fetch", function (event) {
 
     event.respondWith(
       (async function () {
-        return event.request.json().then((json) => {
-          const requestType = event.request.url.replace(serverUrl, "");
-          if (!self.db[json.appName]) {
-            connectDB(json.appName);
-          }
-          switch (requestType) {
-            case "create-app":
-              return self.db[json.appName]
-                .isConnected()
-                .then((responseBody) => {
-                  return new Response(
-                    JSON.stringify(responseBody),
-                    responseInit
-                  );
-                });
-            case "get-object":
-              return self.db[json.appName]
-                .getObject(json.id)
-                .then((responseBody) => {
-                  return new Response(
-                    JSON.stringify(responseBody),
-                    responseInit
-                  );
-                });
-            case "update-object":
-              return self.db[json.appName]
-                .updateObject(json.id, json.document)
-                .then((responseBody) => {
-                  return new Response(
-                    JSON.stringify(responseBody),
-                    responseInit
-                  );
-                });
-            default:
-              return new Response("Wrong request type : " + requestType, {
-                status: 404,
-                statusText: "Not Found",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-              });
-          }
-        });
+        const json = await event.request.json();
+
+        const requestType = event.request.url.replace(serverUrl, "");
+        if (!self.db[json.appName]) {
+          connectDB(json.appName);
+        }
+        let responseBody;
+        switch (requestType) {
+          case "create-app":
+            responseBody = await self.db[json.appName].isConnected();
+            break;
+          case "get-object":
+            responseBody = await self.db[json.appName].getObject(json.id);
+            break;
+          case "update-object":
+            responseBody = await self.db[json.appName].updateObject(
+              json.id,
+              json.document
+            );
+            break;
+          default:
+            return new Response("Wrong request type : " + requestType, {
+              status: 404,
+              statusText: "Not Found",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+        }
+        return new Response(JSON.stringify(responseBody), responseInit);
       })()
     );
   }
