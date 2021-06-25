@@ -22,13 +22,15 @@
  * SOFTWARE.
  */
 
+import * as WebSocket from "ws";
+
 /**
  * A database adapter between Concordant service API and database specific API.
  */
 export default interface DataSource {
   /**
    * Is connection still active.
-   * Return a promise to a boolean.
+   * @returns a promise to a boolean.
    * Reject promise if impossible to contact database.
    */
   isConnected(): Promise<boolean>;
@@ -36,14 +38,14 @@ export default interface DataSource {
   /**
    * Get a given object from the database.
    * @param docName unique identifier of the targeted document.
-   * Return a promise to a string object.
+   * @returns a promise to a string object.
    * Reject promise if impossible to get object.
    */
   getObject(docName: string): Promise<string>;
 
   /**
    * Get all objects from the database.
-   * Return promise a promise to an array of string objects.
+   * @returns promise a promise to an array of string objects.
    * Reject promise if impossible to get objects.
    */
   getObjects(): Promise<Promise<string>[]>;
@@ -52,15 +54,58 @@ export default interface DataSource {
    * Update a given object with the given [value].
    * @param docName unique identifier of the targeted object.
    * @param document value to be put in the database.
-   * Return a promise to the new stored value.
+   * @returns a promise to the new stored value.
    * Reject promise if impossible to update object.
    */
   updateObject(docName: string, document: string): Promise<string>;
 
   /**
    * Close the database.
-   * Return an empty promise.
+   * @returns an empty promise.
    * Reject promise if impossible to close the database.
    */
   close(): Promise<void>;
+
+  /**
+   * Subscribe to updates.
+   * @param collectionUId subscription item.
+   * @param clientId subscriber id.
+   * @returns true.
+   */
+  subscribe(collectionUId: string, clientId: string): Promise<boolean>;
+
+  /**
+   * Get the list of subscribers of a collection.
+   * @param collectionUId the collection uid.
+   * @returns a set of subscribers ids.
+   */
+  getSubscribers(collectionUId: string): Set<string> | undefined;
+
+  /**
+   * Unsubscribe to updates.
+   * @param collectionUId unsubscription item.
+   * @param clientId subscriber id.
+   * @returns true if previously subscribed, false otherwise.
+   */
+  unsubscribe(collectionUId: string, clientId: string): Promise<boolean>;
+
+  /**
+   * Save the web socket of a client.
+   * @param clientId id of connected client.
+   * @param ws associated web socket.
+   */
+  addWebSocket(clientId: string, ws: WebSocket): void;
+
+  /**
+   * Get the web socket of a client.
+   * @param clientId id of the client.
+   * @returns the associated web socket.
+   */
+  getWebSocket(clientId: string): WebSocket | undefined;
+
+  /**
+   * Unsave the web socket of a client.
+   * @param clientId client id.
+   */
+  removeWebSocket(clientId: string): void;
 }
