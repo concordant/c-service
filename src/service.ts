@@ -32,7 +32,10 @@ import express from "express";
 import { makeExecutableSchema } from "graphql-tools";
 import { OpenAPI, useSofa } from "sofa-api";
 import { graphQLSchema } from "./schema";
-import PouchDBDataSource, { PouchDBParams } from "./database/PouchDBDataSource";
+import { PouchDBParams } from "./database/PouchDBDataSource";
+import StoreDataSource from "./database/StoreDataSource";
+
+const db = new StoreDataSource();
 
 // CouchDB variables
 const url = process.env.COUCHDB_URL || "http://localhost:5984/";
@@ -52,7 +55,7 @@ const resolvers = {
         password,
         dbName: appName,
       };
-      const dataSource = new PouchDBDataSource(params);
+      const dataSource = db.getOrConnect(params);
       return dataSource.isConnected();
     },
     deleteApp(_: any, { appName }: any): Promise<boolean> {
@@ -65,7 +68,7 @@ const resolvers = {
         password,
         dbName: appName,
       };
-      const dataSource = new PouchDBDataSource(params);
+      const dataSource = db.getOrConnect(params);
       return dataSource.updateObject(id, document);
     },
     replicator: (_: any, { source, target, continuous }: any) => {
@@ -80,7 +83,7 @@ const resolvers = {
         password,
         dbName: appName,
       };
-      const dataSource = new PouchDBDataSource(params);
+      const dataSource = db.getOrConnect(params);
       return dataSource.getObjects();
     },
     getObject: (_: any, { appName, id }: any): Promise<string> => {
@@ -90,7 +93,7 @@ const resolvers = {
         password,
         dbName: appName,
       };
-      const dataSource = new PouchDBDataSource(params);
+      const dataSource = db.getOrConnect(params);
       return dataSource.getObject(id);
     },
     replicators: async () => {
@@ -154,13 +157,13 @@ app.use(
 );
 
 // Configure GraphQL server
-const server = new ApolloServer({
+const serverApollo = new ApolloServer({
   resolvers,
   typeDefs,
 });
 
 // Bind GraphQL server with API
-server.applyMiddleware({ app });
+serverApollo.applyMiddleware({ app });
 
 // Launch server
 app.listen(4000, "0.0.0.0");
