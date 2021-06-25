@@ -26,13 +26,17 @@
 
 import { ApolloServer, gql } from "apollo-server-express";
 import * as bodyParser from "body-parser";
-import { crdtlib } from "@concordant/c-crdtlib";
 import cors from "cors";
 import express from "express";
+import * as http from "http";
+import * as WebSocket from "ws";
 import { makeExecutableSchema } from "graphql-tools";
 import { OpenAPI, useSofa } from "sofa-api";
 import { graphQLSchema } from "./schema";
-import PouchDBDataSource, { PouchDBParams } from "./database/PouchDBDataSource";
+import { PouchDBParams } from "./database/PouchDBDataSource";
+import StoreDataSource from "./database/StoreDataSource";
+
+const db = new StoreDataSource();
 
 // CouchDB variables
 const url = process.env.COUCHDB_URL || "http://localhost:5984/";
@@ -52,7 +56,7 @@ const resolvers = {
         password,
         dbName: appName,
       };
-      const dataSource = new PouchDBDataSource(params);
+      const dataSource = db.getOrConnect(params);
       return dataSource.isConnected();
     },
     deleteApp(_: any, { appName }: any): Promise<boolean> {
@@ -65,8 +69,34 @@ const resolvers = {
         password,
         dbName: appName,
       };
-      const dataSource = new PouchDBDataSource(params);
+      const dataSource = db.getOrConnect(params);
       return dataSource.updateObject(id, document);
+    },
+    subscribe: (
+      _: any,
+      { appName, collectionUId, userId }: any
+    ): Promise<boolean> => {
+      const params: PouchDBParams = {
+        url,
+        username,
+        password,
+        dbName: appName,
+      };
+      const dataSource = db.getOrConnect(params);
+      return dataSource.subscribe(collectionUId, userId);
+    },
+    unsubscribe: (
+      _: any,
+      { appName, collectionUId, userId }: any
+    ): Promise<boolean> => {
+      const params: PouchDBParams = {
+        url,
+        username,
+        password,
+        dbName: appName,
+      };
+      const dataSource = db.getOrConnect(params);
+      return dataSource.unsubscribe(collectionUId, userId);
     },
     replicator: (_: any, { source, target, continuous }: any) => {
       return Promise.reject("Not yet implemented");
@@ -80,7 +110,7 @@ const resolvers = {
         password,
         dbName: appName,
       };
-      const dataSource = new PouchDBDataSource(params);
+      const dataSource = db.getOrConnect(params);
       return dataSource.getObjects();
     },
     getObject: (_: any, { appName, id }: any): Promise<string> => {
@@ -90,7 +120,7 @@ const resolvers = {
         password,
         dbName: appName,
       };
-      const dataSource = new PouchDBDataSource(params);
+      const dataSource = db.getOrConnect(params);
       return dataSource.getObject(id);
     },
     replicators: async () => {
@@ -154,13 +184,39 @@ app.use(
 );
 
 // Configure GraphQL server
-const server = new ApolloServer({
+const serverApollo = new ApolloServer({
   resolvers,
   typeDefs,
 });
 
 // Bind GraphQL server with API
-server.applyMiddleware({ app });
+serverApollo.applyMiddleware({ app });
 
 // Launch server
 app.listen(4000, "0.0.0.0");
+
+//initialize a simple http server
+const server = http.createServer(app);
+
+//initialize the WebSocket server instance
+const wss = new WebSocket.Server({ server });
+
+wss.on("connection", (ws: WebSocket) => {
+  ws.on("message", (message: string) => {
+    const obj = JSON.parse(message);
+    const params: PouchDBParams = {
+      url,
+      username,
+      password,
+      dbName: obj.appName,
+    };
+    const dataSource = db.getOrConnect(params);
+    dataSource.addWebSocket(obj.userId, ws);
+  });
+  ws.on("close", (code: number, reason: string) => {
+    // do nothing
+  });
+});
+
+//start our web socket server
+server.listen(process.env.PORT || 8999);
