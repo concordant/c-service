@@ -12,8 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add subscription and web socket in DataSource
 - Add StoreDataSource class to store DataSource
 - Add subscription endpoint
+- Run websocket server on port 8999 (default port)
 - Add subscription support in service worker
-- Add subscription test
 
 ### Changed
 
