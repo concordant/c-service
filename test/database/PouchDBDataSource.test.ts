@@ -242,3 +242,30 @@ describe("CouchDB read and write", () => {
       .catch((error) => fail(error));
   });
 });
+
+describe("Subscription", () => {
+  const params: PouchDBParams = {
+    url: couchdbUrl,
+    username: couchdbUser,
+    password: couchdbPassword,
+    dbName,
+  };
+  const dataSource = new PouchDBDataSource(params);
+
+  it("Subscribe/Unsubscribe", (done) => {
+    dataSource
+      .subscribe("mycollection", "myid")
+      .then(() => {
+        const set = new Set();
+        set.add("myid");
+        expect(dataSource.getSubscribers("mycollection")).toMatchObject(set);
+      })
+      .then(() => dataSource.unsubscribe("mycollection", "myid"))
+      .then(() => {
+        expect(dataSource.getSubscribers("mycollection")).toMatchObject(
+          new Set()
+        );
+        done();
+      });
+  });
+});
