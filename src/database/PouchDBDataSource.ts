@@ -91,22 +91,34 @@ export default class PouchDBDataSource implements DataSource {
    * Perform bidirectional replication between the local database and the remote database.
    * @param remoteDB the remote database.
    */
-  public sync(remoteDB: PouchDBDataSource) {
+  public sync(
+    remoteDB: PouchDBDataSource,
+    onChange: (doc: string, subscribers: Set<string> | undefined) => void
+  ) {
     this.database
       .sync(remoteDB.database, {
         live: true,
         retry: true,
       })
-      .on("change", function (change) {
+      .on("change", (info) => {
+        info.change.docs.forEach((doc) => {
+          const obj = JSON.parse(doc._id);
+          onChange(JSON.stringify(doc), this.getSubscribers(obj.collectionUId));
+        });
+      })
+      .on("paused", (err) => {
         // do nothing.
       })
-      .on("paused", function (info) {
+      .on("active", () => {
         // do nothing.
       })
-      .on("active", function () {
+      .on("error", (err) => {
         // do nothing.
       })
-      .on("error", function (err) {
+      .on("denied", (err) => {
+        // do nothing.
+      })
+      .on("complete", (info) => {
         // do nothing.
       });
   }
