@@ -93,7 +93,7 @@ export default class PouchDBDataSource implements DataSource {
    */
   public sync(
     remoteDB: PouchDBDataSource,
-    onChange: (doc: string, subscribers: Set<string> | undefined) => void
+    onChange: (doc: string, subscribers: string) => Promise<boolean>
   ) {
     this.database
       .sync(remoteDB.database, {
@@ -103,7 +103,11 @@ export default class PouchDBDataSource implements DataSource {
       .on("change", (info) => {
         info.change.docs.forEach((doc) => {
           const obj = JSON.parse(doc._id);
-          onChange(JSON.stringify(doc), this.getSubscribers(obj.collectionUId));
+          this.getSubscribers(obj.collectionUId)?.forEach((id) => {
+            onChange(JSON.stringify(doc), id).catch(() => {
+              this.unsubscribe(obj.collectionUId, id);
+            });
+          });
         });
       })
       .on("paused", (err) => {

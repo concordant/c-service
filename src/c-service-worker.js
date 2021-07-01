@@ -45,16 +45,20 @@ self.addEventListener("activate", function (event) {
  * Send an "update" message to each service worker clients
  * @param {*} doc the sent message
  */
-function onChange(doc, subscribers) {
-  subscribers.forEach((id) => {
-    self.clients.get(id).then((client) => {
+function onChange(doc, subscriberId) {
+  return self.clients
+    .get(subscriberId)
+    .then((client) => {
       var message = {
         type: "update",
         data: doc,
       };
       client.postMessage(JSON.stringify(message));
+      return Promise.resolve(true);
+    })
+    .catch(() => {
+      return Promise.reject(false);
     });
-  });
 }
 
 self.addEventListener("fetch", function (event) {

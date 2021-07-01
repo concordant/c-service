@@ -22,7 +22,7 @@ export default class StoreDataSource {
    */
   public getOrConnect(
     params: PouchDBParams,
-    onChange?: (doc: string) => void
+    onChange?: (doc: string, subscribers: string) => Promise<boolean>
   ): DataSource {
     const dbName = params.dbName;
     const db = this.databases[dbName];
