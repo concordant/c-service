@@ -79,7 +79,7 @@ Then run the service:
 npx @concordant/c-service
 ```
 
-This launches an Express server listening on TCP port 4000.
+This launches an Express server listening on TCP port 4000 and a WebSocket server on port 8999.
 
 ## Setup C-Service as a Systemd service
 
