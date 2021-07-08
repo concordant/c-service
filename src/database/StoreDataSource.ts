@@ -29,13 +29,17 @@ export default class StoreDataSource {
     if (db !== undefined) {
       return db;
     }
-    const remoteDB = new PouchDBDataSource(params);
 
     if (onChange === undefined) {
-      this.databases[dbName] = remoteDB;
+      this.databases[dbName] = new PouchDBDataSource(params, true);
     } else {
-      const localDB = new PouchDBDataSource({ dbName });
-      localDB.sync(remoteDB, onChange);
+      const remoteDB = new PouchDBDataSource(params, false);
+      const localDB = new PouchDBDataSource(
+        { dbName },
+        true,
+        remoteDB,
+        onChange
+      );
       this.databases[dbName] = localDB;
     }
     return this.databases[dbName];

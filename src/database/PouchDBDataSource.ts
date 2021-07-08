@@ -60,7 +60,12 @@ export default class PouchDBDataSource implements DataSource {
    * Default constructor.
    * @param params parameters for PouchDB database.
    */
-  constructor(params: PouchDBParams) {
+  constructor(
+    params: PouchDBParams,
+    setChange: boolean,
+    remoteDB?: PouchDBDataSource,
+    onChange?: (doc: string, subscribers: string) => Promise<boolean>
+  ) {
     const { dbName, url, username, password } = params;
 
     if (url === undefined) {
@@ -70,6 +75,35 @@ export default class PouchDBDataSource implements DataSource {
       this.database = new PouchDB(url + slash + dbName, {
         auth: { username, password },
       });
+    }
+    if (remoteDB !== undefined) {
+      this.sync(remoteDB);
+    }
+    if (setChange) {
+      this.database
+        .changes({ live: true, since: "now", include_docs: true })
+        .on("change", (change) => {
+          const obj = JSON.parse(change.id);
+          if (onChange === undefined) {
+            this.getSubscribers(obj.collectionUId)?.forEach((subscriberId) => {
+              const ws = this.getWebSocket(subscriberId);
+              if (ws) {
+                ws.send(JSON.stringify(change.doc), (error) => {
+                  if (error) {
+                    this.removeWebSocket(subscriberId);
+                    this.unsubscribe(obj.collectionUId, subscriberId);
+                  }
+                });
+              }
+            });
+          } else {
+            this.getSubscribers(obj.collectionUId)?.forEach((subscriberId) => {
+              onChange(JSON.stringify(change.doc), subscriberId).catch(() => {
+                this.unsubscribe(obj.collectionUId, subscriberId);
+              });
+            });
+          }
+        });
     }
     this.followers = new Map();
     this.webSockets = new Map();
@@ -91,24 +125,14 @@ export default class PouchDBDataSource implements DataSource {
    * Perform bidirectional replication between the local database and the remote database.
    * @param remoteDB the remote database.
    */
-  public sync(
-    remoteDB: PouchDBDataSource,
-    onChange: (doc: string, subscribers: string) => Promise<boolean>
-  ) {
+  private sync(remoteDB: PouchDBDataSource) {
     this.database
       .sync(remoteDB.database, {
         live: true,
         retry: true,
       })
       .on("change", (info) => {
-        info.change.docs.forEach((doc) => {
-          const obj = JSON.parse(doc._id);
-          this.getSubscribers(obj.collectionUId)?.forEach((id) => {
-            onChange(JSON.stringify(doc), id).catch(() => {
-              this.unsubscribe(obj.collectionUId, id);
-            });
-          });
-        });
+        // do nothing.
       })
       .on("paused", (err) => {
         // do nothing.
@@ -202,19 +226,7 @@ export default class PouchDBDataSource implements DataSource {
               newDocument._rev = body._rev;
               return this.database
                 .put(newDocument)
-                .then((response) => {
-                  const obj = JSON.parse(docName);
-                  this.getSubscribers(obj.collectionUId)?.forEach((value) => {
-                    const ws = this.getWebSocket(value);
-                    if (ws) {
-                      ws.send(JSON.stringify(newDocument), (error) => {
-                        if (error) {
-                          this.removeWebSocket(value);
-                          this.unsubscribe(obj.collectionUId, value);
-                        }
-                      });
-                    }
-                  });
+                .then(() => {
                   return "OK";
                 })
                 .catch((error) => {
