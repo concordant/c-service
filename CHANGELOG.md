@@ -9,12 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add subscription and web socket in DataSource
-- Add StoreDataSource class to store DataSource
-- Add subscription endpoint
-- Run websocket server on port 8999 (default port)
-- Add subscription support in service worker
-
 ### Changed
 
 ### Deprecated
@@ -24,6 +18,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [1.2.0] - 2021-07-09
+
+### Added
+
+- Add subscription and web socket in DataSource
+- Add StoreDataSource class to store DataSource
+- Add subscription endpoint
+- Run websocket server on port 8999 (default port)
+- Add subscription support in service worker
 
 ## [1.1.7] - 2021-04-16
 
