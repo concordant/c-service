@@ -47,18 +47,21 @@ export default class PouchDBDataSource implements DataSource {
   private database: PouchDB.Database;
 
   /**
-   * Map of subscription items to subscribers
+   * Map of subscription items to subscribers.
    */
   private followers: Map<string, Set<string>>;
 
   /**
-   * Map of client ID to associated Web Socket
+   * Map of client ID to associated Web Socket.
    */
   private webSockets: Map<string, WebSocket>;
 
   /**
    * Default constructor.
    * @param params parameters for PouchDB database.
+   * @param setChange set live changes feed.
+   * @param remoteDB synchronize with a remote PouchDB database.
+   * @param onChange callback when a change occurs.
    */
   constructor(
     params: PouchDBParams,
@@ -123,7 +126,7 @@ export default class PouchDBDataSource implements DataSource {
 
   /**
    * Perform bidirectional replication between the local database and the remote database.
-   * @param remoteDB the remote database.
+   * @param remoteDB the remote PouchDB database.
    */
   private sync(remoteDB: PouchDBDataSource) {
     this.database
