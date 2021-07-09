@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+import * as WebSocket from "ws";
 import { crdtlib } from "@concordant/c-crdtlib";
 import DataSource from "./DataSource";
 import PouchDB from "pouchdb";
@@ -46,10 +47,28 @@ export default class PouchDBDataSource implements DataSource {
   private database: PouchDB.Database;
 
   /**
+   * Map of subscription items to subscribers.
+   */
+  private followers: Map<string, Set<string>>;
+
+  /**
+   * Map of client ID to associated Web Socket.
+   */
+  private webSockets: Map<string, WebSocket>;
+
+  /**
    * Default constructor.
    * @param params parameters for PouchDB database.
+   * @param setChange set live changes feed.
+   * @param remoteDB synchronize with a remote PouchDB database.
+   * @param onChange callback when a change occurs.
    */
-  constructor(params: PouchDBParams) {
+  constructor(
+    params: PouchDBParams,
+    setChange: boolean,
+    remoteDB?: PouchDBDataSource,
+    onChange?: (doc: string, subscribers: string) => Promise<boolean>
+  ) {
     const { dbName, url, username, password } = params;
 
     if (url === undefined) {
@@ -60,11 +79,42 @@ export default class PouchDBDataSource implements DataSource {
         auth: { username, password },
       });
     }
+    if (remoteDB !== undefined) {
+      this.sync(remoteDB);
+    }
+    if (setChange) {
+      this.database
+        .changes({ live: true, since: "now", include_docs: true })
+        .on("change", (change) => {
+          const obj = JSON.parse(change.id);
+          if (onChange === undefined) {
+            this.getSubscribers(obj.collectionUId)?.forEach((subscriberId) => {
+              const ws = this.getWebSocket(subscriberId);
+              if (ws) {
+                ws.send(JSON.stringify(change.doc), (error) => {
+                  if (error) {
+                    this.removeWebSocket(subscriberId);
+                    this.unsubscribe(obj.collectionUId, subscriberId);
+                  }
+                });
+              }
+            });
+          } else {
+            this.getSubscribers(obj.collectionUId)?.forEach((subscriberId) => {
+              onChange(JSON.stringify(change.doc), subscriberId).catch(() => {
+                this.unsubscribe(obj.collectionUId, subscriberId);
+              });
+            });
+          }
+        });
+    }
+    this.followers = new Map();
+    this.webSockets = new Map();
   }
 
   /**
    * Is connection still active.
-   * Return a promise to a boolean.
+   * @returns a promise to a boolean.
    * Reject promise if impossible to contact database.
    */
   public isConnected(): Promise<boolean> {
@@ -76,24 +126,30 @@ export default class PouchDBDataSource implements DataSource {
 
   /**
    * Perform bidirectional replication between the local database and the remote database.
-   * @param remoteDB the remote database.
+   * @param remoteDB the remote PouchDB database.
    */
-  public sync(remoteDB: PouchDBDataSource) {
+  private sync(remoteDB: PouchDBDataSource) {
     this.database
       .sync(remoteDB.database, {
         live: true,
         retry: true,
       })
-      .on("change", function (change) {
+      .on("change", (info) => {
         // do nothing.
       })
-      .on("paused", function (info) {
+      .on("paused", (err) => {
         // do nothing.
       })
-      .on("active", function () {
+      .on("active", () => {
         // do nothing.
       })
-      .on("error", function (err) {
+      .on("error", (err) => {
+        // do nothing.
+      })
+      .on("denied", (err) => {
+        // do nothing.
+      })
+      .on("complete", (info) => {
         // do nothing.
       });
   }
@@ -101,7 +157,7 @@ export default class PouchDBDataSource implements DataSource {
   /**
    * Get a given object from the database.
    * @param docName unique identifier of the targeted document.
-   * Return a promise to a string object.
+   * @returns a promise to a string object.
    * Reject promise if impossible to get object.
    */
   public getObject(docName: string): Promise<string> {
@@ -131,7 +187,7 @@ export default class PouchDBDataSource implements DataSource {
 
   /**
    * Get all objects from the database.
-   * Return promise a promise to an array of string objects.
+   * @returns promise a promise to an array of string objects.
    * Reject promise if impossible to get objects.
    */
   public getObjects(): Promise<Promise<string>[]> {
@@ -150,7 +206,7 @@ export default class PouchDBDataSource implements DataSource {
    * Update a given object with the given [value].
    * @param docName unique identifier of the targeted object.
    * @param document value to be put in the database.
-   * Return a promise to the new stored value.
+   * @returns a promise to the new stored value.
    * Reject promise if impossible to update object.
    */
   public updateObject(docName: string, document: string): Promise<string> {
@@ -173,8 +229,12 @@ export default class PouchDBDataSource implements DataSource {
               newDocument._rev = body._rev;
               return this.database
                 .put(newDocument)
-                .then(() => "OK")
-                .catch((error) => this.updateObject(docName, document));
+                .then(() => {
+                  return "OK";
+                })
+                .catch((error) => {
+                  return this.updateObject(docName, document);
+                });
             } catch (error) {
               return Promise.reject(error);
             }
@@ -197,7 +257,7 @@ export default class PouchDBDataSource implements DataSource {
 
   /**
    * Close the database.
-   * Return an empty promise.
+   * @returns an empty promise.
    * Reject promise if impossible to close the database.
    */
   public close(): Promise<void> {
@@ -205,5 +265,70 @@ export default class PouchDBDataSource implements DataSource {
       .close()
       .then()
       .catch((error) => Promise.reject(error));
+  }
+
+  /**
+   * Subscribe to updates.
+   * @param collectionUId subscription item.
+   * @param clientId subscriber id.
+   * @returns true.
+   */
+  public subscribe(collectionUId: string, clientId: string): Promise<boolean> {
+    if (this.followers.get(collectionUId) === undefined) {
+      this.followers.set(collectionUId, new Set());
+    }
+    this.followers.get(collectionUId)?.add(clientId);
+    return Promise.resolve(true);
+  }
+
+  /**
+   * Get the list of subscribers of a collection.
+   * @param collectionUId the collection uid.
+   * @returns a set of subscribers ids.
+   */
+  public getSubscribers(collectionUId: string): Set<string> | undefined {
+    return this.followers.get(collectionUId);
+  }
+
+  /**
+   * Unsubscribe to updates.
+   * @param collectionUId unsubscription item.
+   * @param clientId subscriber id.
+   * @returns true if previously subscribed, false otherwise.
+   */
+  public unsubscribe(
+    collectionUId: string,
+    clientId: string
+  ): Promise<boolean> {
+    const follows = this.followers.get(collectionUId);
+    return follows
+      ? Promise.resolve(follows.delete(clientId))
+      : Promise.resolve(false);
+  }
+
+  /**
+   * Save the web socket of a client.
+   * @param clientId id of connected client.
+   * @param ws associated web socket.
+   */
+  public addWebSocket(clientId: string, ws: WebSocket): void {
+    this.webSockets.set(clientId, ws);
+  }
+
+  /**
+   * Get the web socket of a client.
+   * @param clientId id of the client.
+   * @returns the associated web socket.
+   */
+  public getWebSocket(clientId: string): WebSocket | undefined {
+    return this.webSockets.get(clientId);
+  }
+
+  /**
+   * Unsave the web socket of a client.
+   * @param clientId client id.
+   */
+  public removeWebSocket(clientId: string): void {
+    this.webSockets.delete(clientId);
   }
 }
