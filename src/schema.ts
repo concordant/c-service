@@ -45,6 +45,8 @@ export const graphQLSchema = `
     createApp(appName: String): Boolean
     deleteApp(appName: String): Boolean
     updateObject(appName: String, id: ID!, document: String): String
+    subscribe(appName: String, collectionUId: ID!, userId: ID!): String
+    unsubscribe(appName: String, collectionUId: ID!, userId: ID!): String
     replicator(source: String, target: String, continuous: Boolean): String
   }
 
