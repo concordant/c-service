@@ -38,7 +38,7 @@ describe("Establish connection", () => {
     const params: PouchDBParams = {
       dbName,
     };
-    const dataSource = new PouchDBDataSource(params);
+    const dataSource = new PouchDBDataSource(params, false);
     dataSource
       .isConnected()
       .then((result) => (result ? done() : fail()))
@@ -52,7 +52,7 @@ describe("Establish connection", () => {
       password: couchdbPassword,
       dbName,
     };
-    const dataSource = new PouchDBDataSource(params);
+    const dataSource = new PouchDBDataSource(params, false);
     dataSource
       .isConnected()
       .then((result) => (result ? done() : fail()))
@@ -64,7 +64,7 @@ describe("Establish connection", () => {
       url: couchdbUrl,
       dbName,
     };
-    const dataSource = new PouchDBDataSource(params);
+    const dataSource = new PouchDBDataSource(params, false);
     dataSource
       .isConnected()
       .then(() => fail())
@@ -76,7 +76,7 @@ describe("In-memory read and write", () => {
   const params: PouchDBParams = {
     dbName,
   };
-  const dataSource = new PouchDBDataSource(params);
+  const dataSource = new PouchDBDataSource(params, false);
   const environment1 = new crdtlib.utils.SimpleEnvironment(
     new crdtlib.utils.ClientUId("client1")
   );
@@ -163,7 +163,7 @@ describe("CouchDB read and write", () => {
     password: couchdbPassword,
     dbName,
   };
-  const dataSource = new PouchDBDataSource(params);
+  const dataSource = new PouchDBDataSource(params, false);
   const environment1 = new crdtlib.utils.SimpleEnvironment(
     new crdtlib.utils.ClientUId("client1")
   );
@@ -240,5 +240,32 @@ describe("CouchDB read and write", () => {
         done();
       })
       .catch((error) => fail(error));
+  });
+});
+
+describe("Subscription", () => {
+  const params: PouchDBParams = {
+    url: couchdbUrl,
+    username: couchdbUser,
+    password: couchdbPassword,
+    dbName,
+  };
+  const dataSource = new PouchDBDataSource(params, false);
+
+  it("Subscribe/Unsubscribe", (done) => {
+    dataSource
+      .subscribe("mycollection", "myid")
+      .then(() => {
+        const set = new Set();
+        set.add("myid");
+        expect(dataSource.getSubscribers("mycollection")).toMatchObject(set);
+      })
+      .then(() => dataSource.unsubscribe("mycollection", "myid"))
+      .then(() => {
+        expect(dataSource.getSubscribers("mycollection")).toMatchObject(
+          new Set()
+        );
+        done();
+      });
   });
 });

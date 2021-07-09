@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-import PouchDBDataSource from "./database/PouchDBDataSource.ts";
+import StoreDataSource from "./database/StoreDataSource";
 import CONFIG from "./config.json";
 
 const serverUrl = CONFIG.serverUrl;
@@ -33,7 +33,7 @@ const password = CONFIG.password;
 
 /* eslint-disable no-undef */
 self.addEventListener("install", function (event) {
-  self.db = {};
+  self.db = new StoreDataSource();
   self.skipWaiting();
 });
 
@@ -41,19 +41,24 @@ self.addEventListener("activate", function (event) {
   event.waitUntil(self.clients.claim());
 });
 
-function connectDB(dbName) {
-  const localDB = new PouchDBDataSource({ dbName });
-
-  const params = {
-    url,
-    username,
-    password,
-    dbName,
-  };
-  const remoteDB = new PouchDBDataSource(params);
-  localDB.sync(remoteDB);
-
-  self.db[dbName] = localDB;
+/**
+ * Send an "update" message to each service worker clients
+ * @param {*} doc the sent message
+ */
+function onChange(doc, subscriberId) {
+  return self.clients
+    .get(subscriberId)
+    .then((client) => {
+      var message = {
+        type: "update",
+        data: doc,
+      };
+      client.postMessage(JSON.stringify(message));
+      return Promise.resolve(true);
+    })
+    .catch(() => {
+      return Promise.reject(false);
+    });
 }
 
 self.addEventListener("fetch", function (event) {
@@ -66,31 +71,43 @@ self.addEventListener("fetch", function (event) {
         "Content-Type": "application/json",
       },
     };
-
     event.respondWith(
       (async function () {
-        const json = await event.request.json();
-
-        const requestType = event.request.url.replace(serverUrl, "");
-        if (!self.db[json.appName]) {
-          connectDB(json.appName);
-        }
+        const json = await event.request.clone().json();
+        const dbName = json.appName;
+        const params = {
+          url,
+          username,
+          password,
+          dbName,
+        };
+        let db = self.db.getOrConnect(params, onChange);
         let responseBody;
-        switch (requestType) {
+        switch (event.request.url.replace(serverUrl, "")) {
           case "create-app":
-            responseBody = await self.db[json.appName].isConnected();
+            responseBody = await db.isConnected();
             break;
           case "get-object":
-            responseBody = await self.db[json.appName].getObject(json.id);
+            responseBody = await db.getObject(json.id);
             break;
           case "update-object":
-            responseBody = await self.db[json.appName].updateObject(
-              json.id,
-              json.document
+            responseBody = await db.updateObject(json.id, json.document);
+            break;
+          case "subscribe":
+            responseBody = await db.subscribe(
+              json.collectionUId,
+              event.clientId
+            );
+            break;
+          case "unsubscribe":
+            fetch(event.request);
+            responseBody = await db.unsubscribe(
+              json.collectionUId,
+              event.clientId
             );
             break;
           default:
-            return new Response("Wrong request type : " + requestType, {
+            return new Response("Unknown request url : " + event.request.url, {
               status: 404,
               statusText: "Not Found",
               headers: {
