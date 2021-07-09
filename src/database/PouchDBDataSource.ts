@@ -300,7 +300,7 @@ export default class PouchDBDataSource implements DataSource {
     const follows = this.followers.get(collectionUId);
     return follows
       ? Promise.resolve(follows.delete(clientId))
-      : Promise.reject("Error : " + clientId + " is not subscribed.");
+      : Promise.resolve(false);
   }
 
   /**
