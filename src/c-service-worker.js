@@ -73,7 +73,7 @@ self.addEventListener("fetch", function (event) {
     };
     event.respondWith(
       (async function () {
-        const json = await event.request.json();
+        const json = await event.request.clone().json();
         const dbName = json.appName;
         const params = {
           url,
@@ -100,6 +100,7 @@ self.addEventListener("fetch", function (event) {
             );
             break;
           case "unsubscribe":
+            fetch(event.request);
             responseBody = await db.unsubscribe(
               json.collectionUId,
               event.clientId
