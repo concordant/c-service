@@ -225,7 +225,13 @@ export default class PouchDBDataSource implements DataSource {
               return this.database
                 .put(newDocument)
                 .then(() => "OK")
-                .catch((error) => this.updateObject(docName, document));
+                .catch((err) => {
+                  if (err.name === "conflict") {
+                    return this.updateObject(docName, document);
+                  } else {
+                    return Promise.reject(err);
+                  }
+                });
             } catch (error) {
               return Promise.reject(error);
             }
