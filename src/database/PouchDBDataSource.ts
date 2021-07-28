@@ -120,7 +120,7 @@ export default class PouchDBDataSource implements DataSource {
   public isConnected(): Promise<boolean> {
     return this.database
       .info()
-      .then(() => true)
+      .then(() => Promise.resolve(true))
       .catch((error) => Promise.reject(error));
   }
 
@@ -129,29 +129,10 @@ export default class PouchDBDataSource implements DataSource {
    * @param remoteDB the remote PouchDB database.
    */
   private sync(remoteDB: PouchDBDataSource) {
-    this.database
-      .sync(remoteDB.database, {
-        live: true,
-        retry: true,
-      })
-      .on("change", (info) => {
-        // do nothing.
-      })
-      .on("paused", (err) => {
-        // do nothing.
-      })
-      .on("active", () => {
-        // do nothing.
-      })
-      .on("error", (err) => {
-        // do nothing.
-      })
-      .on("denied", (err) => {
-        // do nothing.
-      })
-      .on("complete", (info) => {
-        // do nothing.
-      });
+    this.database.sync(remoteDB.database, {
+      live: true,
+      retry: true,
+    });
   }
 
   /**
@@ -180,9 +161,7 @@ export default class PouchDBDataSource implements DataSource {
             }
           });
       })
-      .catch((error) => {
-        return Promise.reject(error);
-      });
+      .catch((error) => Promise.reject(error));
   }
 
   /**
