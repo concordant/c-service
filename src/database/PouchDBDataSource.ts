@@ -144,10 +144,32 @@ export default class PouchDBDataSource implements DataSource {
   public getObject(docName: string): Promise<string> {
     return this.database
       .info()
-      .then((body) => {
+      .then((info) => {
         return this.database
-          .get(docName)
-          .then((body) => Promise.resolve(JSON.stringify(body)))
+          .get(docName, { conflicts: true })
+          .then((doc) => {
+            if (!doc._conflicts) {
+              return Promise.resolve(JSON.stringify(doc));
+            }
+            const bodyCRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(
+              JSON.stringify(doc)
+            );
+            return Promise.all(
+              doc._conflicts.map((rev) =>
+                this.database.get(docName, { rev: rev })
+              )
+            ).then((values) => {
+              for (const value of values) {
+                const CRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(
+                  JSON.stringify(value)
+                );
+                bodyCRDT.merge(CRDT);
+              }
+              const newDocument = JSON.parse(bodyCRDT.toJson());
+              newDocument._id = docName;
+              return Promise.resolve(JSON.stringify(newDocument));
+            });
+          })
           .catch((error) => {
             try {
               const objectUId = JSON.parse(docName);
