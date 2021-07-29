@@ -84,28 +84,45 @@ export default class PouchDBDataSource implements DataSource {
     }
     if (setChange) {
       this.database
-        .changes({ live: true, since: "now", include_docs: true })
+        .changes({
+          live: true,
+          since: "now",
+          include_docs: true,
+          conflicts: true,
+        })
         .on("change", (change) => {
-          const obj = JSON.parse(change.id);
-          if (onChange === undefined) {
-            this.getSubscribers(obj.collectionUId)?.forEach((subscriberId) => {
-              const ws = this.getWebSocket(subscriberId);
-              if (ws) {
-                ws.send(JSON.stringify(change.doc), (error) => {
-                  if (error) {
-                    this.removeWebSocket(subscriberId);
-                    this.unsubscribe(obj.collectionUId, subscriberId);
-                  }
-                });
-              }
-            });
-          } else {
-            this.getSubscribers(obj.collectionUId)?.forEach((subscriberId) => {
-              onChange(JSON.stringify(change.doc), subscriberId).catch(() => {
-                this.unsubscribe(obj.collectionUId, subscriberId);
-              });
-            });
+          let promise: Promise<string> = Promise.resolve(
+            JSON.stringify(change.doc)
+          );
+          if (change.doc?._conflicts) {
+            promise = this.getObject(change.doc._id);
           }
+          promise.then((document) => {
+            const obj = JSON.parse(change.id);
+            if (onChange === undefined) {
+              this.getSubscribers(obj.collectionUId)?.forEach(
+                (subscriberId) => {
+                  const ws = this.getWebSocket(subscriberId);
+                  if (ws) {
+                    ws.send(document, (error) => {
+                      if (error) {
+                        this.removeWebSocket(subscriberId);
+                        this.unsubscribe(obj.collectionUId, subscriberId);
+                      }
+                    });
+                  }
+                }
+              );
+            } else {
+              this.getSubscribers(obj.collectionUId)?.forEach(
+                (subscriberId) => {
+                  onChange(document, subscriberId).catch(() => {
+                    this.unsubscribe(obj.collectionUId, subscriberId);
+                  });
+                }
+              );
+            }
+          });
         });
     }
     this.followers = new Map();
