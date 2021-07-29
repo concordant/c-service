@@ -211,7 +211,7 @@ export default class PouchDBDataSource implements DataSource {
   public getObjects(): Promise<Promise<string>[]> {
     return this.database
       .info()
-      .then((body) => {
+      .then((info) => {
         return this.database
           .allDocs()
           .then((objs) => objs.rows.map((obj) => this.getObject(obj.id)))
@@ -230,29 +230,52 @@ export default class PouchDBDataSource implements DataSource {
   public updateObject(docName: string, document: string): Promise<string> {
     return this.database
       .info()
-      .then((body) => {
+      .then((info) => {
         return this.database
-          .get(docName)
-          .then((body) => {
+          .get(docName, { conflicts: true })
+          .then((doc) => {
             try {
-              const CRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(
-                document.replace(/\\'/g, "'")
-              );
+              if (!doc._conflicts) {
+                doc._conflicts = [];
+              }
               const bodyCRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(
-                JSON.stringify(body)
+                JSON.stringify(doc)
               );
-              bodyCRDT.merge(CRDT);
-              const newDocument = JSON.parse(bodyCRDT.toJson());
-              newDocument._id = docName;
-              newDocument._rev = body._rev;
-              return this.database
-                .put(newDocument)
-                .then(() => {
-                  return "OK";
-                })
-                .catch((error) => {
-                  return this.updateObject(docName, document);
-                });
+              return Promise.all(
+                doc._conflicts.map((rev) =>
+                  this.database.get(docName, { rev: rev })
+                )
+              ).then((values) => {
+                const promises: Promise<PouchDB.Core.Response>[] = [];
+                for (const value of values) {
+                  const CRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(
+                    JSON.stringify(value)
+                  );
+                  bodyCRDT.merge(CRDT);
+                  promises.push(this.database.remove(docName, value._rev));
+                }
+                const CRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(
+                  document.replace(/\\'/g, "'")
+                );
+                bodyCRDT.merge(CRDT);
+                const newDocument = JSON.parse(bodyCRDT.toJson());
+                newDocument._id = docName;
+                newDocument._rev = doc._rev;
+                return this.database
+                  .put(newDocument)
+                  .then(() => {
+                    return Promise.all(promises)
+                      .then(() => Promise.resolve("OK"))
+                      .catch((err) => Promise.reject(err));
+                  })
+                  .catch((err) => {
+                    if (err.name === "conflict") {
+                      return this.updateObject(docName, document);
+                    } else {
+                      return Promise.reject(err);
+                    }
+                  });
+              });
             } catch (error) {
               return Promise.reject(error);
             }
