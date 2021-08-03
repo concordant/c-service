@@ -33,7 +33,6 @@ const password = CONFIG.password;
 
 /* eslint-disable no-undef */
 self.addEventListener("install", function (event) {
-  self.db = new StoreDataSource();
   self.skipWaiting();
 });
 
@@ -62,6 +61,9 @@ function onChange(doc, subscriberId) {
 }
 
 self.addEventListener("fetch", function (event) {
+  if (self.db === undefined) {
+    self.db = new StoreDataSource();
+  }
   if (event.request.url.startsWith(serverUrl)) {
     var responseInit = {
       // status/statusText default to 200/OK, but we're explicitly setting them here.
