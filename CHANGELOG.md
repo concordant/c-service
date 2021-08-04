@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [1.2.1] - 2021-08-04
+
+### Added
+
+- Detect and resolve eventual conflicts
+- Ensure that StoreDataSource exists in the service worker
+
 ## [1.2.0] - 2021-07-09
 
 ### Added
