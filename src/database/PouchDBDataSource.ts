@@ -84,28 +84,45 @@ export default class PouchDBDataSource implements DataSource {
     }
     if (setChange) {
       this.database
-        .changes({ live: true, since: "now", include_docs: true })
+        .changes({
+          live: true,
+          since: "now",
+          include_docs: true,
+          conflicts: true,
+        })
         .on("change", (change) => {
-          const obj = JSON.parse(change.id);
-          if (onChange === undefined) {
-            this.getSubscribers(obj.collectionUId)?.forEach((subscriberId) => {
-              const ws = this.getWebSocket(subscriberId);
-              if (ws) {
-                ws.send(JSON.stringify(change.doc), (error) => {
-                  if (error) {
-                    this.removeWebSocket(subscriberId);
-                    this.unsubscribe(obj.collectionUId, subscriberId);
-                  }
-                });
-              }
-            });
-          } else {
-            this.getSubscribers(obj.collectionUId)?.forEach((subscriberId) => {
-              onChange(JSON.stringify(change.doc), subscriberId).catch(() => {
-                this.unsubscribe(obj.collectionUId, subscriberId);
-              });
-            });
+          let promise: Promise<string> = Promise.resolve(
+            JSON.stringify(change.doc)
+          );
+          if (change.doc?._conflicts) {
+            promise = this.getObject(change.doc._id);
           }
+          promise.then((document) => {
+            const obj = JSON.parse(change.id);
+            if (onChange === undefined) {
+              this.getSubscribers(obj.collectionUId)?.forEach(
+                (subscriberId) => {
+                  const ws = this.getWebSocket(subscriberId);
+                  if (ws) {
+                    ws.send(document, (error) => {
+                      if (error) {
+                        this.removeWebSocket(subscriberId);
+                        this.unsubscribe(obj.collectionUId, subscriberId);
+                      }
+                    });
+                  }
+                }
+              );
+            } else {
+              this.getSubscribers(obj.collectionUId)?.forEach(
+                (subscriberId) => {
+                  onChange(document, subscriberId).catch(() => {
+                    this.unsubscribe(obj.collectionUId, subscriberId);
+                  });
+                }
+              );
+            }
+          });
         });
     }
     this.followers = new Map();
@@ -120,7 +137,7 @@ export default class PouchDBDataSource implements DataSource {
   public isConnected(): Promise<boolean> {
     return this.database
       .info()
-      .then(() => true)
+      .then(() => Promise.resolve(true))
       .catch((error) => Promise.reject(error));
   }
 
@@ -129,29 +146,10 @@ export default class PouchDBDataSource implements DataSource {
    * @param remoteDB the remote PouchDB database.
    */
   private sync(remoteDB: PouchDBDataSource) {
-    this.database
-      .sync(remoteDB.database, {
-        live: true,
-        retry: true,
-      })
-      .on("change", (info) => {
-        // do nothing.
-      })
-      .on("paused", (err) => {
-        // do nothing.
-      })
-      .on("active", () => {
-        // do nothing.
-      })
-      .on("error", (err) => {
-        // do nothing.
-      })
-      .on("denied", (err) => {
-        // do nothing.
-      })
-      .on("complete", (info) => {
-        // do nothing.
-      });
+    this.database.sync(remoteDB.database, {
+      live: true,
+      retry: true,
+    });
   }
 
   /**
@@ -163,10 +161,32 @@ export default class PouchDBDataSource implements DataSource {
   public getObject(docName: string): Promise<string> {
     return this.database
       .info()
-      .then((body) => {
+      .then((info) => {
         return this.database
-          .get(docName)
-          .then((body) => Promise.resolve(JSON.stringify(body)))
+          .get(docName, { conflicts: true })
+          .then((doc) => {
+            if (!doc._conflicts) {
+              return Promise.resolve(JSON.stringify(doc));
+            }
+            const bodyCRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(
+              JSON.stringify(doc)
+            );
+            return Promise.all(
+              doc._conflicts.map((rev) =>
+                this.database.get(docName, { rev: rev })
+              )
+            ).then((values) => {
+              for (const value of values) {
+                const CRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(
+                  JSON.stringify(value)
+                );
+                bodyCRDT.merge(CRDT);
+              }
+              const newDocument = JSON.parse(bodyCRDT.toJson());
+              newDocument._id = docName;
+              return Promise.resolve(JSON.stringify(newDocument));
+            });
+          })
           .catch((error) => {
             try {
               const objectUId = JSON.parse(docName);
@@ -180,9 +200,7 @@ export default class PouchDBDataSource implements DataSource {
             }
           });
       })
-      .catch((error) => {
-        return Promise.reject(error);
-      });
+      .catch((error) => Promise.reject(error));
   }
 
   /**
@@ -193,7 +211,7 @@ export default class PouchDBDataSource implements DataSource {
   public getObjects(): Promise<Promise<string>[]> {
     return this.database
       .info()
-      .then((body) => {
+      .then((info) => {
         return this.database
           .allDocs()
           .then((objs) => objs.rows.map((obj) => this.getObject(obj.id)))
@@ -212,29 +230,52 @@ export default class PouchDBDataSource implements DataSource {
   public updateObject(docName: string, document: string): Promise<string> {
     return this.database
       .info()
-      .then((body) => {
+      .then((info) => {
         return this.database
-          .get(docName)
-          .then((body) => {
+          .get(docName, { conflicts: true })
+          .then((doc) => {
             try {
-              const CRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(
-                document.replace(/\\'/g, "'")
-              );
+              if (!doc._conflicts) {
+                doc._conflicts = [];
+              }
               const bodyCRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(
-                JSON.stringify(body)
+                JSON.stringify(doc)
               );
-              bodyCRDT.merge(CRDT);
-              const newDocument = JSON.parse(bodyCRDT.toJson());
-              newDocument._id = docName;
-              newDocument._rev = body._rev;
-              return this.database
-                .put(newDocument)
-                .then(() => {
-                  return "OK";
-                })
-                .catch((error) => {
-                  return this.updateObject(docName, document);
-                });
+              return Promise.all(
+                doc._conflicts.map((rev) =>
+                  this.database.get(docName, { rev: rev })
+                )
+              ).then((values) => {
+                const promises: Promise<PouchDB.Core.Response>[] = [];
+                for (const value of values) {
+                  const CRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(
+                    JSON.stringify(value)
+                  );
+                  bodyCRDT.merge(CRDT);
+                  promises.push(this.database.remove(docName, value._rev));
+                }
+                const CRDT = crdtlib.crdt.DeltaCRDT.Companion.fromJson(
+                  document.replace(/\\'/g, "'")
+                );
+                bodyCRDT.merge(CRDT);
+                const newDocument = JSON.parse(bodyCRDT.toJson());
+                newDocument._id = docName;
+                newDocument._rev = doc._rev;
+                return this.database
+                  .put(newDocument)
+                  .then(() => {
+                    return Promise.all(promises)
+                      .then(() => Promise.resolve("OK"))
+                      .catch((err) => Promise.reject(err));
+                  })
+                  .catch((err) => {
+                    if (err.name === "conflict") {
+                      return this.updateObject(docName, document);
+                    } else {
+                      return Promise.reject(err);
+                    }
+                  });
+              });
             } catch (error) {
               return Promise.reject(error);
             }
@@ -246,7 +287,13 @@ export default class PouchDBDataSource implements DataSource {
               return this.database
                 .put(newDocument)
                 .then(() => "OK")
-                .catch((error) => this.updateObject(docName, document));
+                .catch((err) => {
+                  if (err.name === "conflict") {
+                    return this.updateObject(docName, document);
+                  } else {
+                    return Promise.reject(err);
+                  }
+                });
             } catch (error) {
               return Promise.reject(error);
             }
