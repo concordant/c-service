@@ -199,7 +199,10 @@ app.listen(4000, "0.0.0.0");
 const server = http.createServer(app);
 
 //initialize the WebSocket server instance
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({
+  server: server,
+  path: process.env.WS_PATH || "/",
+});
 
 wss.on("connection", (ws: WebSocket) => {
   ws.on("message", (message: string) => {
