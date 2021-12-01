@@ -73,6 +73,12 @@ export COUCHDB_URL=my-couchdb-server.org
 export COUCHDB_USER=my-user COUCHDB_PASSWORD=my-passwd
 ```
 
+It is also possible to configure WebSocket path used by the service (default is `/`):
+
+```bash
+export WS_PATH=my-websocket-path
+```
+
 Then run the service:
 
 ```bash
