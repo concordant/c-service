@@ -9,8 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- WebSocket path is now configurable
-
 ### Changed
 
 ### Deprecated
@@ -20,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+
+## [1.2.2] - 2021-12-02
+
+### Added
+
+- WebSocket path is now configurable
 
 ## [1.2.1] - 2021-08-04
 
