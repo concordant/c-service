@@ -1,16 +1,12 @@
-# C-Service
+# The Concordant Service
 
 [![License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/licenses/MIT)
 [![pipeline status](https://gitlab.inria.fr/concordant/software/c-service/badges/master/pipeline.svg)](https://gitlab.inria.fr/concordant/software/c-service/-/commits/master)
 [![coverage report](https://gitlab.inria.fr/concordant/software/c-service/badges/master/coverage.svg)](https://gitlab.inria.fr/concordant/software/c-service/-/commits/master)
 
-The first version of C-Service: a distributed database service
-for CRDTs of the [C-CRDTlib](https://github.com/concordant/c-crdtlib).
+The C-Service is a lightweight proxy service that can run on many kinds of devices and connect in one end C-Client instances running on edge devices (terminal or PoP) to support transactions and replication between services, and on the other end any backend server that is adapted to its drivers interface to store and replicate data.
 
-The C-Service is meant to run on edge devices (terminal or PoP)
-and (will) support transactions and replication between services.
-
-It runs as a ServiceWorker in web browsers,
+Currently on beta version, it runs as a ServiceWorker in web browsers,
 using PouchDB to synchronize with a remote CouchDB server.
 It can also be launched as a standalone application, typically server-side,
 to be used by browsers that do not support Service Workers.
@@ -18,7 +14,7 @@ to be used by browsers that do not support Service Workers.
 The C-Service exposes a REST API which should not be accessed directly,
 as it may not be stable; use the [c-client library](https://gitlab.inria.fr/concordant/software/c-client/) instead.
 
-The main repository is in [the Inria gitlab](https://gitlab.inria.fr/concordant/software/c-service/) (this is where you can post tickets. There is an identical clone in [GitHub](https://github.com/concordant/c-service) (tickets here might be ignored).
+*Note on current implementation:* the C-Service beta version is a distributed database service for CRDTs of the [C-CRDTlib](https://github.com/concordant/c-crdtlib).
 
 ## Getting started
 
@@ -27,11 +23,8 @@ The main repository is in [the Inria gitlab](https://gitlab.inria.fr/concordant/
 For the next steps, you will need the following software:
 
 - Make sure you have the latest stable version of [Node.js](https://nodejs.org/en/download/);
-- C-Service synchronizes with a
-  [CouchDB](https://docs.couchdb.org/en/stable/install/index.html) backend.
-  Once installed,
-  use the [CouchDB user panel (Fauxton)](http://127.0.0.1:5984/_utils/)
-  to setup a database and a user.
+- C-Service synchronizes with a [CouchDB](https://docs.couchdb.org/en/stable/install/index.html) backend.
+- Once CouchDB installed, use the [CouchDB user panel (Fauxton)](http://127.0.0.1:5984/_utils/) to setup a database and a user.
 
 In addition, you will need to enable CORS in CouchDB, using Fauxton
 or the [dedicated NPM package from PouchDB](https://github.com/pouchdb/add-cors-to-couchdb):
@@ -44,8 +37,7 @@ npx add-cors-to-couchdb [http://mycouchDBserver.org] \
 
 ### Use the C-Service as a Service Worker
 
-A Service Worker implementation is bundled with the C-Service package,
-in `dist/c-service-worker.js`.
+A Service Worker implementation is bundled with the C-Service package, in `dist/c-service-worker.js`.
 
 To use it, just copy (or link) it to an appropriate location
 and register it as a ServiceWorker in your application.
@@ -59,8 +51,7 @@ adjust the configuration in `src/config.json` and run
 npm install
 ```
 
-In a future release,
-the C-Client will be able to provide these settings at runtime.
+In a future release, the C-Client will be able to provide these settings at runtime.
 
 ### Start C-Service standalone
 

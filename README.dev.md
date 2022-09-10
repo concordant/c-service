@@ -1,16 +1,15 @@
+# Dev Documentation
+
+Want to contribute ? Or build your own C-Service package. This is the place to go.
+
 ## Private releases
 
-The C-Service, and the C-CRDTlib it depends on,
-are delivered as NPM packages.
-Public releases are published on [npmjs](https://www.npmjs.com/),
-while development releases are published
-to a private [Gitlab Packages registry](https://gitlab.inria.fr/concordant/software/c-crdtlib/-/packages).
+The C-Service, and the C-CRDTlib it depends on, are delivered as NPM packages.
+Public releases are published on [npmjs](https://www.npmjs.com/), while development releases are published to a private [Gitlab Packages registry](https://gitlab.inria.fr/concordant/software/c-crdtlib/-/packages).
 
-To use development releases, set up NPM
-as described in the [c-crdtlib guide](https://gitlab.inria.fr/concordant/software/c-crdtlib/-/blob/master/README.dev.md#javascripttypescript-and-npm)
+To use development releases, set up NPM as described in the [c-crdtlib guide](https://gitlab.inria.fr/concordant/software/c-crdtlib/-/blob/master/README.dev.md#javascripttypescript-and-npm)
 
-See also the [wiki](https://gitlab.inria.fr/concordant/software/c-service/-/wikis/)
-for documentation.
+See also the [wiki](https://gitlab.inria.fr/concordant/software/c-service/-/wikis/) for documentation.
 
 Go to project root directory and run:
 
