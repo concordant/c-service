@@ -4,7 +4,7 @@ Dev contributing guide.
 
 ## General instructions
 
-Please read the [Concordant general contributing instructions](https://gitlab.inria.fr/concordant/internal/documentation/-/blob/master/CONTRIBUTING.md)
+Please read the [Concordant general contributing instructions](https://github.com/concordant/.github/blob/main/CONTRIBUTING.md)
 
 ## Branches
 
