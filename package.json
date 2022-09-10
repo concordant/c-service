@@ -1,7 +1,7 @@
 {
   "name": "@concordant/c-service",
-  "version": "1.2.2",
-  "description": "Background service for the Concordant platform",
+  "version": "1.2.3",
+  "description": "Proxy connector service for the Concordant platform",
   "keywords": [
     "concordant",
     "crdt",
@@ -16,7 +16,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.inria.fr/concordant/software/c-service.git"
+    "url": "git+https://github.com/concordant/c-service"
   },
   "bin": "./dist/service.js",
   "main": "./dist/service.js",
